@@ -1,3 +1,4 @@
+import numpy as np
 from IPython.core.display_functions import display
 from PIL import Image
 
@@ -24,3 +25,18 @@ def plot_pdf(page, crop_float=None,  dpi=200,):
         lower = int(pix.height * crop_float[1])
         crop = (left, upper, right, lower)
         display(image.crop(crop))
+
+
+def symmetrical_polynomial_factorization(polynomial, di, gi):
+    quo, rem = np.divmod(len(polynomial.args), 2)
+    if rem == 0:
+        args = polynomial.args
+    else:
+        if len(gi) % 2 == 0 and len(di) % 2 == 0:
+            args = [i for e, i in enumerate(polynomial.args)]
+        else:
+            args = [i for e, i in enumerate(polynomial.args) if sum([quo, rem])-1 != e]
+    pol_idx = [e for e, c in enumerate(di) for d in args if d.coeff(c, 1) != 0]
+    prod = np.prod([np.sum([(c[i]) for i in pol_idx]) for c in [di, gi]])
+    s = prod - (prod.expand() - polynomial)
+    return s
