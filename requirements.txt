@@ -4,7 +4,7 @@ pymupdf~=1.23.8
 pillow~=10.2.0
 scipy~=1.10.1
 
-# work in pycharm 21
+# to work in pycharm 21
 jupyter==1.0.0
 jupyter_client==7.3.4
 jupyter-console==6.6.2
