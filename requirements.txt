@@ -1,7 +1,8 @@
-sympy
-numpy
-pymupdf
-pillow
+sympy~=1.12
+numpy~=1.24.4
+pymupdf~=1.23.8
+pillow~=10.2.0
+scipy~=1.10.1
 
 # work in pycharm 21
 jupyter==1.0.0
@@ -13,3 +14,4 @@ jupyterlab==3.5.3
 jupyterlab-pygments==0.1.2
 jupyterlab_server==2.19.0
 jupyterlab-widgets==1.0.0
+ipython~=8.12.3
