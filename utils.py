@@ -1,6 +1,7 @@
 import numpy as np
-from IPython.core.display_functions import display
+import sympy as sy
 from PIL import Image
+from IPython.core.display_functions import display
 
 
 def plot_pdf(page, crop_float=None,  dpi=200,):
@@ -40,3 +41,15 @@ def symmetrical_polynomial_factorization(polynomial, di, gi):
     prod = np.prod([np.sum([(c[i]) for i in pol_idx]) for c in [di, gi]])
     s = prod - (prod.expand() - polynomial)
     return s
+
+
+def symmetrical_cyclic_convolution(x, y):
+    # https://stackoverflow.com/a/66709258
+    x_arr = np.array(x)
+    size = x_arr.shape[0]
+    xx = np.tile(x_arr.reshape(-1), 2)
+    yy = np.array(y).reshape(-1)
+    out = np.convolve(xx, yy)
+    out_clip = out[size:2 * size]
+    out_mtx = sy.Matrix(out_clip)
+    return out_mtx
