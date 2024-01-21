@@ -1,4 +1,4 @@
-winograd_matrices = {
+matrices = {
     2: {
         'a': [
             [1, 1],
