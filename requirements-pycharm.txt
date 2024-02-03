@@ -2,6 +2,7 @@
 
 notebook==6.4.0
 jupyterlab==3.3.0
+traitlets==5.9.0
 #jupyter==1.0.0
 #jupyter_client==7.3.4
 #jupyter-console==6.6.2

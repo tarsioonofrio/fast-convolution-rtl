@@ -14,9 +14,9 @@ def naive_convolve(data: np.array, kernel: np.array) -> np.array:
         for j in range(data.shape[1] - k + 1):
             # img[i, j] = individual pixel value
             # Get the current matrix
-            mat = data[i:i + k, j:j + k]
+            tmp = data[i:i + k, j:j + k]
             # Apply the convolution - element-wise multiplication and summation of the result
             # Store the result to i-th row and j-th column of our convolved_img array
             # 9 multiplications, 8 aditions per output
-            output[i, j] = np.sum(np.multiply(mat, kernel))
+            output[i, j] = np.sum(np.multiply(tmp, kernel))
     return output
