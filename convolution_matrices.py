@@ -1,26 +1,29 @@
-def c3x3m4a11e2():
+import numpy as np
+
+
+def wrap_tap_filter(a, b, c):
+    def tap_filter(g, d):
+        return c * b * g * d
+
+def c3x3_5m20a9e():
     '''
-    From Blahut Appendix A A collection of cyclic convolution algorithms, page 427
-    cyclic, 3x3, 4 multiplications, 11 aditions and 2 extra operations
+    From Blahut page 166
+    Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
     :return:
     '''
-    a = [
+    a = np.array([
+        [1, 0, 0],
         [1, 1, 1],
-        [1, 0, -1],
-        [0, 1, -1],
-        [1, 1, -2]
-    ]
-    c = [
-        [1, 1, 0, -1],
-        [1, -1, -1, 2],
-        [1, 0, 1, -1]
-    ]
-    g = [1, 3]
-    b = [
-        [1, 1, 1],
-        [3, 0, -3],
-        [0, 3, -3],
-        [1, 1, -2]
-    ]
-    m = {'a': a, 'c': c, 'g': g, 'b': b}
-    return m
+        [1, -1, 1],
+        [1, 2, 4],
+        [0, 0, 1]
+    ])
+    b = a
+    g = np.array([1/2, -1/2, -1/6, 1/6, 1])
+    c = np.array([
+        [2, 0, 0, 0, 0],
+        [-1, -2, 2, -1, 2],
+        [-2, -1, -3, 0, -1],
+        [1, 1, 1, 1, -2],
+        [0, 0, 0, 0, 1]
+    ])
