@@ -46,5 +46,50 @@ class C3x3_5m20a9e():
 
     def __call__(self, fv):
         out = self.a.T * self.gs * self.c.T * sy.Matrix(fv)
+    def convolution(fv):
+        out = a.T * gs * c.T * sy.Matrix(fv)
         return out
+    return convolution
+
+
+def c3x3_5m20a9e(gv):
+    '''
+    From Blahut page 166
+    Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
+    :return:
+    '''
+    _rin = 5
+    _rout = 3
+    _a = [
+        [1, 0, 0],
+        [1, 1, 1],
+        [1, -1, 1],
+        [1, 2, 4],
+        [0, 0, 1]
+    ]
+    _b = _a
+    _n = [[1, 2], [-1, 2], [-1, 6], [1, 6], [1, 1]]
+    _c = [
+        [2, 0, 0, 0, 0],
+        [-1, -2, 2, -1, 2],
+        [-2, -1, -3, 0, -1],
+        [1, 1, 1, 1, -2],
+        [0, 0, 0, 0, 1]
+    ]
+
+    a = sy.Matrix(_a)
+    b = sy.Matrix(_b)
+    c = sy.Matrix(_c)
+    n = sy.Matrix([sy.Rational(d, q) for d, q in _n])
+
+    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(_rout))))
+    f = sy.Matrix(sy.symbols(" ".join(f"f_{i}" for i in range(_rin))))
+    bg = sy.diag(*(b * g).tolist())
+    bgn = sy.diag(*(bg * n))
+    subs = {k: v for k, v in zip(g.values(), gv)}
+    gs = bgn.subs(subs)
+    s = sy.MatMul(a.T, gs, c.T, f)
+    return wrapper_convolution(a, gs, c)
+
+
 
