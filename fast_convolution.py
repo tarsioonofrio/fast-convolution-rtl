@@ -46,6 +46,9 @@ class C3x3_5m20a9e():
 
     def __call__(self, fv):
         out = self.a.T * self.gs * self.c.T * sy.Matrix(fv)
+
+
+def wrapper_convolution(a, gs, c):
     def convolution(fv):
         out = a.T * gs * c.T * sy.Matrix(fv)
         return out
