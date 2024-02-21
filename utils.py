@@ -76,3 +76,15 @@ def symmetrical_cyclic_convolution(x, y):
     out_clip = out[size:2 * size]
     out_mtx = sy.Matrix(out_clip)
     return out_mtx
+
+def winograd_cyclic_conv2x2(x0, x1, y0, y1):
+    ax0 = x0+x1
+    ax1 = x0-x1
+    bx0 = (y0+y1)/2
+    bx1 = (y0-y1)/2
+
+    m0 = ax0*bx0
+    m1 = ax1*bx1
+    s0 = m0 + m1
+    s1 = m0 - m1
+    return (s0, s1, m1, m0)
