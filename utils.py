@@ -28,6 +28,29 @@ def plot_pdf(page, crop_float=None,  dpi=200,):
         display(image.crop(crop))
 
 
+def plot_pdf2col(page, column, crop_float=None, dpi=200,):
+    """
+    (upper, lower)
+    crop float value between 0 and 1
+    """
+    pix = page.get_pixmap(dpi=dpi)
+    # mode = "RGBA" if pix.alpha else "RGB"
+    mode = "RGB"
+    image = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+    if crop_float is None:
+        display(image)
+    else:
+        assert 0 <= crop_float[0] <= 1
+        assert 0 <= crop_float[1] <= 1
+        assert column in [0, 1]
+        left = (pix.width)//2 * column
+        upper = int(pix.height * crop_float[0])
+        right = (pix.width)//2 * (column + 1)
+        lower = int(pix.height * crop_float[1])
+        crop = (left, upper, right, lower)
+        display(image.crop(crop))
+
+
 def symmetrical_polynomial_factorization(polynomial, di, gi):
     quo, rem = np.divmod(len(polynomial.args), 2)
     if rem == 0:
