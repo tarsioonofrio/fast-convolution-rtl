@@ -1,6 +1,6 @@
 import numpy as np
 import sympy as sy
-from PIL import Image
+from PIL import Image, ImageOps
 from IPython.core.display_functions import display
 
 
@@ -12,7 +12,7 @@ def plot_pdf(page, crop_float=None,  dpi=200,):
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
-    image = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+    image = ImageOps.invert(Image.frombytes(mode, [pix.width, pix.height], pix.samples))
     if crop_float is None:
         display(image)
     else:
@@ -36,7 +36,7 @@ def plot_pdf2col(page, column, crop_float=None, dpi=200,):
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
-    image = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+    image = ImageOps.invert(Image.frombytes(mode, [pix.width, pix.height], pix.samples))
     if crop_float is None:
         display(image)
     else:
@@ -77,14 +77,14 @@ def symmetrical_cyclic_convolution(x, y):
     out_mtx = sy.Matrix(out_clip)
     return out_mtx
 
-def winograd_cyclic_conv2x2(x0, x1, y0, y1):
-    ax0 = x0+x1
-    ax1 = x0-x1
-    bx0 = (y0+y1)/2
-    bx1 = (y0-y1)/2
+def winograd_cyclic_conv2x2(x, y):
+    ax0 = x[0]+x[1]
+    ax1 = x[0]-x[1]
+    bx0 = (y[0]+y[1])/2
+    bx1 = (y[0]-y[1])/2
 
     m0 = ax0*bx0
     m1 = ax1*bx1
     s0 = m0 + m1
     s1 = m0 - m1
-    return (s0, s1, m1, m0)
+    return (s0, s1)
