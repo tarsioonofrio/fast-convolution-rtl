@@ -88,3 +88,13 @@ def winograd_cyclic_conv2x2(x, y):
     s0 = m0 + m1
     s1 = m0 - m1
     return (s0, s1)
+
+
+# https://stackoverflow.com/a/38034801
+def conv_circ_fft(signal, ker):
+    '''
+        signal: real 1D array
+        ker: real 1D array
+        signal and ker must have same shape
+    '''
+    return np.real(np.fft.ifft( np.fft.fft(signal)*np.fft.fft(ker) ))
