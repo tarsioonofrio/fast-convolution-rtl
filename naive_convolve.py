@@ -1,6 +1,7 @@
 # https://gist.github.com/better-data-science/1bed20956e4ba510c4170123a784e8b5#file-conv_from_scratch-py
 import numpy as np
 
+
 def naive_convolve(data: np.array, kernel: np.array) -> np.array:
     # To simplify things
     k = kernel.shape[0]

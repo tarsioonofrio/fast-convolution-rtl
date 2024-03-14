@@ -1,2 +1,4 @@
 python-lsp-server[all]
 debugpy
+jedi
+flake8
