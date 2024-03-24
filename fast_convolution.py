@@ -1,3 +1,6 @@
+import math
+import itertools
+
 import numpy as np
 import sympy as sy
 
@@ -48,11 +51,27 @@ class C3x3_5m20a9e():
         out = self.a.T * self.gs * self.c.T * sy.Matrix(fv)
 
 
-def wrapper_convolution(a, gs, c):
+def recursive_log2(n):
+    if isinstance(n, sy.Rational):
+        n = n.q
+        exp_sig = -1
+    else:
+        exp_sig = 1
+
+    base_sig = -1 if n < 0 else 1
+    exp = [exp_sig * e for e, b in enumerate(bin(n)[2::][::-1]) if b == '1']
+    return base_sig, exp
+
+
+def wrap_convolution(a, bg, c):
     def convolution(fv):
-        out = a.T * gs * c.T * sy.Matrix(fv)
+        out = wrap_filter(a, bg, c) * sy.Matrix(fv)
         return out
     return convolution
+
+
+def wrap_filter(a, bg, c):
+    return a.T * bg * c.T
 
 
 def c3x3_5m20a9e(gv):
@@ -92,7 +111,7 @@ def c3x3_5m20a9e(gv):
     subs = {k: v for k, v in zip(g.values(), gv)}
     gs = bgn.subs(subs)
     # s = sy.MatMul(a.T, gs, c.T, f)
-    return wrapper_convolution(a, gs, c)
+    return wrap_convolution(a, gs, c)
 
 
 def c3x3_6m10a0e(gv):
@@ -131,6 +150,54 @@ def c3x3_6m10a0e(gv):
     bgn = sy.diag(*(bg * n))
     subs = {k: v for k, v in zip(g.values(), gv)}
     gs = bgn.subs(subs)
-    return wrapper_convolution(a, gs, c)
+    return wrap_convolution(a, gs, c)
 
 
+def toom_cook(d_size, g_size, points):
+    x = sy.symbols("x")
+    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(d_size))))
+    gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_size))))
+    dx = sum([i*x**e for e, i in enumerate(di)])
+    gx = sum([i*x**e for e, i in enumerate(gi)])
+    sx = gx*dx
+    xi = [x**i for i in range(1, sy.degree(sx.expand(), x) + 1)]
+    s_degree = d_size + g_size - 1
+    bi = [sy.nsimplify(p) for p in points]
+    assert s_degree == len(bi), print(
+        f"b_degree: {d_size} != len(bi): {len(bi)}"
+    )
+    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(d_size))))
+    gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_size))))
+    _a_mtx = [[(b**e) for e, d in enumerate(di)] for b in bi if b != sy.oo]
+    _b_mtx = [[(b**e) for e, d in enumerate(gi)] for b in bi if b != sy.oo]
+    bi_inf = [x for x in bi if x != sy.oo]
+    _cq = [
+        1/sy.expand(np.prod([(b0 - b) for b in i]))
+        for b0, i in
+        zip(bi_inf, itertools.combinations(reversed(bi_inf), len(bi_inf)-1))
+    ]
+    if sy.oo in bi:
+        _a_inf = [[0] * (len(di) - 1) + [1]]
+        a_mtx = sy.Matrix(_a_mtx + _a_inf)
+        _b_inf = [[0] * (len(gi) - 1) + [1]]
+        b_mtx = sy.Matrix(_b_mtx + _b_inf)
+        cq = _cq + [1]
+    else:
+        a_mtx = sy.Matrix(_a_mtx)
+        b_mtx = sy.Matrix(_b_mtx)
+        cq = _cq
+
+    # bg_mtx = sy.diag(*(sy.diag(*cq) * b_mtx * gi).tolist())
+    # bg_mtx = g2bg(cq, b_mtx)
+    cd = [
+        sy.expand(np.prod([(x - b) for b in i if b != sy.oo]))
+        for i in itertools.combinations(reversed(bi), len(bi)-1)
+    ]
+    c0 = sy.Matrix([s.subs({x: 0}) for s in cd])
+    c1 = sy.Matrix([[d.coeff(c, 1) for c in xi] for d in cd])
+    c_mtx = sy.Matrix(c0.T.tolist() + c1.T.tolist())
+    return c_mtx, cq, b_mtx, a_mtx
+
+
+def g2bg(cq, b, g):
+    return sy.diag(*(sy.diag(*cq) * b * sy.Matrix(g)).tolist())
