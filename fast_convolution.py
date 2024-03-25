@@ -60,7 +60,13 @@ def recursive_log2(n):
 
     sign = -1 if n < 0 else 1
 
-    if isinstance(n, sy.Rational):
+    if isinstance(n, sy.Integer):
+        exp_z = _recursive_log2(n)
+        out = {
+            "s": sign,
+            "z": exp_z,
+        }
+    else:
         exp_p = _recursive_log2(n.p)
         exp_q = _recursive_log2(n.q)
         out = {
@@ -68,14 +74,42 @@ def recursive_log2(n):
             "p": exp_p,
             "q": exp_q,
         }
-
-    else:
-        exp_z = _recursive_log2(n)
-        out = {
-            "s": sign,
-            "z": exp_z,
-        }
     return out
+
+
+def log2_lst(mtx):
+    lst_in = mtx.tolist()
+    lst_out = [
+        [None for c in range(len(lst_in[0]))]
+        for r in range(len(lst_in))
+    ]
+    for r, row in enumerate(lst_in):
+        for c, col in enumerate(row):
+            lst_out[r][c] = recursive_log2(col)
+    return lst_out
+
+
+def log2_matrix(lst):
+    mtx = sy.zeros(len(lst), len(lst[0]))
+    for er, r in enumerate(lst):
+        for ec, c in enumerate(r):
+            if 'z' in c:
+                n = sum([
+                    c["s"] * sy.UnevaluatedExpr(sy.Pow(2, z, evaluate=False))
+                    for z in c["z"]
+                ])
+            elif 'p' in c:
+                n = sum([
+                    c["s"] * sy.UnevaluatedExpr(sy.Rational(
+                        sy.Pow(2, p, evaluate=False),
+                        sy.Pow(2, q, evaluate=False)
+                    ))
+                    for p, q in zip(c["p"], c["q"])
+                ])
+            else:
+                n = 0
+            mtx[er, ec] = n
+    return mtx
 
 
 def wrap_convolution(a, bg, c):
