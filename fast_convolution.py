@@ -52,15 +52,30 @@ class C3x3_5m20a9e():
 
 
 def recursive_log2(n):
-    if isinstance(n, sy.Rational):
-        n = n.q
-        exp_sig = -1
-    else:
-        exp_sig = 1
+    def _recursive_log2(n):
+        return [e for e, b in enumerate(bin(n)[2::][::-1]) if b == '1']
 
-    base_sig = -1 if n < 0 else 1
-    exp = [exp_sig * e for e, b in enumerate(bin(n)[2::][::-1]) if b == '1']
-    return base_sig, exp
+    if n == 0:
+        return {}
+
+    sign = -1 if n < 0 else 1
+
+    if isinstance(n, sy.Rational):
+        exp_p = _recursive_log2(n.p)
+        exp_q = _recursive_log2(n.q)
+        out = {
+            "s": sign,
+            "p": exp_p,
+            "q": exp_q,
+        }
+
+    else:
+        exp_z = _recursive_log2(n)
+        out = {
+            "s": sign,
+            "z": exp_z,
+        }
+    return out
 
 
 def wrap_convolution(a, bg, c):
