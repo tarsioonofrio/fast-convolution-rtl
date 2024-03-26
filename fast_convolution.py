@@ -90,6 +90,13 @@ def log2_lst(mtx):
 
 
 def log2_matrix(lst):
+    def log2_rational(p, q):
+        p0 = sy.UnevaluatedExpr(sy.Pow(2, p, evaluate=False))
+        q0 = sy.Pow(sy.UnevaluatedExpr(
+            sy.Pow(2, q, evaluate=False)), -1, evaluate=False
+        )
+        return p0 * q0
+
     mtx = sy.zeros(len(lst), len(lst[0]))
     for er, r in enumerate(lst):
         for ec, c in enumerate(r):
@@ -99,13 +106,19 @@ def log2_matrix(lst):
                     for z in c["z"]
                 ])
             elif 'p' in c:
-                n = sum([
-                    c["s"] * sy.UnevaluatedExpr(sy.Rational(
-                        sy.Pow(2, p, evaluate=False),
-                        sy.Pow(2, q, evaluate=False)
-                    ))
-                    for p, q in zip(c["p"], c["q"])
+                p = sum([
+                    (c["s"] * sy.UnevaluatedExpr(
+                        sy.Pow(2, p, evaluate=False))
+                     )
+                    for p in c["p"]
                 ])
+                q = sum([
+                    (c["s"] * sy.Pow(sy.UnevaluatedExpr(
+                        sy.Pow(2, q, evaluate=False)), -1, evaluate=False)
+                     )
+                    for q in c["q"]
+                ])
+                n = p * q
             else:
                 n = 0
             mtx[er, ec] = n
