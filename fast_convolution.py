@@ -191,12 +191,19 @@ def log2_matrix(lst):
                      )
                     for p in c["p"]
                 ])
-                q = sum([
-                    (c["s"] * sy.Pow(sy.UnevaluatedExpr(
-                        sy.Pow(2, q, evaluate=False)), -1, evaluate=False)
-                     )
-                    for q in c["q"]
-                ])
+                # q = sum([
+                #     (c["s"] * sy.Pow(sy.UnevaluatedExpr(
+                #         sy.Pow(2, q, evaluate=False)), -1, evaluate=False)
+                #      )
+                #     for q in c["q"]
+                # ])
+                if len(c["q"]) == 1:
+                    _q = sy.UnevaluatedExpr(sy.Pow(
+                        2, c["q"][0], evaluate=False
+                    ))
+                    q = sy.Pow(_q, -1, evaluate=False)
+                else:
+                    q = c["q"]
                 n = p * q
             else:
                 n = 0
@@ -273,3 +280,22 @@ def toom_cook_conv_1d(d_size, g_size, points, g):
     return f
 
 
+def filter1d_slide2d(filt, in_arr, out_shape, index):
+    out_arr = np.zeros(out_shape, dtype=int)
+    for r in range(index, out_shape[0] + index):
+        for c in range(0, out_shape[1], 3):
+            f = in_arr[r, c:c+5]
+            if len(f) == 5:
+                out = filt(f).flat()
+                out_arr[r - index, c:c+3] = out
+            else:
+                size = (5 - len(f))
+                zeros = size * [0]
+                out = filt(f.tolist() + zeros)
+                out_arr[r - index, c:c+size] = out[:2]
+    return out_arr
+
+
+def filter1d_slide2d_count(out_shape):
+    count = len(list(range(out_shape[0]))) * len(range(0, out_shape[1], 3))
+    return count
