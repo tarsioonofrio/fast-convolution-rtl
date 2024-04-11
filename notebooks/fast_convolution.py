@@ -51,7 +51,7 @@ import sympy as sy
 #         out = self.a.T * self.gs * self.c.T * sy.Matrix(fv)
 
 
-def c3x3_5m20a9e(gv):
+def c3x3_5m20a9e_old(gv):
     '''
     From Blahut page 166
     Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
@@ -218,9 +218,17 @@ def wrap_convolution(c, bg, a):
         return out
     return convolution
 
-
 def to_filter(c, bg, a):
     return a.T * bg * c.T
+
+
+def wrap_convolution2d(c1, c2, bg, a1, a2):
+    def convolution(f):
+        tr = c1.T * sy.Matrix(f) * c2
+        m = sy.HadamardProduct(tr, bg, evaluate=True)
+        inv = a1.T * m * a2
+        return inv
+    return convolution
 
 
 def toom_cook(d_size, g_size, points):
@@ -273,6 +281,11 @@ def g2bg(cq, b, g):
     return sy.diag(*(sy.diag(*cq) * b * sy.Matrix(g)).tolist())
 
 
+def g2bg2d(cq1, b1, cq2, b2, g):
+    bg = (sy.diag(*cq2) * b2) * sy.Matrix(g) * (sy.diag(*cq1) * b1).T
+    return bg
+
+
 def toom_cook_conv_1d(d_size, g_size, points, g):
     c, cq, b, a = toom_cook(d_size, g_size, points)
     bg = g2bg(cq, b, g)
@@ -280,34 +293,59 @@ def toom_cook_conv_1d(d_size, g_size, points, g):
     return f
 
 
-def filter1d_slide2d(filt, in_arr, out_shape, index):
+def toom_cook_conv_2d(d_size, g_size, points, g):
+    c1, cq1, b1, a1 = toom_cook(d_size, g_size, points)
+    c2, cq2, b2, a2 = toom_cook(d_size, g_size, points)
+    bg = g2bg2d(cq1, b1, cq2, b2, g)
+    f = wrap_convolution2d(c1, c2, bg, a1, a2)
+    return f
+
+
+def filter1d_slide2d(filt, in_arr, out_shape, index, in_size=5, out_size=3):
     out_arr = np.zeros(out_shape, dtype=int)
     for r in range(index, out_shape[0] + index):
-        for c in range(0, out_shape[1], 3):
-            f = in_arr[r, c:c+5]
-            if len(f) == 5:
+        for c in range(0, out_shape[1], in_size):
+            f = in_arr[r, c:c+in_size]
+            if len(f) == in_size:
                 out = filt(f).flat()
-                out_arr[r - index, c:c+3] = out
+                out_arr[r - index, c:c+out_size] = out
             else:
-                size = (5 - len(f))
+                size = (in_size - len(f))
                 zeros = size * [0]
                 out = filt(f.tolist() + zeros)
-                out_arr[r - index, c:c+size] = out[:2]
+                out_arr[r - index, c:c+size] = out[:size]
     return out_arr
 
 
-def filter1d_slide2d_count(out_shape):
-    count = len(list(range(out_shape[0]))) * len(range(0, out_shape[1], 3))
+def filter1d_slide2d_count(shape, size):
+    count = len(list(range(shape[0]))) * len(range(0, shape[1], size))
     return count
 
 
-def C3x3_5m20a9e(d_size, g_size, points, g):
+def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
+    out_arr = np.zeros(out_shape, dtype=int)
+    for r in range(0, out_shape[0]):
+        for c in range(0, out_shape[1], in_size):
+            f = in_arr[r:r+in_size, c:c+in_size]
+            if len(f) == in_size:
+                out = filt(f)
+                out_arr[r:r+out_size, c:c+out_size] = out
+            else:
+                size = (in_size - len(f))
+                zeros = size * [0]
+                out = filt(f.tolist() + zeros)
+                out_arr[r:r+out_size, c:c+size] = out[:size]
+    return out_arr
+
+
+def c3x3_5m20a9e(g):
     '''
     From Blahut page 166
     Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
     :return:
     '''
-    c, cq, b, a = toom_cook(d_size, g_size, points)
+    points = [0, -1, 1, -2, np.inf]
+    c, cq, b, a = toom_cook(3, 3, points)
     bg = g2bg(cq, b, g)
     f = wrap_convolution(c, bg, a)
     return f

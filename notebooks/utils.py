@@ -77,6 +77,7 @@ def symmetrical_cyclic_convolution(x, y):
     out_mtx = sy.Matrix(out_clip)
     return out_mtx
 
+
 def winograd_cyclic_conv2x2(x, y):
     ax0 = x[0]+x[1]
     ax1 = x[0]-x[1]
@@ -91,10 +92,10 @@ def winograd_cyclic_conv2x2(x, y):
 
 
 # https://stackoverflow.com/a/38034801
-def conv_circ_fft(signal, ker):
+def conv_circ_fft(signal, kernel):
     '''
         signal: real 1D array
         ker: real 1D array
         signal and ker must have same shape
     '''
-    return np.real(np.fft.ifft( np.fft.fft(signal)*np.fft.fft(ker) ))
+    return np.real(np.fft.ifft(np.fft.fft(signal)*np.fft.fft(kern)))
