@@ -331,11 +331,18 @@ def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
                 out = filt(f)
                 out_arr[r:r+out_size, c:c+out_size] = out
             else:
-                size = (in_size - len(f))
-                zeros = size * [0]
-                out = filt(f.tolist() + zeros)
-                out_arr[r:r+out_size, c:c+size] = out[:size]
+                row = f.shape[0]
+                col = f.shape[1]
+                new = np.zeros((in_size, in_size), dtype=int)
+                new[:row, :col] = f
+                out = filt(new)
+                out_arr[r:r+row, c:c+col] = out[:row :col]
     return out_arr
+
+
+def filter2d_slide2d_count(shape, size):
+    count = len(list(range(0, shape[0], size))) * len(range(0, shape[1], size))
+    return count
 
 
 def c3x3_5m20a9e(g):

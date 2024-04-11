@@ -8,7 +8,7 @@ from scipy import signal
 
 from notebooks.naive_convolve import naive_convolve
 from notebooks.fast_convolution import (
-    toom_cook_conv_2d, filter2d_slide2d, filter1d_slide2d_count
+    toom_cook_conv_2d, filter2d_slide2d, filter2d_slide2d_count
 )
 
 
@@ -51,14 +51,14 @@ print(f"Additions: {size * 8}")
 
 print("Fast totals:")
 
-fast_count = filter1d_slide2d_count(output.shape)
+fast_count = filter2d_slide2d_count(output.shape, weight.shape[0])
 mult = fast_count * len(points)**2
 print(f"Multiplications: {mult}")
 
-add0 = fast_count * 20 * len(fast_conv)
-add1 = fast_count * 2 * len(fast_conv)
-print(f"Additions: {add0 + add1}")
-
-print(f"* Additions for each batch processed: {add0}")
-print(f"* Additions to join batches: {add1}")
+# add0 = fast_count * 20
+# add1 = fast_count * 2
+# print(f"Additions: {add0 + add1}")
+#
+# print(f"* Additions for each batch processed: {add0}")
+# print(f"* Additions to join batches: {add1}")
 

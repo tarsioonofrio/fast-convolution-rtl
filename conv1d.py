@@ -54,7 +54,7 @@ print(f"Additions: {size * 8}")
 
 print("Fast totals:")
 
-fast_count = filter1d_slide2d_count(output.shape)
+fast_count = filter1d_slide2d_count(output.shape, weight.shape[0])
 mult = fast_count * len(points) * len(fast_conv)
 print(f"Multiplications: {mult}")
 
@@ -64,4 +64,4 @@ print(f"Additions: {add0 + add1}")
 
 print(f"* Additions for each batch processed: {add0}")
 print(f"* Additions to join batches: {add1}")
-
+print(f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}")
