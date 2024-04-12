@@ -19,38 +19,58 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('-f', '--file', type=Path)
+
+# 1D sub parser
 parser.add_argument(
     '-p', '--points', nargs='+', default=[0, -1, 1, -2, 'inf'],
-    help=("Number of points to interpolate. If no vector size is provided, "
-          "is assumed that the format is M=P-3+1")
+    help=("List of points to be interpolate for Toom-Cook")
 )
 parser.add_argument(
-    '-s', '--vector-size', nargs=2, type=int,
+    '-v', '--vector-size', nargs=2, type=int,
     help=("Size of two vectors to be convoluted. The two sizes must be in "
-          "format P=M+N-1 where P is number of points to be interpolated, "
+          "format P=M+N-1 where P is number of points to be interpolated "
+          "and the output size, "
           "M and N are respectively the first and second values of the "
           "argument. M as the size o features and N size of weights."))
 
-parser.add_argument('-r', '--random', type=int, default=0)
-parser.add_argument('-i', '--image-side', type=int)
+parser.add_argument(
+    '-t', '--type', default="float", choices=("int", "float"), help="Data type"
+)
 
+parser.add_argument(
+    '-c', '--const', default=1, type=int,
+    help="Constant value to multiply all data"
+)
+
+parser.add_argument(
+    '-I', '--interactions', type=int,  help="Image side of random data"
+)
+
+# RAND sub parser
+parser.add_argument(
+    '-r', '--random', type=int,  nargs=2,
+    help="Lowest and highest value of random data"
+)
+parser.add_argument(
+    '-i', '--image-side', type=int,  help="Image side of random data"
+)
 
 args = parser.parse_args()
-
 
 image = Image.open(args.file).convert('L')
 points = [np.inf if p == 'inf' else p for p in args.points]
 
 if args.vector_size is None:
-    n_size = 3
     m_size = len(points) - 3 + 1
+    n_size = 3
 else:
     m_size = args.vector_size[0]
     n_size = args.vector_size[1]
 
+type_int = True if args.type == "int" else False
 
 feature = np.array(image)
-weight = np.array([
+weight = args.const * np.array([
     [0, 1, 0],
     [1, -4, 1],
     [0, 1, 0],
@@ -62,7 +82,7 @@ output_naive = naive_convolve(feature, weight)
 print(f"Output default and naive are equals: {np.all(output == output_naive)}")
 
 fast_conv = [
-    toom_cook_conv_1d(m_size, n_size, points, weight[i])
+    toom_cook_conv_1d(m_size, n_size, points, weight[i], type_int=type_int)
     for i in range(weight.shape[0])
 ]
 
@@ -73,7 +93,14 @@ output_fast = np.sum(axis=0, a=[
     for i in range(0, weight.shape[0])
 ])
 
-print(f"Output default and fast are equals: {np.all(output == output_fast)}")
+if args.type == "int":
+    mse = np.mean(np.power(output - output_fast, 2))
+    # mse = np.power(output - output_fast, 2)
+    print(f"MSE : {mse}")
+else:
+    print(
+        f"Output default and fast are equals: {np.all(output == output_fast)}"
+    )
 
 size = output.size
 
@@ -99,3 +126,4 @@ print(f"* Additions to join batches: {add1}")
 print(
     f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
 )
+

@@ -286,17 +286,19 @@ def g2bg2d(cq1, b1, cq2, b2, g):
     return bg
 
 
-def toom_cook_conv_1d(d_size, g_size, points, g):
+def toom_cook_conv_1d(d_size, g_size, points, g, type_int=False):
     c, cq, b, a = toom_cook(d_size, g_size, points)
-    bg = g2bg(cq, b, g)
+    bg0 = g2bg(cq, b, g)
+    bg = bg0 if type_int is False else sy.Matrix(np.array(bg0, dtype=int))
     f = wrap_convolution(c, bg, a)
     return f
 
 
-def toom_cook_conv_2d(d_size, g_size, points, g):
+def toom_cook_conv_2d(d_size, g_size, points, g, type_int=False):
     c1, cq1, b1, a1 = toom_cook(d_size, g_size, points)
     c2, cq2, b2, a2 = toom_cook(d_size, g_size, points)
-    bg = g2bg2d(cq1, b1, cq2, b2, g)
+    bg0 = g2bg2d(cq1, b1, cq2, b2, g)
+    bg = bg0 if type_int is False else sy.Matrix(np.array(bg0, dtype=int))
     f = wrap_convolution2d(c1, c2, bg, a1, a2)
     return f
 
