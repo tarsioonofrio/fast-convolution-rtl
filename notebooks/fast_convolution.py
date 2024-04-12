@@ -310,10 +310,11 @@ def filter1d_slide2d(filt, in_arr, out_shape, index, in_size=5, out_size=3):
                 out = filt(f).flat()
                 out_arr[r - index, c:c+out_size] = out
             else:
-                size = (in_size - len(f))
-                zeros = size * [0]
+                tmp_in_size = (in_size - len(f))
+                zeros = tmp_in_size * [0]
                 out = filt(f.tolist() + zeros)
-                out_arr[r - index, c:c+size] = out[:size]
+                tmp_out_size = out_shape[0] - c
+                out_arr[r - index, c:c+tmp_out_size] = out[:tmp_out_size]
     return out_arr
 
 
@@ -336,7 +337,7 @@ def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
                 new = np.zeros((in_size, in_size), dtype=int)
                 new[:row, :col] = f
                 out = filt(new)
-                out_arr[r:r+row, c:c+col] = out[:row :col]
+                out_arr[r:r+row, c:c+col] = out[:row, :col]
     return out_arr
 
 
