@@ -304,7 +304,7 @@ def toom_cook_conv_2d(d_size, g_size, points, g):
 def filter1d_slide2d(filt, in_arr, out_shape, index, in_size=5, out_size=3):
     out_arr = np.zeros(out_shape, dtype=int)
     for r in range(index, out_shape[0] + index):
-        for c in range(0, out_shape[1], in_size):
+        for c in range(0, out_shape[1], out_size):
             f = in_arr[r, c:c+in_size]
             if len(f) == in_size:
                 out = filt(f).flat()
@@ -324,8 +324,8 @@ def filter1d_slide2d_count(shape, size):
 
 def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
     out_arr = np.zeros(out_shape, dtype=int)
-    for r in range(0, out_shape[0]):
-        for c in range(0, out_shape[1], in_size):
+    for r in range(0, out_shape[0], out_size):
+        for c in range(0, out_shape[1], out_size):
             f = in_arr[r:r+in_size, c:c+in_size]
             if len(f) == in_size:
                 out = filt(f)
