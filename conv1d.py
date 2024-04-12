@@ -31,7 +31,8 @@ parser.add_argument(
           "format P=M+N-1 where P is number of points to be interpolated "
           "and the output size, "
           "M and N are respectively the first and second values of the "
-          "argument. M as the size o features and N size of weights."))
+          "argument. M as the size o features and N size of weights.")
+)
 
 parser.add_argument(
     '-t', '--type', default="float", choices=("int", "float"), help="Data type"
@@ -52,7 +53,8 @@ parser.add_argument(
     help="Lowest and highest value of random data"
 )
 parser.add_argument(
-    '-i', '--image-side', type=int,  help="Image side of random data"
+    '-i', '--image-side', type=int, default=32,
+    help="Image side of random data"
 )
 
 args = parser.parse_args()
@@ -69,12 +71,27 @@ else:
 
 type_int = True if args.type == "int" else False
 
-feature = np.array(image)
-weight = args.const * np.array([
-    [0, 1, 0],
-    [1, -4, 1],
-    [0, 1, 0],
-])
+if args.random is None:
+    feature = np.array(image)
+else:
+    feature0 = np.random.randint(
+        args.random[0], args.random[1], size=args.image_side ** 2
+    )
+    feature = feature0.reshape(args.image_side, args.image_side)
+
+
+if args.random is None:
+    weight = np.array([
+        [0, 1, 0],
+        [1, -4, 1],
+        [0, 1, 0],
+    ])
+else:
+    weight0 = np.random.randint(
+        args.random[0], args.random[1], size=n_size ** 2
+    )
+    weight = weight0.reshape(n_size, n_size)
+
 
 output = signal.convolve2d(feature, weight[::-1, ::-1], mode='valid')
 output_naive = naive_convolve(feature, weight)
@@ -82,7 +99,9 @@ output_naive = naive_convolve(feature, weight)
 print(f"Output default and naive are equals: {np.all(output == output_naive)}")
 
 fast_conv = [
-    toom_cook_conv_1d(m_size, n_size, points, weight[i], type_int=type_int)
+    toom_cook_conv_1d(
+        m_size, n_size, points, weight[i], type_int=type_int
+    )
     for i in range(weight.shape[0])
 ]
 
