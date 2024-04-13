@@ -13,19 +13,26 @@ from notebooks.fast_convolution import (
 )
 
 
-parser = argparse.ArgumentParser(
+parser_tc1d = argparse.ArgumentParser(
     description='1D Toom-Cook convolution in image with one channel',
     # epilog='Text at the bottom of help'
 )
 
-parser.add_argument('-f', '--file', type=Path)
+subparsers = parser_tc1d.add_subparsers(help='sub-command help')
+
+# create the parser for the "a" command
+
+parser_tc1d = subparsers.add_parser(
+    'init toom-cook 1d', help='Help Toom Cook 1D'
+)
+
 
 # 1D sub parser
-parser.add_argument(
+parser_tc1d.add_argument(
     '-p', '--points', nargs='+', default=[0, -1, 1, -2, 'inf'],
     help=("List of points to be interpolate for Toom-Cook")
 )
-parser.add_argument(
+parser_tc1d.add_argument(
     '-v', '--vector-size', nargs=2, type=int,
     help=("Size of two vectors to be convoluted. The two sizes must be in "
           "format P=M+N-1 where P is number of points to be interpolated "
@@ -33,31 +40,31 @@ parser.add_argument(
           "M and N are respectively the first and second values of the "
           "argument. M as the size o features and N size of weights.")
 )
-
-parser.add_argument(
+parser_tc1d.add_argument(
     '-t', '--type', default="float", choices=("int", "float"), help="Data type"
 )
-
-parser.add_argument(
+parser_tc1d.add_argument(
     '-c', '--const', default=1, type=int,
     help="Constant value to multiply all data"
 )
 
-parser.add_argument(
+
+# SIM sub parser
+parser_sim = subparsers.add_parser('sim', help='Help simulation')
+parser_sim.add_argument('-f', '--file', type=Path)
+parser_sim.add_argument(
     '-I', '--interactions', type=int,  help="Image side of random data"
 )
-
-# RAND sub parser
-parser.add_argument(
+parser_sim.add_argument(
     '-r', '--random', type=int,  nargs=2,
     help="Lowest and highest value of random data"
 )
-parser.add_argument(
+parser_sim.add_argument(
     '-i', '--image-side', type=int, default=32,
     help="Image side of random data"
 )
 
-args = parser.parse_args()
+args = parser_tc1d.parse_args()
 
 image = Image.open(args.file).convert('L')
 points = [np.inf if p == 'inf' else p for p in args.points]
@@ -70,6 +77,14 @@ else:
     n_size = args.vector_size[1]
 
 type_int = True if args.type == "int" else False
+
+
+fast_conv = [
+    toom_cook_conv_1d(
+        m_size, n_size, points, weight[i], type_int=type_int
+    )
+    for i in range(n_size)
+]
 
 if args.random is None:
     feature = np.array(image)
@@ -98,12 +113,6 @@ output_naive = naive_convolve(feature, weight)
 
 print(f"Output default and naive are equals: {np.all(output == output_naive)}")
 
-fast_conv = [
-    toom_cook_conv_1d(
-        m_size, n_size, points, weight[i], type_int=type_int
-    )
-    for i in range(weight.shape[0])
-]
 
 output_fast = np.sum(axis=0, a=[
     filter1d_slide2d(
