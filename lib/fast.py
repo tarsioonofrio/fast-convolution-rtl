@@ -218,6 +218,7 @@ def wrap_convolution(c, bg, a):
         return out
     return convolution
 
+
 def to_filter(c, bg, a):
     return a.T * bg * c.T
 

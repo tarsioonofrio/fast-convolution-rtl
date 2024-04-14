@@ -115,6 +115,11 @@ def sim(ctx):
 
 @sim.command()
 @click.option(
+    "--constant", "--const", "-c",
+    default=root / "images" / "karatsuba032.jpg",
+    help=("Feature file, can be a image or json list file.")
+
+@click.option(
     "--feature", "-f", default=root / "images" / "karatsuba032.jpg",
     help=("Feature file, can be a image or json list file.")
 )
@@ -123,7 +128,7 @@ def sim(ctx):
     help=("Weight file, need to be a json list file.")
 )
 @click.option("--integer", "--int", "-i", flag_value=True)
-def define(feature, weight, integer):
+def define(feature, weight, constant, integer):
     init_file = open_init()
     m_size, n_size, points, c, b, a, q = init_file
 
@@ -131,7 +136,8 @@ def define(feature, weight, integer):
         image = Image.open(feature).convert('L')
         feat_arr = np.array(image)
     with open(weight) as f:
-        wght_arr = np.array(json.load(f)).reshape(n_size, n_size)
+        wght_arr = (np.array(json.load(f)).
+                    reshape(n_size, n_size) * constant)
 
     type_int = True if integer == "int" else False
     fast_conv = [
@@ -141,7 +147,9 @@ def define(feature, weight, integer):
         for i in range(n_size)
     ]
 
-    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
+    output_default = signal.convolve2d(
+        feat_arr, wght_arr[::-1, ::-1], mode='valid'
+    )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     print(
@@ -150,7 +158,8 @@ def define(feature, weight, integer):
 
     output_fast = np.sum(axis=0, a=[
         fast.filter1d_slide2d(
-            fast_conv[i], feat_arr, output_default.shape, i, len(points), m_size
+            fast_conv[i], feat_arr, output_default.shape, i, len(points),
+            m_size
         )
         for i in range(0, wght_arr.shape[0])
      ])
@@ -173,21 +182,18 @@ def define(feature, weight, integer):
     print(f"Additions: {size * 8}")
 
     print("Fast totals:")
-
     fast_count = fast.filter1d_slide2d_count(output_default.shape, m_size)
     mult = fast_count * len(points) * len(fast_conv)
     print(f"Iterations: {fast_count}")
     print(f"Multiplications: {mult}")
-
     add0 = fast_count * 20 * len(fast_conv)
     add1 = fast_count * 2 * len(fast_conv)
-
     print(f"Additions: {add0 + add1}")
     print(f"* Additions for each batch processed: {add0}")
     print(f"* Additions to join batches: {add1}")
     print(
         f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
-    ) 
+    )
 
 
 @sim.command()
