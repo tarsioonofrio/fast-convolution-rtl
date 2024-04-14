@@ -115,10 +115,9 @@ def sim(ctx):
 
 @sim.command()
 @click.option(
-    "--constant", "--const", "-c",
-    default=root / "images" / "karatsuba032.jpg",
-    help=("Feature file, can be a image or json list file.")
-
+    "--constant", "--const", "-c", type=int, default=1,
+    help=("Constant to multiply the weight.")
+)
 @click.option(
     "--feature", "-f", default=root / "images" / "karatsuba032.jpg",
     help=("Feature file, can be a image or json list file.")
@@ -198,6 +197,10 @@ def define(feature, weight, constant, integer):
 
 @sim.command()
 @click.option(
+    "--constant", "--const", "-c", type=int, default=1,
+    help=("Constant to multiply the weight.")
+)
+@click.option(
     "--image-side", "-s", default=32,
     help=("Image side, must be a power of two.")
 )
@@ -214,7 +217,7 @@ def define(feature, weight, constant, integer):
     help=("Minimal and maximal value of weight random data.")
 )
 @click.option("--integer", "--int", "-i", flag_value=True)
-def random(feature_random, weight_random, image_side, integer, loop):
+def random(feature_random, weight_random, image_side, integer, loop, constant):
     init_file = open_init()
     m_size, n_size, points, c, b, a, q = init_file
     type_int = True if integer == "int" else False
@@ -226,7 +229,7 @@ def random(feature_random, weight_random, image_side, integer, loop):
         weight_random[0], weight_random[1], size=n_size ** 2
     )
     feat_arr = feat.reshape(image_side, image_side)
-    wght_arr = wght.reshape(n_size, n_size)
+    wght_arr = wght.reshape(n_size, n_size) * constant
     fast_conv = [
         fast.conv1d(
             wght_arr[i], c, q, b, a, type_int=type_int
@@ -234,7 +237,9 @@ def random(feature_random, weight_random, image_side, integer, loop):
         for i in range(n_size)
     ]
 
-    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
+    output_default = signal.convolve2d(
+        feat_arr, wght_arr[::-1, ::-1], mode='valid'
+    )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     print(
@@ -243,7 +248,8 @@ def random(feature_random, weight_random, image_side, integer, loop):
 
     output_fast = np.sum(axis=0, a=[
         fast.filter1d_slide2d(
-            fast_conv[i], feat_arr, output_default.shape, i, len(points), m_size
+            fast_conv[i], feat_arr, output_default.shape, i, len(points),
+            m_size
         )
         for i in range(0, wght_arr.shape[0])
      ])
