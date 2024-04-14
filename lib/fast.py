@@ -290,6 +290,7 @@ def g_to_bg2d(cq1, b1, cq2, b2, g):
 def conv1d(g, c, q, b, a, type_int=False):
     bg0 = g_to_bg(q, b, g)
     bg = bg0 if type_int is False else sy.Matrix(np.array(bg0, dtype=int))
+    # breakpoint()
     f = wrap_convolution(c, bg, a)
     return f
 

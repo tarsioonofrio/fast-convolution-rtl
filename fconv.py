@@ -8,6 +8,7 @@ import numpy as np
 import sympy as sy
 from PIL import Image
 from scipy import signal
+from sklearn import metrics
 # from matplotlib import pyplot as plt
 
 from lib.naive import naive_convolve
@@ -138,10 +139,9 @@ def define(feature, weight, constant, integer):
         wght_arr = (np.array(json.load(f)).
                     reshape(n_size, n_size) * constant)
 
-    type_int = True if integer == "int" else False
     fast_conv = [
         fast.conv1d(
-            wght_arr[i], c, q, b, a, type_int=type_int
+            wght_arr[i], c, q, b, a, type_int=integer
         )
         for i in range(n_size)
     ]
@@ -164,9 +164,14 @@ def define(feature, weight, constant, integer):
      ])
 
     if integer:
-        mse = np.mean(np.power(output_default - output_fast, 2))
-        # mse = np.power(output - output_fast, 2)
-        print(f"MSE : {mse}")
+        rmse = metrics.root_mean_squared_error(
+            output_default.reshape(-1), output_fast.reshape(-1)
+        )
+        mae = metrics.mean_absolute_error(
+            output_default.reshape(-1), output_fast.reshape(-1)
+        )
+        print(f"RMSE : {rmse}")
+        print(f"MAE : {mae}")
     else:
         compare_fast = np.all(output_default == output_fast)
         print(
@@ -196,10 +201,10 @@ def define(feature, weight, constant, integer):
 
 
 @sim.command()
-@click.option(
-    "--constant", "--const", "-c", type=int, default=1,
-    help=("Constant to multiply the weight.")
-)
+# @click.option(
+#     "--constant", "--const", "-c", type=int, default=1,
+#     help=("Constant to multiply the weight.")
+# )
 @click.option(
     "--image-side", "-s", default=32,
     help=("Image side, must be a power of two.")
@@ -217,10 +222,9 @@ def define(feature, weight, constant, integer):
     help=("Minimal and maximal value of weight random data.")
 )
 @click.option("--integer", "--int", "-i", flag_value=True)
-def random(feature_random, weight_random, image_side, integer, loop, constant):
+def random(feature_random, weight_random, image_side, integer, loop):
     init_file = open_init()
     m_size, n_size, points, c, b, a, q = init_file
-    type_int = True if integer == "int" else False
 
     feat = np.random.randint(
          feature_random[0], feature_random[1], size=image_side ** 2
@@ -229,10 +233,10 @@ def random(feature_random, weight_random, image_side, integer, loop, constant):
         weight_random[0], weight_random[1], size=n_size ** 2
     )
     feat_arr = feat.reshape(image_side, image_side)
-    wght_arr = wght.reshape(n_size, n_size) * constant
+    wght_arr = wght.reshape(n_size, n_size)
     fast_conv = [
         fast.conv1d(
-            wght_arr[i], c, q, b, a, type_int=type_int
+            wght_arr[i], c, q, b, a, type_int=integer
         )
         for i in range(n_size)
     ]
@@ -255,9 +259,14 @@ def random(feature_random, weight_random, image_side, integer, loop, constant):
      ])
 
     if integer:
-        mse = np.mean(np.power(output_default - output_fast, 2))
-        # mse = np.power(output - output_fast, 2)
-        print(f"MSE : {mse}")
+        rmse = metrics.root_mean_squared_error(
+            output_default.reshape(-1), output_fast.reshape(-1)
+        )
+        mae = metrics.mean_absolute_error(
+            output_default.reshape(-1), output_fast.reshape(-1)
+        )
+        print(f"RMSE : {rmse}")
+        print(f"MAE : {mae}")
     else:
         compare_fast = np.all(output_default == output_fast)
         print(
