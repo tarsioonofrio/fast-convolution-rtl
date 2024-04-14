@@ -1,9 +1,11 @@
-# import argparse
+#!/usr/bin/env python
+
+import json
 from pathlib import Path
 
 import click
 import numpy as np
-# import sympy as sy
+import sympy as sy
 from PIL import Image
 from scipy import signal
 # from matplotlib import pyplot as plt
@@ -109,12 +111,15 @@ def toom_cook(ctx):
     pass
 
 
-def count_points(ctx, param, incomplete):
+def count_points(ctx, param, value):
     # You can generate completions with help strings by returning a list
     # of CompletionItem. You can match on whatever you want, including
     # the help.
-    breakpoint()
-    return 5
+    #breakpoint()
+    m = int(ctx.params["vector_size"][0])
+    n = int(ctx.params["vector_size"][1])
+    param.nargs = m + n - 1
+    return value
 
 
 @toom_cook.command(name="1d")
@@ -127,7 +132,8 @@ def count_points(ctx, param, incomplete):
           "argument. M as the size o features and N size of weights.")
 )
 @click.option(
-    '--points', '-p', default="0 -1 1 -2 inf", nargs=count_points, show_default=True,
+    '--points', '-p', default="0 -1 1 -2 inf",
+    show_default=True,
     help=("List of points to be interpolate for Toom-Cook. "
           "Must use quotation marks: '0 -1 1 -2 inf'.")
 )
@@ -141,8 +147,23 @@ def one_d(points, vector_size):
         m_size = vector_size[0]
         n_size = vector_size[1]
 
-    c, cq, b, a = fast.toom_cook(m_size, n_size, list_points)
-    print(c)
+    c, q0, b, a = fast.toom_cook(m_size, n_size, list_points)
+    q = [[int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q0]
+    data = {
+        "points": list_points,
+        "m": m_size,
+        "n": n_size,
+        "matrix": {
+            "c": np.array(c, dtype=int).tolist(),
+            "q": q,
+            "b": np.array(b, dtype=int).tolist(),
+            "a": np.array(a, dtype=int).tolist(),
+        }
+    }
+    with open('init.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    sy.preview((c, q, b, a), viewer='file', filename='matrix.png', euler=False)
+
 
 
 # fast_conv = [
