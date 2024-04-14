@@ -14,36 +14,11 @@ from lib.naive import naive_convolve
 from lib import fast 
 
 root = Path(__file__).resolve().parent
-# # SIM sub parser
-# parser_sim = subparsers.add_parser(
-#     'sim', help='Help simulation', description="Sim"
-# )
-
-# parser_sim.add_argument(
-#     '-t', '--type', default="float", choices=("int", "float"), help="Data type"
-# )
 # parser_sim.add_argument(
 #     '-c', '--const', default=1, type=int,
 #     help="Constant value to multiply all data"
 # )
-# parser_sim.add_argument('-f', '--file', type=Path)
-# parser_sim.add_argument(
-#     '-I', '--interactions', type=int,  help="Image side of random data"
-# )
-# parser_sim.add_argument(
-#     '-r', '--random', type=int,  nargs=2,
-#     help="Lowest and highest value of random data"
-# )
-# parser_sim.add_argument(
-#     '-i', '--image-side', type=int, default=32,
-#     help="Image side of random data"
-# )
 
-# args = parser.parse_args()
-
-# @click.option('--repo-home', envvar='REPO_HOME', default='.repo')
-# @click.option('--debug/--no-debug', default=False,
-#               envvar='REPO_DEBUG')
 
 @click.group()
 @click.pass_context
@@ -149,18 +124,8 @@ def sim(ctx):
 )
 @click.option("--integer", "--int", "-i", flag_value=True)
 def define(feature, weight, integer):
-    with open('init.json') as f:
-        init = json.load(f)
-    m_size = init["m"]
-    n_size = init["n"]
-    points = init["points"]
-    matrix = init["matrix"]
-    c = sy.Matrix(matrix["c"])
-    b = sy.Matrix(matrix["b"])
-    a = sy.Matrix(matrix["a"])
-    q = sy.Matrix([
-        sy.Rational(p, q) for p, q in matrix["q"]
-    ])
+    init_file = open_init()
+    m_size, n_size, points, c, b, a, q = init_file
 
     with open(feature) as f:
         image = Image.open(feature).convert('L')
@@ -176,31 +141,31 @@ def define(feature, weight, integer):
         for i in range(n_size)
     ]
 
-    output = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
+    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
     output_naive = naive_convolve(feat_arr, wght_arr)
-
+    compare_naive = np.all(output_default == output_naive)
     print(
-        f"Output default and naive are equals: {np.all(output == output_naive)}"
+        f"Output default and naive are equals: {compare_naive}"
     )
 
     output_fast = np.sum(axis=0, a=[
         fast.filter1d_slide2d(
-            fast_conv[i], feat_arr, output.shape, i, len(points), m_size
+            fast_conv[i], feat_arr, output_default.shape, i, len(points), m_size
         )
         for i in range(0, wght_arr.shape[0])
      ])
 
     if integer:
-        mse = np.mean(np.power(output - output_fast, 2))
+        mse = np.mean(np.power(output_default - output_fast, 2))
         # mse = np.power(output - output_fast, 2)
         print(f"MSE : {mse}")
     else:
-        compare = np.all(output == output_fast)
+        compare_fast = np.all(output_default == output_fast)
         print(
-            f"Output default and fast are equals: {compare}"
+            f"Output default and fast are equals: {compare_fast}"
         )
 
-    size = output.size
+    size = output_default.size
 
     print("Naive totals:")
     print(f"Iterations: {size}")
@@ -209,7 +174,7 @@ def define(feature, weight, integer):
 
     print("Fast totals:")
 
-    fast_count = fast.filter1d_slide2d_count(output.shape, m_size)
+    fast_count = fast.filter1d_slide2d_count(output_default.shape, m_size)
     mult = fast_count * len(points) * len(fast_conv)
     print(f"Iterations: {fast_count}")
     print(f"Multiplications: {mult}")
@@ -225,6 +190,91 @@ def define(feature, weight, integer):
     ) 
 
 
+@sim.command()
+@click.option(
+    "--image-side", "-s", default=32,
+    help=("Image side, must be a power of two.")
+)
+@click.option(
+    "--loop", "-L", default=1,
+    help=("Total of execution loops.")
+)
+@click.option(
+    "--feature-random", "-f", nargs=2, default=[0, 256],
+    help=("Minimal and maximal value of feature random data.")
+)
+@click.option(
+    "--weight-random", "-w", nargs=2, default=[0, 1024],
+    help=("Minimal and maximal value of weight random data.")
+)
+@click.option("--integer", "--int", "-i", flag_value=True)
+def random(feature_random, weight_random, image_side, integer, loop):
+    init_file = open_init()
+    m_size, n_size, points, c, b, a, q = init_file
+    type_int = True if integer == "int" else False
+
+    feat = np.random.randint(
+         feature_random[0], feature_random[1], size=image_side ** 2
+     )
+    wght = np.random.randint(
+        weight_random[0], weight_random[1], size=n_size ** 2
+    )
+    feat_arr = feat.reshape(image_side, image_side)
+    wght_arr = wght.reshape(n_size, n_size)
+    fast_conv = [
+        fast.conv1d(
+            wght_arr[i], c, q, b, a, type_int=type_int
+        )
+        for i in range(n_size)
+    ]
+
+    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
+    output_naive = naive_convolve(feat_arr, wght_arr)
+    compare_naive = np.all(output_default == output_naive)
+    print(
+        f"Output default and naive are equals: {compare_naive}"
+    )
+
+    output_fast = np.sum(axis=0, a=[
+        fast.filter1d_slide2d(
+            fast_conv[i], feat_arr, output_default.shape, i, len(points), m_size
+        )
+        for i in range(0, wght_arr.shape[0])
+     ])
+
+    if integer:
+        mse = np.mean(np.power(output_default - output_fast, 2))
+        # mse = np.power(output - output_fast, 2)
+        print(f"MSE : {mse}")
+    else:
+        compare_fast = np.all(output_default == output_fast)
+        print(
+            f"Output default and fast are equals: {compare_fast}"
+        )
+
+    size = output_default.size
+
+    print("Naive totals:")
+    print(f"Iterations: {size}")
+    print(f"Multiplications: {size * 9}")
+    print(f"Additions: {size * 8}")
+
+    print("Fast totals:")
+
+    fast_count = fast.filter1d_slide2d_count(output_default.shape, m_size)
+    mult = fast_count * len(points) * len(fast_conv)
+    print(f"Iterations: {fast_count}")
+    print(f"Multiplications: {mult}")
+
+    add0 = fast_count * 20 * len(fast_conv)
+    add1 = fast_count * 2 * len(fast_conv)
+
+    print(f"Additions: {add0 + add1}")
+    print(f"* Additions for each batch processed: {add0}")
+    print(f"* Additions to join batches: {add1}")
+    print(
+        f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
+    )
 
 # if args.random is None:
 #     feature = np.array(image)
@@ -247,6 +297,21 @@ def define(feature, weight, integer):
 #     )
 #     weight = weight0.reshape(n_size, n_size)
 
+
+def open_init():
+    with open('init.json') as f:
+        init = json.load(f)
+    m = init["m"]
+    n = init["n"]
+    p = init["points"]
+    matrix = init["matrix"]
+    c = sy.Matrix(matrix["c"])
+    b = sy.Matrix(matrix["b"])
+    a = sy.Matrix(matrix["a"])
+    q = sy.Matrix([
+        sy.Rational(p, q) for p, q in matrix["q"]
+    ])
+    return m, n, p, c, b, a, q
 
 
 if __name__ == '__main__':
