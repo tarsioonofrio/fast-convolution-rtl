@@ -15,35 +15,37 @@ from lib.naive import naive_convolve
 from lib import fast 
 
 root = Path(__file__).resolve().parent
-# parser_sim.add_argument(
-#     '-c', '--const', default=1, type=int,
-#     help="Constant value to multiply all data"
-# )
 
 
 @click.group()
 @click.pass_context
-def main(ctx):
-    pass
-    # ctx.obj = Repo(repo_home, debug)
-
-@main.group()
-@click.pass_context
-def init(ctx):
-    pass
-    # ctx.obj = Repo(repo_home, debug)
+def main(ctx): pass
 
 
 @main.group()
 @click.pass_context
-def sim(ctx):
-    pass
+def init(ctx): pass
+
+
+@main.group()
+@click.pass_context
+def sim(ctx): pass
 
 
 @init.group(name="1d")
 @click.pass_context
-def one_d(ctx):
-    pass
+def one_d(ctx): pass
+
+
+@init.group(name="2d")
+@click.option(
+    "--design", "-d", type=click.Choice(['iterated', 'nested']),
+    default='iterated',
+)
+@click.pass_context
+def two_d(ctx, design):
+    ctx.ensure_object(dict)
+    ctx.obj["design"] = design
 
 
 def count_points(ctx, param, value):
@@ -90,12 +92,10 @@ def toom_cook(points, vector_size):
         "points": list_points,
         "m": m_size,
         "n": n_size,
-        "matrix": {
-            "c": np.array(c, dtype=int).tolist(),
-            "q": q,
-            "b": np.array(b, dtype=int).tolist(),
-            "a": np.array(a, dtype=int).tolist(),
-        }
+        "c": np.array(c, dtype=int).tolist(),
+        "q": q,
+        "b": np.array(b, dtype=int).tolist(),
+        "a": np.array(a, dtype=int).tolist(),
     }
     with open('init.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -108,11 +108,110 @@ def toom_cook(points, vector_size):
     )
 
 
+@two_d.command(name="toom-cook")
+@click.option(
+    '--vector_size0', '-v1', required=False, nargs=2,
+    help=("Size of two vectors to be convoluted. The two sizes must be in "
+          "format P=M+N-1 where P is number of points to be interpolated "
+          "and the output size, "
+          "M and N are respectively the first and second values of the "
+          "argument. M as the size o features and N size of weights.")
+)
+@click.option(
+    '--vector_size1', '-v2', required=False, nargs=2,
+    help=("Size of two vectors to be convoluted. The two sizes must be in "
+          "format P=M+N-1 where P is number of points to be interpolated "
+          "and the output size, "
+          "M and N are respectively the first and second values of the "
+          "argument. M as the size o features and N size of weights.")
+)
+@click.option(
+    '--points0', '-p1', default="0 -1 1 -2 inf",
+    show_default=True,
+    help=("List of points to be interpolate for Toom-Cook. "
+          "Must use quotation marks: '0 -1 1 -2 inf'.")
+)
+@click.option(
+    '--points1', '-p2', default="0 -1 1 -2 inf",
+    show_default=True,
+    help=("List of points to be interpolate for Toom-Cook. "
+          "Must use quotation marks: '0 -1 1 -2 inf'.")
+)
+def toom_cook2d(points0, points1, vector_size0, vector_size1):
+    list_points0 = [np.inf if p == 'inf' else int(p) for p in points0.split()]
+    list_points1 = [np.inf if p == 'inf' else int(p) for p in points1.split()]
+
+    if vector_size0 is None:
+        m_size0 = len(list_points0) - 3 + 1
+        n_size0 = 3
+    else:
+        m_size0 = vector_size0[0]
+        n_size0 = vector_size0[1]
+
+    if vector_size1 is None:
+        m_size1 = len(list_points1) - 3 + 1
+        n_size1 = 3
+    else:
+        m_size1 = vector_size1[0]
+        n_size1 = vector_size1[1]
+
+    c0, _q0, b0, a0 = fast.toom_cook(m_size0, n_size0, list_points0)
+    q0 = [
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in _q0
+    ]
+    c1, _q1, b1, a1 = fast.toom_cook(m_size1, n_size1, list_points1)
+    q1 = [
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in _q1
+    ]
+
+    data = {
+        "1d": {
+            0: {
+                "points": list_points0,
+                "m": m_size0,
+                "n": n_size0,
+                "c": np.array(c0, dtype=int).tolist(),
+                "q": q0,
+                "b": np.array(b0, dtype=int).tolist(),
+                "a": np.array(a0, dtype=int).tolist(),
+            },
+            1: {
+                "points": list_points1,
+                "m": m_size1,
+                "n": n_size1,
+                "c": np.array(c1, dtype=int).tolist(),
+                "q": q1,
+                "b": np.array(b1, dtype=int).tolist(),
+                "a": np.array(a1, dtype=int).tolist(),
+            }
+        }
+    }
+    with open('init.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    sy.preview(
+        (c0, q0, b0, a0), viewer='file', filename='conv_matrix0.png',
+        euler=False
+    )
+    sy.preview(
+        (a0.T, q0, b0, c0.T), viewer='file', filename='filt_matrix0.png',
+        euler=False
+    )
+    sy.preview(
+        (c1, q1, b1, a1), viewer='file', filename='conv_matrix1.png',
+        euler=False
+    )
+    sy.preview(
+        (a1.T, q1, b1, c1.T), viewer='file', filename='filt_matrix1.png',
+        euler=False
+    )
+
+
 @main.group()
 @click.pass_context
-def sim(ctx):
-    pass
-    # ctx.obj = Repo(repo_home, debug)
+def sim(ctx): pass
+
 
 @sim.command()
 @click.option(
@@ -129,8 +228,10 @@ def sim(ctx):
 )
 @click.option("--integer", "--int", "-i", flag_value=True)
 def define(feature, weight, constant, integer):
-    init_file = open_init()
-    m_size, n_size, points, c, b, a, q = init_file
+    with open('init.json') as f:
+        init_file = json.load(f)
+    init = unpack_init(init_file)
+    m_size, n_size, points, c, b, a, q = init
 
     with open(feature) as f:
         image = Image.open(feature).convert('L')
@@ -223,8 +324,10 @@ def define(feature, weight, constant, integer):
 )
 @click.option("--integer", "--int", "-i", flag_value=True)
 def random(feature_random, weight_random, image_side, integer, loop):
-    init_file = open_init()
-    m_size, n_size, points, c, b, a, q = init_file
+    with open('init.json') as f:
+        init_file = json.load(f)
+    init = unpack_init(init_file)
+    m_size, n_size, points, c, b, a, q = init
 
     feat = np.random.randint(
          feature_random[0], feature_random[1], size=image_side ** 2
@@ -297,40 +400,16 @@ def random(feature_random, weight_random, image_side, integer, loop):
         f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
     )
 
-# if args.random is None:
-#     feature = np.array(image)
-# else:
-#     feature0 = np.random.randint(
-#         args.random[0], args.random[1], size=args.image_side ** 2
-#     )
-#     feature = feature0.reshape(args.image_side, args.image_side)
 
-
-# if args.random is None:
-#     weight = np.array([
-#         [0, 1, 0],
-#         [1, -4, 1],
-#         [0, 1, 0],
-#     ])
-# else:
-#     weight0 = np.random.randint(
-#         args.random[0], args.random[1], size=n_size ** 2
-#     )
-#     weight = weight0.reshape(n_size, n_size)
-
-
-def open_init():
-    with open('init.json') as f:
-        init = json.load(f)
+def unpack_init(init):
     m = init["m"]
     n = init["n"]
     p = init["points"]
-    matrix = init["matrix"]
-    c = sy.Matrix(matrix["c"])
-    b = sy.Matrix(matrix["b"])
-    a = sy.Matrix(matrix["a"])
+    c = sy.Matrix(init["c"])
+    b = sy.Matrix(init["b"])
+    a = sy.Matrix(init["a"])
     q = sy.Matrix([
-        sy.Rational(p, q) for p, q in matrix["q"]
+        sy.Rational(p, q) for p, q in init["q"]
     ])
     return m, n, p, c, b, a, q
 
