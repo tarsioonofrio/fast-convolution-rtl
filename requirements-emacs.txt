@@ -1,4 +1,5 @@
 python-lsp-server[all]
+pylsp-rope
 debugpy
 jedi
 flake8
