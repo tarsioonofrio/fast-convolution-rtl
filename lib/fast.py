@@ -211,6 +211,10 @@ def log2_matrix(lst):
     return mtx
 
 
+def matrix_to_log2(mtx):
+    return log2_matrix(log2_lst(mtx))
+
+
 def wrap_convolution(c, bg, a):
     filt = to_filter(c, bg, a)
     def convolution(f):

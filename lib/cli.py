@@ -111,21 +111,31 @@ def cmd_build_toom_cook(points):
     # TODO export matrix form too
     mul = sy.MatMul(a.T, bg, c.T, di)
     sy.preview(
-        sy.Eq(s_small, mul), viewer='matrix_mult.png',
-        filename='build_filt.png', euler=False
-    )
-
-    sy.preview(
-        bg_step, viewer='file', filename='g_step.png', euler=False
+        sy.Eq(s_small, mul), viewer='file',
+        filename='matrix_mult.png', euler=False
     )
     sy.preview(
-        cd_step, viewer='file', filename='d_step.png', euler=False
+        bg_step, viewer='file', filename='step_g.png', euler=False
     )
     sy.preview(
-        s_step, viewer='file', filename='s_step.png', euler=False
+        cd_step, viewer='file', filename='step_d.png', euler=False
+    )
+    sy.preview(
+        s_step, viewer='file', filename='step_s.png', euler=False
     )
 
-
+    log2_at = sy.Eq(
+        sy.MatrixSymbol('a', 2, 2).T, fast.matrix_to_log2(a.T), evaluate=False
+    )
+    log2_ct = sy.Eq(
+        sy.MatrixSymbol('c', 2, 2).T, fast.matrix_to_log2(c.T), evaluate=False
+    )
+    sy.preview(
+        log2_at, viewer='file', filename='log2_at.png', euler=False
+    )
+    sy.preview(
+        log2_ct, viewer='file', filename='log2_ct.png', euler=False
+    )
 
 
 def cmd_sim_file(feature, weight):
