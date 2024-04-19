@@ -1,3 +1,4 @@
+import os
 import json
 from pathlib import Path
 
@@ -14,41 +15,44 @@ from lib.naive import naive_convolve
 
 
 # root = Path(__file__).resolve().parent
+root_path = Path(os.getcwd())
+config_path = root_path / "config"
+init_file = config_path / "init.json"
+build_file = config_path / "build.json"
 
 
-def unpack_init(init_data):
-    d = init_data["d"]
-    m = init_data["m"]
-    n = init_data["n"]
+def read_init():
+    with open(init_file) as f:
+        data = json.load(f)
+    d = data["d"]
+    m = data["m"]
+    n = data["n"]
     return d, m, n
 
 
-def unpack_build(build_data):
-    p = build_data["p"]
-    c = sy.Matrix(build_data["c"])
-    b = sy.Matrix(build_data["b"])
-    a = sy.Matrix(build_data["a"])
+def read_build():
+    with open(build_file) as f:
+        data = json.load(f)
+    p = data["p"]
+    c = sy.Matrix(data["c"])
+    b = sy.Matrix(data["b"])
+    a = sy.Matrix(data["a"])
     q = sy.Matrix([
-        sy.Rational(p, q) for p, q in build_data["q"]
+        sy.Rational(p, q) for p, q in data["q"]
     ])
     return p, c, b, a, q
 
 
 def read_num_points():
-    file = Path('init.json')
-    if file.exists() is False:
+    if init_file.exists() is False:
         return 1
-    with open(file) as f:
-        init_file = json.load(f)
-    init_data = unpack_init(init_file)
-    d, m, n = init_data
+    d, m, n = read_init()
     p = m + n - 1
     return p
 
 
 def cmd_init(dimensions, m, n):
-    file = Path("init.json")
-    if file.exists():
+    if init_file.exists():
         click.echo(
             message="init.json existis, fconv model already initialized"
         )
@@ -60,21 +64,20 @@ def cmd_init(dimensions, m, n):
         "m": m,
         "n": n,
     }
-    with open('init.json', 'w', encoding='utf-8') as f:
+    init_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(init_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     click.echo("Initialized")
 
 
 def cmd_build_toom_cook(points):
-    with open('init.json') as f:
-        init_file = json.load(f)
-    init_data = unpack_init(init_file)
+    init_data = read_init()
     d_size, m_size, n_size = init_data
     i_size = m_size + n_size - 1
     list_points = [np.inf if p == 'inf' else int(p) for p in points]
 
     c, q, b, a = fast.toom_cook(m_size, n_size, list_points)
-    fi = sy.Matrix(sy.symbols(" ".join(f"f_{i}"for i in range(i_size))))
+    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(i_size))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(n_size))))
     bg = fast.g_to_bg(q, b, g)
     q0 = [
@@ -90,24 +93,49 @@ def cmd_build_toom_cook(points):
         "b": np.array(b, dtype=int).tolist(),
         "a": np.array(a, dtype=int).tolist(),
     }
-    with open('build.json', 'w', encoding='utf-8') as f:
+    with open(build_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+    bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
+    bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
+    bg_step = conv_step(bgs, b, bs)
+
+    cs = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
+    cds = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
+    cd_step = conv_step(cds, c.T, cs)
+
+    s_small = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[0]))))
+    s_big = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
+    s_step = conv_step(s_small, a.T, s_big)
+
     # TODO export matrix form too
-    mul = sy.MatMul(a.T, bg, c.T, fi)
+    mul = sy.MatMul(a.T, bg, c.T, di)
     sy.preview(
-        mul, viewer='file', filename='build_filt.png', euler=False
+        sy.Eq(s_small, mul), viewer='matrix_mult.png',
+        filename='build_filt.png', euler=False
     )
+
+    sy.preview(
+        bg_step, viewer='file', filename='g_step.png', euler=False
+    )
+    sy.preview(
+        cd_step, viewer='file', filename='d_step.png', euler=False
+    )
+    sy.preview(
+        s_step, viewer='file', filename='s_step.png', euler=False
+    )
+
+
 
 
 def cmd_sim_file(feature, weight):
     with open('init.json') as f:
         init_file = json.load(f)
-        d, m_size, n_size = unpack_init(init_file)
+        d, m_size, n_size = read_init(init_file)
 
     with open('build.json') as f:
         build_file = json.load(f)
-        points, c, b, a, q = unpack_build(build_file)
+        points, c, b, a, q = read_build(build_file)
 
     with open('quant.json') as f:
         quant_file = json.load(f)
@@ -186,7 +214,7 @@ def cmd_sim_file(feature, weight):
 def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
     with open('init.json') as f:
         init_file = json.load(f)
-    init = unpack_init(init_file)
+    init = read_init(init_file)
     m_size, n_size, points, c, b, a, q = init
 
     feat = np.random.randint(
