@@ -32,12 +32,12 @@ dynamic = ["dependencies"]
 dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages.find]
-# where = ["src"]  # list of folders that contain the packages (["."] by default)
+where = ["src"]  # list of folders that contain the packages (["."] by default)
 # include = ["my_package*"]  # package names should match these glob patterns (["*"] by default)
-exclude = ["notebooks*", ".*"]  # exclude packages matching these glob patterns (empty by default)
+exclude = ["notebooks*"]  # exclude packages matching these glob patterns (empty by default)
 # namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
 
-[tool.hatch.build]
+# [tool.hatch.build]
 # exclude = [
 #  "/.*",
 #  "/notebooks*",
@@ -46,7 +46,7 @@ exclude = ["notebooks*", ".*"]  # exclude packages matching these glob patterns 
 
 [project.scripts]
 fast-conv = "fast_convolution.cli:main"
-fc = "fast_convolution.cli:main"
+# fc = "fast_convolution.cli:main"
 
 [project.urls]
 bugs = "https://github.com/tarsioonofrio/fast_convolution/issues"
@@ -55,7 +55,7 @@ homepage = "https://github.com/tarsioonofrio/fast_convolution"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-# package-dir = {"src" = "src"}
+# package = {"src" = "src"}
 
 [tool.setuptools.package-data]
 "*" = ["*.*"]

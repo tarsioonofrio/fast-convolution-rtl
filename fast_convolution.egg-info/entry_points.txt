@@ -1,3 +1,0 @@
-[console_scripts]
-fast-conv = fast_convolution.cli:main
-fc = fast_convolution.cli:main
