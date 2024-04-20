@@ -2,13 +2,13 @@
 Fast Convolution
 ================
 
-
-
-
-
-
 Package that implement some fast convolution algoritms
 
+
+Install
+-------
+
+`pip install .`
 
 
 Features
@@ -19,9 +19,6 @@ Features
 Credits
 -------
 
-## Install
-
-`pip install .`
 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
