@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fast_convolution"
+version = "0.0.1"
+# https://stackoverflow.com/a/73600610/2850407
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+#[project.scripts]
+#fconv = "fast_convolution.fconv:main"
