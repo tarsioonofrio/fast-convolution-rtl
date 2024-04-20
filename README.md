@@ -1,3 +1,0 @@
-## Install
-
-`pip install -e .`

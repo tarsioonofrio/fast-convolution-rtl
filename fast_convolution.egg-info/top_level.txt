@@ -1,0 +1,5 @@
+dist
+docs
+images
+src
+tests

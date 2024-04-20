@@ -1,0 +1,9 @@
+
+[dev]
+coverage
+mypy
+pytest
+ruff
+
+[dynamic]
+dependencies
