@@ -1,5 +1,7 @@
 
 .idea/
+dist/
+src/fast_convolution.egg-info/
 
 .ipynb_checkpoints/
 
