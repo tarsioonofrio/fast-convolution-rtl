@@ -10,8 +10,8 @@ from scipy import signal
 from sklearn import metrics
 # from matplotlib import pyplot as plt
 
-import fast
-from naive import naive_convolve
+from . import fast
+from .naive import naive_convolve
 
 
 # root = Path(__file__).resolve().parent

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-from commands import (
+from .commands import (
     cmd_init, cmd_build_toom_cook, cmd_sim_file, cmd_sim_random,
     read_num_points, conv_step,
 )
