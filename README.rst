@@ -8,7 +8,7 @@ Package that implement some fast convolution algoritms
 Install
 -------
 
-`pip install .`
+`pip install -e .`
 
 
 Features

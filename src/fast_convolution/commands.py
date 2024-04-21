@@ -24,10 +24,11 @@ build_file = config_path / "build.json"
 def read_init():
     with open(init_file) as f:
         data = json.load(f)
-    d = data["d"]
-    m = data["m"]
-    n = data["n"]
-    return d, m, n
+    c = data["c"]
+    a = data["a"]
+    b = data["b"]
+    dim = data["dim"]
+    return dim, c, b, a
 
 
 def read_build():
@@ -45,40 +46,60 @@ def read_build():
 
 def read_num_points():
     if init_file.exists() is False:
-        return 1
-    d, m, n = read_init()
-    p = m + n - 1
-    return p
+        return 0
+    dim, c, b, a = read_init()
+    return c
 
 
-def cmd_init(dimensions, m, n):
+def cmd_init(dimensions, in_len, out_len, w):
     if init_file.exists():
         click.echo(
             message="init.json existis, fconv model already initialized"
         )
         click.Abort()
         exit(1)
+    in_arr = np.array(in_len)
+    w_arr = np.array(w)
+    out_arr = np.array(out_len)
+    if in_len is None and out_len is None:
+        b = in_arr - out_arr + 1
+        c = in_arr
+        a = out_arr
+    elif in_len is None:
+        c = out_arr + w_arr - 1
+        a = out_arr
+        b = w_arr
+    elif out_len is None:
+        a = in_arr - w_arr + 1
+        c = in_arr
+        b = w_arr
+    else:
+        click.echo(
+            message="Just one param is passed, inform another."
+        )
+        click.Abort()
+        exit(1)
 
     data = {
-        "d": dimensions,
-        "m": m,
-        "n": n,
+        "dim": dimensions,
+        "c": c.tolist(),
+        "a": a.tolist(),
+        "b": b.tolist(),
     }
     init_file.parent.mkdir(parents=True, exist_ok=True)
     with open(init_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-    click.echo("Initialized")
+    click.echo("Init ok")
 
 
 def cmd_build_toom_cook(points):
-    init_data = read_init()
-    d_size, m_size, n_size = init_data
-    i_size = m_size + n_size - 1
+    dim, c_len, b_len, a_len = read_init()
+    # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == 'inf' else int(p) for p in points]
-
-    c, q, b, a = fast.toom_cook(m_size, n_size, list_points)
-    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(i_size))))
-    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(n_size))))
+    # breakpoint()
+    c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
+    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len))))
+    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len))))
     bg = fast.g_to_bg(q, b, g)
     q0 = [
         [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
@@ -86,8 +107,6 @@ def cmd_build_toom_cook(points):
     ]
     data = {
         "p": list_points,
-        "m": m_size,
-        "n": n_size,
         "c": np.array(c, dtype=int).tolist(),
         "q": q0,
         "b": np.array(b, dtype=int).tolist(),
@@ -107,7 +126,7 @@ def cmd_build_toom_cook(points):
     s_small = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[0]))))
     s_big = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
     s_step = conv_step(s_small, a.T, s_big)
-
+    # breakpoint()
     # TODO export matrix form too
     mul = sy.MatMul(a.T, bg, c.T, di)
     sy.preview(
@@ -136,16 +155,12 @@ def cmd_build_toom_cook(points):
     sy.preview(
         log2_ct, viewer='file', filename='log2_ct.png', euler=False
     )
+    click.echo("Build ok")
 
 
 def cmd_sim_file(feature, weight):
-    with open('init.json') as f:
-        init_file = json.load(f)
-        d, m_size, n_size = read_init(init_file)
-
-    with open('build.json') as f:
-        build_file = json.load(f)
-        points, c, b, a, q = read_build(build_file)
+    dim, ct_len, b_len, at_len = read_init()
+    points, c, b, a, q = read_build()
 
     with open('quant.json') as f:
         quant_file = json.load(f)
@@ -158,13 +173,13 @@ def cmd_sim_file(feature, weight):
         feat_arr = np.array(image)
     with open(weight) as f:
         wght_arr = (np.array(json.load(f)).
-                    reshape(n_size, n_size) * constant)
+                    reshape(b_size, b_size) * constant)
 
     fast_conv = [
         fast.conv1d(
             wght_arr[i], c, q, b, a, type_int=integer
         )
-        for i in range(n_size)
+        for i in range(b_size)
     ]
 
     output_default = signal.convolve2d(
@@ -179,7 +194,7 @@ def cmd_sim_file(feature, weight):
     output_fast = np.sum(axis=0, a=[
         fast.filter1d_slide2d(
             fast_conv[i], feat_arr, output_default.shape, i, len(points),
-            m_size
+            ct_size
         )
         for i in range(0, wght_arr.shape[0])
      ])
@@ -207,7 +222,7 @@ def cmd_sim_file(feature, weight):
     click.echo(f"Additions: {size * 8}")
 
     click.echo("Fast totals:")
-    fast_count = fast.filter1d_slide2d_count(output_default.shape, m_size)
+    fast_count = fast.filter1d_slide2d_count(output_default.shape, ct_size)
     mult = fast_count * len(points) * len(fast_conv)
     click.echo(f"Iterations: {fast_count}")
     click.echo(f"Multiplications: {mult}")

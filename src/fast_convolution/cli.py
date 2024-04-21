@@ -13,7 +13,6 @@ from .commands import (
 
 root = Path(os.getcwd())
 
-
 @click.group()
 @click.pass_context
 def main(ctx): pass
@@ -21,25 +20,27 @@ def main(ctx): pass
 
 @main.group(
     help=("Size of two vectors to be convoluted. The two sizes must be in "
-          "format C=B+A-1 or A=-B+C+1 where P is number of points to be interpolated "
-          "and the output size, "
-          "M and N are respectively the first and second values of the "
-          "argument. M as the size o features and N size of weights.")
+          "format Out = In - W + 1 or In = Out + W - 1 where In is the number of"
+          "elements in the input, Out is the number of elements in the the "
+          "the output, and W is the number of elements of weights or kernel.")
 )
 def init(): pass
 
 
 @init.command(name="1d")
-@click.option('-m', required=True, type=int)
-@click.option('-n', default=3)
-def init1d(m, n):
-    cmd_init(1, m, n)
+@click.option('-i', '--in-len', default=None, type=int)
+@click.option('-o', '--out-len', default=None, type=int)
+@click.option('-w', default=3, type=int)
+def init1d(in_len, out_len, w):
+    cmd_init(1, in_len, out_len, w)
+
 
 @init.command(name="2d")
-@click.option('-m', required=True, nargs=2)
-@click.option('-n', default=[3, 3], nargs=2)
-def init1d(m, n):
-    cmd_init(2, m, n)
+@click.option('-i', '--in', nargs=2, default=None, type=int)
+@click.option('-o', '--out', nargs=2, default=None, type=int)
+@click.option('-w', default=[3, 3], nargs=2)
+def init2d(in_len, out_len, w):
+    cmd_init(2, in_len, out_len, w)
 
 
 @main.group()
