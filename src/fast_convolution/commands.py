@@ -14,7 +14,6 @@ from . import fast
 from .naive import naive_convolve
 
 
-# root = Path(__file__).resolve().parent
 root_path = Path(os.getcwd())
 config_path = root_path / "config"
 init_file = config_path / "init.json"
@@ -96,7 +95,7 @@ def cmd_build_toom_cook(points):
     dim, c_len, b_len, a_len = read_init()
     # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == 'inf' else int(p) for p in points]
-    # breakpoint()
+
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
     di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len))))
@@ -117,17 +116,17 @@ def cmd_build_toom_cook(points):
 
     bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
     bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-    bg_step = conv_step(bgs, b, bs)
+    bg_step = fast.conv_step(bgs, b, bs)
 
     cs = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
     cds = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
-    cd_step = conv_step(cds, c.T, cs)
+    cd_step = fast.conv_step(cds, c.T, cs)
 
     s_small = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[0]))))
     s_big = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
-    s_step = conv_step(s_small, a.T, s_big)
-    # breakpoint()
-    # TODO export matrix form too
+    s_step = fast.conv_step(s_small, a.T, s_big)
+
+
     mul = sy.MatMul(a.T, bg, c.T, di)
     sy.preview(
         sy.Eq(s_small, mul), viewer='file',
@@ -159,27 +158,26 @@ def cmd_build_toom_cook(points):
 
 
 def cmd_sim_file(feature, weight):
-    dim, ct_len, b_len, at_len = read_init()
+    dim, c_len, b_len, a_len = read_init()
     points, c, b, a, q = read_build()
 
-    with open('quant.json') as f:
-        quant_file = json.load(f)
+    # with open('quant.json') as f:
+    #     quant_file = json.load(f)
 
-    constant = quant_file["const"]
-    integer = quant_file["integer"]
+    # constant = quant_file["const"]
+    integer = False
 
     with open(feature) as f:
         image = Image.open(feature).convert('L')
         feat_arr = np.array(image)
     with open(weight) as f:
-        wght_arr = (np.array(json.load(f)).
-                    reshape(b_size, b_size) * constant)
+        wght_arr = (np.array(json.load(f)).reshape(b_len, b_len))
 
     fast_conv = [
         fast.conv1d(
             wght_arr[i], c, q, b, a, type_int=integer
         )
-        for i in range(b_size)
+        for i in range(b_len)
     ]
 
     output_default = signal.convolve2d(
@@ -193,8 +191,8 @@ def cmd_sim_file(feature, weight):
 
     output_fast = np.sum(axis=0, a=[
         fast.filter1d_slide2d(
-            fast_conv[i], feat_arr, output_default.shape, i, len(points),
-            ct_size
+            fast_conv[i], feat_arr, output_default.shape, i, c_len,
+            a_len
         )
         for i in range(0, wght_arr.shape[0])
      ])
@@ -222,7 +220,7 @@ def cmd_sim_file(feature, weight):
     click.echo(f"Additions: {size * 8}")
 
     click.echo("Fast totals:")
-    fast_count = fast.filter1d_slide2d_count(output_default.shape, ct_size)
+    fast_count = fast.filter1d_slide2d_count(output_default.shape, a_len)
     mult = fast_count * len(points) * len(fast_conv)
     click.echo(f"Iterations: {fast_count}")
     click.echo(f"Multiplications: {mult}")
@@ -313,9 +311,3 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
         f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
     )
 
-
-def conv_step(ff0, mtx, f0):
-    f1 = mtx * f0
-    f2 = sy.Eq(f1, sy.MatMul(mtx, f0, evaluate=False), evaluate=False)
-    f3 = sy.Eq(ff0, f2, evaluate=False)
-    return f3

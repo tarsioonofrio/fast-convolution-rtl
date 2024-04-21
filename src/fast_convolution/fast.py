@@ -335,8 +335,8 @@ def filter1d_slide2d(filt, in_arr, out_shape, index, in_size=5, out_size=3):
     return out_arr
 
 
-def filter1d_slide2d_count(shape, size):
-    count = len(list(range(shape[0]))) * len(range(0, shape[1], size))
+def filter1d_slide2d_count(out_shape, out_size):
+    count = len(list(range(out_shape[0]))) * len(range(0, out_shape[1], out_size))
     return count
 
 
@@ -358,8 +358,8 @@ def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
     return out_arr
 
 
-def filter2d_slide2d_count(shape, size):
-    count = len(list(range(0, shape[0], size))) * len(range(0, shape[1], size))
+def filter2d_slide2d_count(out_shape, out_size):
+    count = len(list(range(0, out_shape[0], out_size))) * len(range(0, out_shape[1], out_size))
     return count
 
 
@@ -374,3 +374,10 @@ def c3x3_5m20a9e(g):
     bg = g_to_bg(cq, b, g)
     f = wrap_convolution(c, bg, a)
     return f
+
+
+def conv_step(ff0, mtx, f0):
+    f1 = mtx * f0
+    f2 = sy.Eq(f1, sy.MatMul(mtx, f0, evaluate=False), evaluate=False)
+    f3 = sy.Eq(ff0, f2, evaluate=False)
+    return f3

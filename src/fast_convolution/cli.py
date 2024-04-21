@@ -7,11 +7,12 @@ import click
 
 from .commands import (
     cmd_init, cmd_build_toom_cook, cmd_sim_file, cmd_sim_random,
-    read_num_points, conv_step,
+    read_num_points,
 )
 
 
 root = Path(os.getcwd())
+example_path = Path(__file__).resolve().parent.parent.parent / "images"
 
 @click.group()
 @click.pass_context
@@ -121,11 +122,11 @@ def sim(ctx): pass
 
 @sim.command()
 @click.option(
-    "--feature", "-f", default=root / "images" / "karatsuba032.jpg",
+    "--feature", "-f", default=example_path / "karatsuba032.jpg",
     help=("Feature file, can be a image or json list file.")
 )
 @click.option(
-    "--weight", "-w", default=root / "images" / "laplace.json",
+    "--weight", "-w", default=example_path / "laplace.json",
     help=("Weight file, need to be a json list file.")
 )
 def file(feature, weight):
