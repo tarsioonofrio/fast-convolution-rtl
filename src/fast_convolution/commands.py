@@ -155,7 +155,8 @@ def cmd_build_toom_cook1d(points):
     with open(build_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    write_latex_image(b, c, a, bg, di)
+    build_dir.mkdir(parents=True, exist_ok=True)
+    write_latex_image(b, c, a, bg, di, build_dir)
     click.echo("Build ok")
 
 
@@ -193,8 +194,12 @@ def cmd_build_toom_cook2d(points1d, points2d):
     with open(build_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    write_latex_image(b1, c1, a1, bg1, di1)
-    write_latex_image(b2, c2, a2, bg2, di2)
+    path1 = build_dir / "1"
+    path1.mkdir(parents=True, exist_ok=True)
+    write_latex_image(b1, c1, a1, bg1, di1, path1)
+    path2 = build_dir / "2"
+    path2.mkdir(parents=True, exist_ok=True)
+    write_latex_image(b2, c2, a2, bg2, di2, path2)
     click.echo("Build ok")
 
 
@@ -224,6 +229,19 @@ def write_latex_image(b, c, a, bg, di, path):
     )
     sy.preview(
         s_step, viewer='file', filename=f'{path}/step_s.png', euler=False
+    )
+
+    log2_at = sy.Eq(
+        sy.MatrixSymbol('a', 2, 2).T, fast.matrix_to_log2(a.T), evaluate=False
+    )
+    log2_ct = sy.Eq(
+        sy.MatrixSymbol('c', 2, 2).T, fast.matrix_to_log2(c.T), evaluate=False
+    )
+    sy.preview(
+        log2_at, viewer='file', filename=f'{path}/log2_at.png', euler=False
+    )
+    sy.preview(
+        log2_ct, viewer='file', filename=f'{path}/log2_ct.png', euler=False
     )
 
 

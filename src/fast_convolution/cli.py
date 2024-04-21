@@ -85,21 +85,21 @@ def build_d2(): pass
 
 @build_d2.command(name="toom-cook")
 @click.option(
-    '--points1d', '-1',
+    '--points-1d', '-p1',
     default=default_toom_cook_points2d(init_data["c"], 0),
     nargs=num_points2d(init_data["c"], 0),
     show_default=True,
     help=("List of points to be interpolate for Toom-Cook first dimension.")
 )
 @click.option(
-    '--points2d', '-2',
+    '--points-2d', '-p2',
     default=default_toom_cook_points2d(init_data["c"], 1),
     nargs=num_points2d(init_data["c"], 1),
     show_default=True,
     help=("List of points to be interpolate for Toom-Cook second dimension.")
 )
-def toom_cook2d(points1d, points2d):
-    cmd_build_toom_cook2d(points1d, points2d)
+def toom_cook2d(points_1d, points_2d):
+    cmd_build_toom_cook2d(points_1d, points_2d)
     click.echo("Builded 2D Toom Cook dimension.")
 
 
