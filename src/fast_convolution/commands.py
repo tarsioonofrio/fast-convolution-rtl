@@ -15,9 +15,12 @@ from .naive import naive_convolve
 
 
 root_path = Path(os.getcwd())
-config_path = root_path / "config"
-init_file = config_path / "init.json"
-build_file = config_path / "build.json"
+config_dir = root_path / "config"
+init_file = config_dir / "init.json"
+build_file = config_dir / "build.json"
+build_dir = root_path / "build"
+quant_dir = root_path / "quant"
+sim_dir = root_path / "sim"
 
 
 def read_init():
@@ -43,11 +46,49 @@ def read_build():
     return p, c, b, a, q
 
 
+def read_init_if_exists():
+    if init_file.exists() is False:
+        return None
+    with open(init_file) as f:
+        data = json.load(f)
+    return data
+
+
 def read_num_points():
     if init_file.exists() is False:
-        return 0
+        return 1
     dim, c, b, a = read_init()
     return c
+
+
+def num_points1d(size):
+    if isinstance(size, int):
+        return size
+    else:
+        return 1
+
+
+def num_points2d(size, axis):
+    if isinstance(size, list) is False:
+        return 1
+    return size[axis]
+
+
+def default_toom_cook_points1d(size):
+    if isinstance(size, int) is False:
+        return 1
+    p0 = [p*s for s in range(1, size//2 + size % 2) for p in [1, -1]]
+    p = [0] + p0[:size-1 - size % 2] + ['inf']
+    return p
+
+
+def default_toom_cook_points2d(size0, axis=None):
+    if isinstance(size0, list) is False:
+        return 1
+    size = size0[axis]
+    p0 = [p*s for s in range(1, size//2 + size % 2) for p in [1, -1]]
+    p = [0] + p0[:size-1 - size % 2] + ['inf']
+    return p
 
 
 def cmd_init(dimensions, in_len, out_len, w):
@@ -91,7 +132,7 @@ def cmd_init(dimensions, in_len, out_len, w):
     click.echo("Init ok")
 
 
-def cmd_build_toom_cook(points):
+def cmd_build_toom_cook1d(points):
     dim, c_len, b_len, a_len = read_init()
     # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == 'inf' else int(p) for p in points]
@@ -100,20 +141,64 @@ def cmd_build_toom_cook(points):
     di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len))))
     bg = fast.g_to_bg(q, b, g)
-    q0 = [
+    qr = [
         [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
         for i in q
     ]
     data = {
         "p": list_points,
         "c": np.array(c, dtype=int).tolist(),
-        "q": q0,
+        "q": qr,
         "b": np.array(b, dtype=int).tolist(),
         "a": np.array(a, dtype=int).tolist(),
     }
     with open(build_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+    write_latex_image(b, c, a, bg, di)
+    click.echo("Build ok")
+
+
+def cmd_build_toom_cook2d(points1d, points2d):
+    dim, c_len, b_len, a_len = read_init()
+    # at_len = ct_len + b_len - 1
+    list_points1d = [np.inf if p == 'inf' else int(p) for p in points1d]
+    list_points2d = [np.inf if p == 'inf' else int(p) for p in points2d]
+
+    c1, q1, b1, a1 = fast.toom_cook(a_len[0], b_len[0], list_points1d)
+    di1 = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0]))))
+    g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len[0]))))
+    bg1 = fast.g_to_bg(q1, b1, g1)
+    qr1 = [
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in q1
+    ]
+
+    c2, q2, b2, a2 = fast.toom_cook(a_len[1], b_len[1], list_points2d)
+    di2 = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len[1]))))
+    g2 = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len[1]))))
+    bg2 = fast.g_to_bg(q2, b2, g2)
+    qr2 = [
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in q2
+    ]
+
+    data = {
+        "p": [list_points1d, list_points2d],
+        "c": [np.array(c1, dtype=int).tolist(), np.array(c2, dtype=int).tolist()],
+        "q": [qr1, qr2],
+        "b": [np.array(b1, dtype=int).tolist(), np.array(b2, dtype=int).tolist()],
+        "a": [np.array(a1, dtype=int).tolist(), np.array(a2, dtype=int).tolist()],
+    }
+    with open(build_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+    write_latex_image(b1, c1, a1, bg1, di1)
+    write_latex_image(b2, c2, a2, bg2, di2)
+    click.echo("Build ok")
+
+
+def write_latex_image(b, c, a, bg, di, path):
     bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
     bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
     bg_step = fast.conv_step(bgs, b, bs)
@@ -126,35 +211,20 @@ def cmd_build_toom_cook(points):
     s_big = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
     s_step = fast.conv_step(s_small, a.T, s_big)
 
-
     mul = sy.MatMul(a.T, bg, c.T, di)
     sy.preview(
         sy.Eq(s_small, mul), viewer='file',
-        filename='matrix_mult.png', euler=False
+        filename=f'{path}/matrix_mult.png', euler=False
     )
     sy.preview(
-        bg_step, viewer='file', filename='step_g.png', euler=False
+        bg_step, viewer='file', filename=f'{path}/step_g.png', euler=False
     )
     sy.preview(
-        cd_step, viewer='file', filename='step_d.png', euler=False
+        cd_step, viewer='file', filename=f'{path}/step_d.png', euler=False
     )
     sy.preview(
-        s_step, viewer='file', filename='step_s.png', euler=False
+        s_step, viewer='file', filename=f'{path}/step_s.png', euler=False
     )
-
-    log2_at = sy.Eq(
-        sy.MatrixSymbol('a', 2, 2).T, fast.matrix_to_log2(a.T), evaluate=False
-    )
-    log2_ct = sy.Eq(
-        sy.MatrixSymbol('c', 2, 2).T, fast.matrix_to_log2(c.T), evaluate=False
-    )
-    sy.preview(
-        log2_at, viewer='file', filename='log2_at.png', euler=False
-    )
-    sy.preview(
-        log2_ct, viewer='file', filename='log2_ct.png', euler=False
-    )
-    click.echo("Build ok")
 
 
 def cmd_sim_file(feature, weight):
