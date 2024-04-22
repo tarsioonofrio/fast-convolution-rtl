@@ -251,12 +251,16 @@ def save_pdf(b, c, a, bg, di, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
+    doc.preamble.append(tex.Command('title', 'Convolution'))
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
-    doc.preamble.append(tex.Command('title', 'Awesome Title'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
-    math_mul = tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
-    doc.append(math_mul)
+    doc.append(
+        tex.Math(data=[r"s = a^t (b \odot g) c^t"], escape=False)
+    )
+    doc.append(
+        tex.Math(data=["s =", tex_no_esc(mul)])
+    )
     doc.generate_pdf(f'{path}/convolution', clean_tex=False)
 
 
