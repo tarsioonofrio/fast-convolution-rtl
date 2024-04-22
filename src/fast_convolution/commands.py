@@ -246,11 +246,12 @@ def save_pdf(b, c, a, bg, di, path):
     )
     doc = tex.Document()
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
+    doc.preamble.append(tex.Command('title', 'Awesome Title'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
-    math_mul = tex.Math(data=[sy.print_latex(s_small), "=", sy.print_latex(mul)])
+    math_mul = tex.Math(data=[tex.NoEscape(sy.latex(s_small)), "=", tex.NoEscape(sy.latex(mul))])
     doc.append(math_mul)
-    doc.generate_pdf(f'{path}/convolution.pdf', clean_tex=False)
+    doc.generate_pdf(f'{path}/convolution', clean_tex=False)
 
 
 def cmd_iterate2d():
