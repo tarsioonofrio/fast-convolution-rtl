@@ -92,6 +92,10 @@ def default_toom_cook_points2d(size0, axis=None):
     return p
 
 
+def tex_no_esc(expr):
+    return tex.NoEscape(sy.latex(expr)) 
+
+
 def cmd_init(dimensions, in_len, out_len, w):
     if init_file.exists():
         click.echo(
@@ -244,12 +248,14 @@ def save_pdf(b, c, a, bg, di, path):
     sy.preview(
         log2_ct, viewer='file', filename=f'{path}/log2_ct.png', euler=False
     )
+
     doc = tex.Document()
+    doc.preamble.append(tex.Package('geometry', 'a3paper'))
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
     doc.preamble.append(tex.Command('title', 'Awesome Title'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
-    math_mul = tex.Math(data=[tex.NoEscape(sy.latex(s_small)), "=", tex.NoEscape(sy.latex(mul))])
+    math_mul = tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
     doc.append(math_mul)
     doc.generate_pdf(f'{path}/convolution', clean_tex=False)
 
