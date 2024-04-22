@@ -248,17 +248,19 @@ def write_latex_image(b, c, a, bg, di, path):
 def cmd_iterate2d():
     dim, c_len, b_len, a_len = read_init()
     d1 = sy.Matrix(
-        c_len, c_len,
-        sy.symbols(" ".join(f"d_{i}"for i in range(c_len **2)))
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0] * c_len[1])))
     )
     g1 = sy.Matrix(
-        c_len, c_len,
-        sy.symbols(" ".join(f"g_{i}"for i in range(c_len **2)))
+        b_len[0], b_len[0],
+        sy.symbols(" ".join(f"g_{i}"for i in range(b_len[0] * b_len[1])))
     )
-    dd = sy.symbol("D")
-    gg = sy.symbol("G")
+    dd = sy.symbols("D")
+    gg = sy.symbols("G")
 
-    build_data = read_build()
+    with open(build_file) as f:
+        build_data = json.load(f)
+
     p1, p2 = build_data["p"]
     c1 = sy.Matrix(build_data["c"][0])
     c2 = sy.Matrix(build_data["c"][1])
@@ -279,9 +281,9 @@ def cmd_iterate2d():
 
     d2s = c1s.T * d1s * c2s
     step_d1a = sy.Eq(d1*c2, sy.MatMul(d1, c2, evaluate=False))
-    step_d1b = sy.Eq(c1.T*d1*c2, step_d1a)
-    step_d1c = sy.Eq(d2s, step_d1b)
-    step_d2 = sy.Eq(dd, step_d1c)
+    step_d1b = sy.Eq(c1.T*d1*c2, step_d1a, evaluate=False)
+    step_d1c = sy.Eq(d2s, step_d1b, evaluate=False)
+    step_d2 = sy.Eq(dd, step_d1c, evaluate=False)
     path = build_dir / "bind"
     path.mkdir(parents=True, exist_ok=True)
     sy.preview(
