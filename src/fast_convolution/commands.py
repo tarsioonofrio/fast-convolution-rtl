@@ -245,6 +245,52 @@ def write_latex_image(b, c, a, bg, di, path):
     )
 
 
+def cmd_iterate2d():
+    dim, c_len, b_len, a_len = read_init()
+    d1 = sy.Matrix(
+        c_len, c_len,
+        sy.symbols(" ".join(f"d_{i}"for i in range(c_len **2)))
+    )
+    g1 = sy.Matrix(
+        c_len, c_len,
+        sy.symbols(" ".join(f"g_{i}"for i in range(c_len **2)))
+    )
+    dd = sy.symbol("D")
+    gg = sy.symbol("G")
+
+    build_data = read_build()
+    p1, p2 = build_data["p"]
+    c1 = sy.Matrix(build_data["c"][0])
+    c2 = sy.Matrix(build_data["c"][1])
+    q1, q2 = build_data["q"]
+    b1 = sy.Matrix(build_data["b"][0])
+    b2 = sy.Matrix(build_data["b"][1])
+    a1 = (build_data["a"][0])
+    a2 = (build_data["a"][1])
+
+    d1s = sy.MatrixSymbol('d', 2, 2)
+    gs = sy.MatrixSymbol('g', 2, 2)
+    a1s = sy.MatrixSymbol('a_1', 2, 2)
+    a2s = sy.MatrixSymbol('a_2', 2, 2)
+    b1s = sy.MatrixSymbol('b_1', 2, 2)
+    b2s = sy.MatrixSymbol('b_2', 2, 2)
+    c1s = sy.MatrixSymbol('c_1', 2, 2)
+    c2s = sy.MatrixSymbol('c_2', 2, 2)
+
+    d2s = c1s.T * d1s * c2s
+    step_d1a = sy.Eq(d1*c2, sy.MatMul(d1, c2, evaluate=False))
+    step_d1b = sy.Eq(c1.T*d1*c2, step_d1a)
+    step_d1c = sy.Eq(d2s, step_d1b)
+    step_d2 = sy.Eq(dd, step_d1c)
+    path = build_dir / "bind"
+    path.mkdir(parents=True, exist_ok=True)
+    sy.preview(
+        step_d2, viewer='file', filename=f'{path}/step_d.png', euler=False
+    )
+
+
+
+
 def cmd_sim_file(feature, weight):
     dim, c_len, b_len, a_len = read_init()
     points, c, b, a, q = read_build()
@@ -292,8 +338,8 @@ def cmd_sim_file(feature, weight):
         mae = metrics.mean_absolute_error(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        print(f"RMSE : {rmse}")
-        print(f"MAE : {mae}")
+        click.echo(f"RMSE : {rmse}")
+        click.echo(f"MAE : {mae}")
     else:
         compare_fast = np.all(output_default == output_fast)
         click.echo(

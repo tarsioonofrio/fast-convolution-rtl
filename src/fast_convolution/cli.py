@@ -9,7 +9,8 @@ from .commands import (
     cmd_init, cmd_build_toom_cook1d, cmd_build_toom_cook2d,
     cmd_sim_file, cmd_sim_random,
     read_init_if_exists, num_points1d, num_points2d,
-    default_toom_cook_points1d, default_toom_cook_points2d
+    default_toom_cook_points1d, default_toom_cook_points2d,
+    cmd_iterate2d,
 )
 
 
@@ -113,10 +114,16 @@ def cyclic_to_linear(points): pass
 
 @build_d2.command()
 @click.option(
-    "--design", "-d", type=click.Choice(['iterated', 'nested']),
-    default='iterated', help=("Not implemented.")
+    "--iterate", "-i", is_flag=True,
+    default=False
 )
-def bind(design): pass
+@click.option(
+    "--nest", "-n", is_flag=True,
+    default=False, help=("Not implemented.")
+)
+def bind(iterate, nest):
+    if iterate:
+        cmd_iterate2d()
 
 
 @main.group(help="Not implemented yet")
