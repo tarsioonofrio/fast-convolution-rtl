@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 import numpy as np
 import sympy as sy
+import pylatex as tex
 from PIL import Image
 from scipy import signal
 from sklearn import metrics
@@ -48,7 +49,7 @@ def read_build():
 
 def read_init_if_exists():
     if init_file.exists() is False:
-        return None
+        return {}
     with open(init_file) as f:
         data = json.load(f)
     return data
@@ -156,7 +157,7 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     build_dir.mkdir(parents=True, exist_ok=True)
-    write_latex_image(b, c, a, bg, di, build_dir)
+    save_pdf(b, c, a, bg, di, build_dir)
     click.echo("Build ok")
 
 
@@ -196,14 +197,14 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
     path1 = build_dir / "1"
     path1.mkdir(parents=True, exist_ok=True)
-    write_latex_image(b1, c1, a1, bg1, di1, path1)
+    save_pdf(b1, c1, a1, bg1, di1, path1)
     path2 = build_dir / "2"
     path2.mkdir(parents=True, exist_ok=True)
-    write_latex_image(b2, c2, a2, bg2, di2, path2)
+    save_pdf(b2, c2, a2, bg2, di2, path2)
     click.echo("Build ok")
 
 
-def write_latex_image(b, c, a, bg, di, path):
+def save_pdf(b, c, a, bg, di, path):
     bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
     bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
     bg_step = fast.conv_step(bgs, b, bs)
@@ -243,6 +244,13 @@ def write_latex_image(b, c, a, bg, di, path):
     sy.preview(
         log2_ct, viewer='file', filename=f'{path}/log2_ct.png', euler=False
     )
+    doc = tex.Document()
+    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
+    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
+    doc.append(tex.NoEscape(r'\maketitle'))
+    math_mul = tex.Math(data=[sy.print_latex(s_small), "=", sy.print_latex(mul)])
+    doc.append(math_mul)
+    doc.generate_pdf(f'{path}/convolution.pdf', clean_tex=False)
 
 
 def cmd_iterate2d():
@@ -289,8 +297,6 @@ def cmd_iterate2d():
     sy.preview(
         step_d2, viewer='file', filename=f'{path}/step_d.png', euler=False
     )
-
-
 
 
 def cmd_sim_file(feature, weight):

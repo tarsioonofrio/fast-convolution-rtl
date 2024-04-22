@@ -55,15 +55,15 @@ def init2d(in_len, out_len, w):
 def build(): pass
 
 
-@build.group(name="1d", hidden=init_data["dim"] == 2)
+@build.group(name="1d", hidden=init_data.get("dim", 1) == 2)
 def build_d1(): pass
 
 
 @build_d1.command(name="toom-cook")
 @click.option(
-    '--points', '-p',
-    default=default_toom_cook_points1d(init_data["c"]),
-    nargs=num_points1d(init_data["c"]), show_default=True,
+    '--points', '-p', type=str,
+    default=default_toom_cook_points1d(init_data.get("c", 1)),
+    nargs=num_points1d(init_data.get("c", 1)), show_default=True,
     help=("List of points to be interpolate for Toom-Cook.")
 )
 def toom_cook1d(points):
@@ -80,22 +80,22 @@ def toom_cook1d(points):
 def cyclic_to_linear(points): pass
 
 
-@build.group(name="2d", hidden=init_data["dim"] == 1)
+@build.group(name="2d", hidden=init_data.get("dim", 2) == 1)
 def build_d2(): pass
 
 
 @build_d2.command(name="toom-cook")
 @click.option(
-    '--points-1d', '-p1',
-    default=default_toom_cook_points2d(init_data["c"], 0),
-    nargs=num_points2d(init_data["c"], 0),
+    '--points-1d', '-p1', type=str,
+    default=default_toom_cook_points2d(init_data.get("c", 1), 0),
+    nargs=num_points2d(init_data.get("c", 1), 0),
     show_default=True,
     help=("List of points to be interpolate for Toom-Cook first dimension.")
 )
 @click.option(
-    '--points-2d', '-p2',
-    default=default_toom_cook_points2d(init_data["c"], 1),
-    nargs=num_points2d(init_data["c"], 1),
+    '--points-2d', '-p2', type=str,
+    default=default_toom_cook_points2d(init_data.get("c", 1), 1),
+    nargs=num_points2d(init_data.get("c", 1), 1),
     show_default=True,
     help=("List of points to be interpolate for Toom-Cook second dimension.")
 )
