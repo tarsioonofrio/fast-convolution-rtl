@@ -374,10 +374,3 @@ def c3x3_5m20a9e(g):
     bg = g_to_bg(cq, b, g)
     f = wrap_convolution(c, bg, a)
     return f
-
-
-def conv_step(ff0, mtx, f0):
-    f1 = mtx * f0
-    f2 = sy.Eq(f1, sy.MatMul(mtx, f0, evaluate=False), evaluate=False)
-    f3 = sy.Eq(ff0, f2, evaluate=False)
-    return f3

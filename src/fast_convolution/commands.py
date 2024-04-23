@@ -161,7 +161,7 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     build_dir.mkdir(parents=True, exist_ok=True)
-    save_pdf(b, c, a, bg, di, build_dir)
+    save_pdf(b, c, a, bg, di, build_dir / "convolution" )
     click.echo("Build ok")
 
 
@@ -199,11 +199,10 @@ def cmd_build_toom_cook2d(points1d, points2d):
     with open(build_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    path1 = build_dir / "1"
-    path1.mkdir(parents=True, exist_ok=True)
+    build_dir.mkdir(parents=True, exist_ok=True)
+    path1 = build_dir / "convolution-axis1"
     save_pdf(b1, c1, a1, bg1, di1, path1)
-    path2 = build_dir / "2"
-    path2.mkdir(parents=True, exist_ok=True)
+    path2 = build_dir / "convolution-axis2"
     save_pdf(b2, c2, a2, bg2, di2, path2)
     click.echo("Build ok")
 
@@ -217,66 +216,47 @@ def save_pdf(b, c, a, bg, di, path):
     cds = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
     cd_step = fast.conv_step(cds, c.T, cs)
 
-    s_small = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[0]))))
-    s_big = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
-    s_step = fast.conv_step(s_small, a.T, s_big)
+    s_big = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
+    s_small = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
+    s_step = fast.conv_step(s_big, a.T, s_big)
 
     mul = sy.MatMul(a.T, bg, c.T, di)
-    sy.preview(
-        sy.Eq(s_small, mul), viewer='file',
-        filename=f'{path}/matrix_mult.png', euler=False
-    )
-    sy.preview(
-        bg_step, viewer='file', filename=f'{path}/step_g.png', euler=False
-    )
-    sy.preview(
-        cd_step, viewer='file', filename=f'{path}/step_d.png', euler=False
-    )
-    sy.preview(
-        s_step, viewer='file', filename=f'{path}/step_s.png', euler=False
-    )
-
-    log2_at = sy.Eq(
-        sy.MatrixSymbol('a', 2, 2).T, fast.matrix_to_log2(a.T), evaluate=False
-    )
-    log2_ct = sy.Eq(
-        sy.MatrixSymbol('c', 2, 2).T, fast.matrix_to_log2(c.T), evaluate=False
-    )
-    sy.preview(
-        log2_at, viewer='file', filename=f'{path}/log2_at.png', euler=False
-    )
-    sy.preview(
-        log2_ct, viewer='file', filename=f'{path}/log2_ct.png', euler=False
-    )
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
-    doc.preamble.append(tex.Command('title', 'Convolution'))
+    doc.preamble.append(tex.Command('title', '1D Convolution'))
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
     doc.append(
-        tex.Math(data=[r"s = a^t (b \odot g) c^t"], escape=False)
+        tex.Math(data=[r"s = a^t {(bg) \odot (c^t d)}"], escape=False)
     )
     doc.append(
-        tex.Math(data=["s =", tex_no_esc(mul)])
+        tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
     )
-    doc.generate_pdf(f'{path}/convolution', clean_tex=False)
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(bgs), "=", tex_no_esc(b*bs), "=", tex_no_esc(b),
+            tex_no_esc(bs)
+        ])
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(cds), "=", tex_no_esc(c.T*cs), "=", tex_no_esc(c.T),
+            tex_no_esc(cs)
+        ])
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(s_small), "=", tex_no_esc(a.T*s_big), "=", tex_no_esc(a.T),
+            tex_no_esc(s_big)
+        ])
+    )
+    doc.generate_pdf(path, clean_tex=False)
 
 
 def cmd_iterate2d():
     dim, c_len, b_len, a_len = read_init()
-    d1 = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0] * c_len[1])))
-    )
-    g1 = sy.Matrix(
-        b_len[0], b_len[0],
-        sy.symbols(" ".join(f"g_{i}"for i in range(b_len[0] * b_len[1])))
-    )
-    dd = sy.symbols("D")
-    gg = sy.symbols("G")
-
     with open(build_file) as f:
         build_data = json.load(f)
 
@@ -286,28 +266,111 @@ def cmd_iterate2d():
     q1, q2 = build_data["q"]
     b1 = sy.Matrix(build_data["b"][0])
     b2 = sy.Matrix(build_data["b"][1])
-    a1 = (build_data["a"][0])
-    a2 = (build_data["a"][1])
+    a1 = sy.Matrix(build_data["a"][0])
+    a2 = sy.Matrix(build_data["a"][1])
 
-    d1s = sy.MatrixSymbol('d', 2, 2)
-    gs = sy.MatrixSymbol('g', 2, 2)
-    a1s = sy.MatrixSymbol('a_1', 2, 2)
-    a2s = sy.MatrixSymbol('a_2', 2, 2)
-    b1s = sy.MatrixSymbol('b_1', 2, 2)
-    b2s = sy.MatrixSymbol('b_2', 2, 2)
-    c1s = sy.MatrixSymbol('c_1', 2, 2)
-    c2s = sy.MatrixSymbol('c_2', 2, 2)
-
-    d2s = c1s.T * d1s * c2s
-    step_d1a = sy.Eq(d1*c2, sy.MatMul(d1, c2, evaluate=False))
-    step_d1b = sy.Eq(c1.T*d1*c2, step_d1a, evaluate=False)
-    step_d1c = sy.Eq(d2s, step_d1b, evaluate=False)
-    step_d2 = sy.Eq(dd, step_d1c, evaluate=False)
-    path = build_dir / "bind"
-    path.mkdir(parents=True, exist_ok=True)
-    sy.preview(
-        step_d2, viewer='file', filename=f'{path}/step_d.png', euler=False
+    d1 = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0] * c_len[1])))
     )
+    d2 = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"\\delta_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    dd = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    g1 = sy.Matrix(
+        b_len[0], b_len[0],
+        sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
+    )
+    g2 = sy.Matrix(
+        b_len[0], c_len[0],
+        sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
+    )
+    gg = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    s2 = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    s1 = sy.Matrix(
+        c_len[0], b_len[0],
+        sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
+    )
+    s = sy.Matrix(
+        a_len[0], a_len[0],
+        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(b_len[0] * b_len[1])))
+    )
+
+    doc = tex.Document()
+    doc.preamble.append(tex.Package('geometry', 'a1paper'))
+    doc.preamble.append(tex.Command('title', '2D Convolution'))
+    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
+    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
+    doc.append(tex.NoEscape(r'\maketitle'))
+    doc.append(
+        tex.Math(data=["s=a_1^t [(b_1 g b_2^t) \odot (c_1^t d c_2)]a _2"], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"S = G \odot D"], escape=False)
+    )
+
+    doc.append(
+        tex.Math(data=[r"G = b_1 g b_2^t"], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(g2), "=", tex_no_esc(g1 * b2.T), "=", tex_no_esc(g1),
+            tex_no_esc(b2.T)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(gg), "=", tex_no_esc(b1 * g2), "=", tex_no_esc(b1),
+            tex_no_esc(g2)
+        ], escape=False)
+    )
+
+    doc.append(
+        tex.Math(data=[r"D = c_1^t d c_2"], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(d2), "=", tex_no_esc(d1 * c2), "=", tex_no_esc(d1),
+            tex_no_esc(c2)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(dd), "=", tex_no_esc(c1.T * d2), "=", tex_no_esc(c1.T),
+            tex_no_esc(d2)
+        ], escape=False)
+    )
+
+    doc.append(
+        tex.Math(data=[r"s = a_1^t S a_2"], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(s1), "=", tex_no_esc(s2 * a2), "=", tex_no_esc(s2),
+            tex_no_esc(a2)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(s), "=", tex_no_esc(a1.T * s1), "=", tex_no_esc(a1.T),
+            tex_no_esc(s1)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"s = a_1^t S a_2"], escape=False)
+    )
+    path = build_dir / "bind"
+    doc.generate_pdf(path, clean_tex=False)
 
 
 def cmd_sim_file(feature, weight):
