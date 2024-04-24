@@ -287,6 +287,7 @@ def g_to_bg(cq, b, g):
 
 
 def g_to_bg2d(cq1, b1, cq2, b2, g):
+    #breakpoint()
     bg = (sy.diag(*cq2) * b2) * sy.Matrix(g) * (sy.diag(*cq1) * b1).T
     return bg
 
@@ -342,24 +343,25 @@ def filter1d_slide2d_count(out_shape, out_size):
 
 def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
     out_arr = np.zeros(out_shape, dtype=int)
-    for r in range(0, out_shape[0], out_size):
-        for c in range(0, out_shape[1], out_size):
-            f = in_arr[r:r+in_size, c:c+in_size]
-            if len(f) == in_size:
+    for r in range(0, out_shape[0], out_size[0]):
+        for c in range(0, out_shape[1], out_size[1]):
+            f = in_arr[r:r+in_size[0], c:c+in_size[1]]
+            if tuple(f.shape) == tuple(in_size):
                 out = filt(f)
-                out_arr[r:r+out_size, c:c+out_size] = out
+                out_arr[r:r+out_size[0], c:c+out_size[1]] = out
             else:
                 row = f.shape[0]
                 col = f.shape[1]
-                new = np.zeros((in_size, in_size), dtype=int)
+                new = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new[:row, :col] = f
                 out = filt(new)
+                breakpoint()
                 out_arr[r:r+row, c:c+col] = out[:row, :col]
     return out_arr
 
 
 def filter2d_slide2d_count(out_shape, out_size):
-    count = len(list(range(0, out_shape[0], out_size))) * len(range(0, out_shape[1], out_size))
+    count = len(list(range(0, out_shape[0], out_size[0]))) * len(range(0, out_shape[1], out_size[1]))
     return count
 
 

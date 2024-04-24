@@ -34,7 +34,7 @@ def read_init():
     return dim, c, b, a
 
 
-def read_build():
+def read_build_1d():
     with open(build_file) as f:
         data = json.load(f)
     p = data["p"]
@@ -44,6 +44,20 @@ def read_build():
     q = sy.Matrix([
         sy.Rational(p, q) for p, q in data["q"]
     ])
+    return p, c, b, a, q
+
+
+def read_build_2d():
+    with open(build_file) as f:
+        data = json.load(f)
+    p = sy.Matrix(data["p"][0]), sy.Matrix(data["p"][1])
+    c = sy.Matrix(data["c"][0]), sy.Matrix(data["c"][1])
+    b = sy.Matrix(data["b"][0]), sy.Matrix(data["b"][1])
+    a = sy.Matrix(data["a"][0]), sy.Matrix(data["a"][1])
+    q = [
+        sy.Matrix([sy.Rational(p, q) for p, q in d])
+        for d in data["q"]
+    ]
     return p, c, b, a, q
 
 
@@ -210,15 +224,12 @@ def cmd_build_toom_cook2d(points1d, points2d):
 def save_pdf(b, c, a, bg, di, path):
     bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
     bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-    bg_step = fast.conv_step(bgs, b, bs)
 
     cs = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
     cds = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
-    cd_step = fast.conv_step(cds, c.T, cs)
 
     s_big = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
     s_small = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
-    s_step = fast.conv_step(s_big, a.T, s_big)
 
     mul = sy.MatMul(a.T, bg, c.T, di)
 
@@ -228,9 +239,11 @@ def save_pdf(b, c, a, bg, di, path):
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
+
     doc.append(
         tex.Math(data=[r"s = a^t {(bg) \odot (c^t d)}"], escape=False)
     )
+
     doc.append(
         tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
     )
@@ -252,6 +265,17 @@ def save_pdf(b, c, a, bg, di, path):
             tex_no_esc(s_big)
         ])
     )
+
+    doc.append(
+        tex.Math(data=[r"a^{t} =", tex_no_esc(fast.matrix_to_log2(a.T))], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"b =", tex_no_esc(fast.matrix_to_log2(b))], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"c^{t} =", tex_no_esc(fast.matrix_to_log2(c.T))], escape=False)
+    )
+
     doc.generate_pdf(path, clean_tex=False)
 
 
@@ -308,15 +332,12 @@ def cmd_iterate2d():
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a1paper'))
-    doc.preamble.append(tex.Command('title', '2D Convolution'))
+    doc.preamble.append(tex.Command('title', 'Iterated 2D Convolution'))
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
     doc.append(
         tex.Math(data=["s=a_1^t [(b_1 g b_2^t) \odot (c_1^t d c_2)]a _2"], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"S = G \odot D"], escape=False)
     )
 
     doc.append(
@@ -352,6 +373,9 @@ def cmd_iterate2d():
     )
 
     doc.append(
+        tex.Math(data=[r"S = G \odot D"], escape=False)
+    )
+    doc.append(
         tex.Math(data=[r"s = a_1^t S a_2"], escape=False)
     )
     doc.append(
@@ -366,16 +390,12 @@ def cmd_iterate2d():
             tex_no_esc(s1)
         ], escape=False)
     )
-    doc.append(
-        tex.Math(data=[r"s = a_1^t S a_2"], escape=False)
-    )
     path = build_dir / "bind"
     doc.generate_pdf(path, clean_tex=False)
 
 
 def cmd_sim_file(feature, weight):
     dim, c_len, b_len, a_len = read_init()
-    points, c, b, a, q = read_build()
 
     # with open('quant.json') as f:
     #     quant_file = json.load(f)
@@ -387,14 +407,10 @@ def cmd_sim_file(feature, weight):
         image = Image.open(feature).convert('L')
         feat_arr = np.array(image)
     with open(weight) as f:
-        wght_arr = (np.array(json.load(f)).reshape(b_len, b_len))
-
-    fast_conv = [
-        fast.conv1d(
-            wght_arr[i], c, q, b, a, type_int=integer
-        )
-        for i in range(b_len)
-    ]
+        if dim == 1:
+            wght_arr = (np.array(json.load(f)).reshape(b_len, b_len))
+        elif dim == 2:
+            wght_arr = (np.array(json.load(f)).reshape(b_len[0], b_len[1]))
 
     output_default = signal.convolve2d(
         feat_arr, wght_arr[::-1, ::-1], mode='valid'
@@ -405,13 +421,30 @@ def cmd_sim_file(feature, weight):
         f"Output default and naive are equals: {compare_naive}"
     )
 
-    output_fast = np.sum(axis=0, a=[
-        fast.filter1d_slide2d(
-            fast_conv[i], feat_arr, output_default.shape, i, c_len,
-            a_len
-        )
-        for i in range(0, wght_arr.shape[0])
-     ])
+    if dim == 1:
+        points, c, b, a, q = read_build_1d()
+        fast_conv = [
+            fast.conv1d(
+                wght_arr[i], c, q, b, a, type_int=integer
+            )
+            for i in range(b_len)
+        ]
+
+        output_fast = np.sum(axis=0, a=[
+            fast.filter1d_slide2d(
+                fast_conv[i], feat_arr, output_default.shape, i, c_len,
+                a_len
+            )
+            for i in range(0, wght_arr.shape[0])
+         ])
+        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_iter * len(points) * len(fast_conv)
+    elif dim == 2:
+        points, c, b, a, q = read_build_2d()
+        fast_conv = fast.conv2d(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
+        output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
+        count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_iter * len(points[0]) * len(points[1])
 
     if integer:
         rmse = metrics.root_mean_squared_error(
@@ -436,18 +469,16 @@ def cmd_sim_file(feature, weight):
     click.echo(f"Additions: {size * 8}")
 
     click.echo("Fast totals:")
-    fast_count = fast.filter1d_slide2d_count(output_default.shape, a_len)
-    mult = fast_count * len(points) * len(fast_conv)
-    click.echo(f"Iterations: {fast_count}")
-    click.echo(f"Multiplications: {mult}")
-    add0 = fast_count * 20 * len(fast_conv)
-    add1 = fast_count * 2 * len(fast_conv)
-    click.echo(f"Additions: {add0 + add1}")
-    click.echo(f"* Additions for each batch processed: {add0}")
-    click.echo(f"* Additions to join batches: {add1}")
-    click.echo(
-        f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
-    )
+    click.echo(f"Iterations: {count_iter}")
+    click.echo(f"Multiplications: {count_mult}")
+    # add0 = fast_count * 20 * len(fast_conv)
+    # add1 = fast_count * 2 * len(fast_conv)
+    # click.echo(f"Additions: {add0 + add1}")
+    # click.echo(f"* Additions for each batch processed: {add0}")
+    # click.echo(f"* Additions to join batches: {add1}")
+    # click.echo(
+    #     f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
+    # )
 
 
 def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
