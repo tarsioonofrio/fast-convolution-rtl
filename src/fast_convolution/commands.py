@@ -482,42 +482,64 @@ def cmd_sim_file(feature, weight):
 
 
 def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
-    with open('init.json') as f:
-        init_file = json.load(f)
-    init = read_init(init_file)
-    m_size, n_size, points, c, b, a, q = init
+    dim, c_len, b_len, a_len = read_init()
+
+    # with open('quant.json') as f:
+    #     quant_file = json.load(f)
+
+    # constant = quant_file["const"]
+    integer = False
 
     feat = np.random.randint(
          feature_random[0], feature_random[1], size=image_side ** 2
      )
-    wght = np.random.randint(
-        weight_random[0], weight_random[1], size=n_size ** 2
-    )
     feat_arr = feat.reshape(image_side, image_side)
-    wght_arr = wght.reshape(n_size, n_size)
-    fast_conv = [
-        fast.conv1d(
-            wght_arr[i], c, q, b, a, type_int=integer
+
+    if dim == 1:
+        wght = np.random.randint(
+            weight_random[0], weight_random[1], size=b_len ** 2
         )
-        for i in range(n_size)
-    ]
+        wght_arr = wght.reshape(b_len, b_len)
+    elif dim == 2:
+        wght = np.random.randint(
+            weight_random[0], weight_random[1],
+            size=b_len[0] * b_len[1]
+        )
+        wght_arr = wght.reshape(b_len[0], b_len[1])
 
     output_default = signal.convolve2d(
         feat_arr, wght_arr[::-1, ::-1], mode='valid'
     )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
-    click.echo(
+    print(
         f"Output default and naive are equals: {compare_naive}"
     )
 
-    output_fast = np.sum(axis=0, a=[
-        fast.filter1d_slide2d(
-            fast_conv[i], feat_arr, output_default.shape, i, len(points),
-            m_size
-        )
-        for i in range(0, wght_arr.shape[0])
-     ])
+    if dim == 1:
+        points, c, b, a, q = read_build_1d()
+        fast_conv = [
+            fast.conv1d(
+                wght_arr[i], c, q, b, a, type_int=integer
+            )
+            for i in range(b_len)
+        ]
+
+        output_fast = np.sum(axis=0, a=[
+            fast.filter1d_slide2d(
+                fast_conv[i], feat_arr, output_default.shape, i, c_len,
+                a_len
+            )
+            for i in range(0, wght_arr.shape[0])
+         ])
+        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_iter * len(points) * len(fast_conv)
+    elif dim == 2:
+        points, c, b, a, q = read_build_2d()
+        fast_conv = fast.conv2d(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
+        output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
+        count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_iter * len(points[0]) * len(points[1])
 
     if integer:
         rmse = metrics.root_mean_squared_error(
@@ -542,19 +564,81 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
     click.echo(f"Additions: {size * 8}")
 
     click.echo("Fast totals:")
+    click.echo(f"Iterations: {count_iter}")
+    click.echo(f"Multiplications: {count_mult}")
 
-    fast_count = fast.filter1d_slide2d_count(output_default.shape, m_size)
-    mult = fast_count * len(points) * len(fast_conv)
-    click.echo(f"Iterations: {fast_count}")
-    click.echo(f"Multiplications: {mult}")
 
-    add0 = fast_count * 20 * len(fast_conv)
-    add1 = fast_count * 2 * len(fast_conv)
+# def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
+#     m_size, n_size, points, c, b, a, q = read_init()
 
-    click.echo(f"Additions: {add0 + add1}")
-    click.echo(f"* Additions for each batch processed: {add0}")
-    click.echo(f"* Additions to join batches: {add1}")
-    click.echo(
-        f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
-    )
+#     feat = np.random.randint(
+#          feature_random[0], feature_random[1], size=image_side ** 2
+#      )
+#     wght = np.random.randint(
+#         weight_random[0], weight_random[1], size=n_size ** 2
+#     )
+#     feat_arr = feat.reshape(image_side, image_side)
+#     wght_arr = wght.reshape(n_size, n_size)
+#     fast_conv = [
+#         fast.conv1d(
+#             wght_arr[i], c, q, b, a, type_int=integer
+#         )
+#         for i in range(n_size)
+#     ]
+
+#     output_default = signal.convolve2d(
+#         feat_arr, wght_arr[::-1, ::-1], mode='valid'
+#     )
+#     output_naive = naive_convolve(feat_arr, wght_arr)
+#     compare_naive = np.all(output_default == output_naive)
+#     click.echo(
+#         f"Output default and naive are equals: {compare_naive}"
+#     )
+
+#     output_fast = np.sum(axis=0, a=[
+#         fast.filter1d_slide2d(
+#             fast_conv[i], feat_arr, output_default.shape, i, len(points),
+#             m_size
+#         )
+#         for i in range(0, wght_arr.shape[0])
+#      ])
+
+#     if integer:
+#         rmse = metrics.root_mean_squared_error(
+#             output_default.reshape(-1), output_fast.reshape(-1)
+#         )
+#         mae = metrics.mean_absolute_error(
+#             output_default.reshape(-1), output_fast.reshape(-1)
+#         )
+#         click.echo(f"RMSE : {rmse}")
+#         click.echo(f"MAE : {mae}")
+#     else:
+#         compare_fast = np.all(output_default == output_fast)
+#         click.echo(
+#             f"Output default and fast are equals: {compare_fast}"
+#         )
+
+#     size = output_default.size
+
+#     click.echo("Naive totals:")
+#     click.echo(f"Iterations: {size}")
+#     click.echo(f"Multiplications: {size * 9}")
+#     click.echo(f"Additions: {size * 8}")
+
+#     click.echo("Fast totals:")
+
+#     fast_count = fast.filter1d_slide2d_count(output_default.shape, m_size)
+#     mult = fast_count * len(points) * len(fast_conv)
+#     click.echo(f"Iterations: {fast_count}")
+#     click.echo(f"Multiplications: {mult}")
+
+#     add0 = fast_count * 20 * len(fast_conv)
+#     add1 = fast_count * 2 * len(fast_conv)
+
+#     click.echo(f"Additions: {add0 + add1}")
+#     click.echo(f"* Additions for each batch processed: {add0}")
+#     click.echo(f"* Additions to join batches: {add1}")
+#     click.echo(
+#         f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
+#     )
 
