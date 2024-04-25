@@ -1,9 +1,9 @@
 sympy~=1.12
 numpy~=1.24.4
+scipy~=1.10.1
+click==8.1.7
 pymupdf~=1.23.8
 pillow~=10.2.0
-scipy~=1.10.1
+pylatex~=1.4.2
 scikit-learn~=1.4.2
-matplotlib
-jupyter
-ipython
+matplotlib~=3.8.4
