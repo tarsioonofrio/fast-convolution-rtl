@@ -465,12 +465,12 @@ def cmd_sim_file(feature, weight):
 
     click.echo("Totals")
     click.echo("Naive")
-    click.echo(f"Iterations: {size}")
+    click.echo(f"Convolutions: {size}")
     click.echo(f"Multiplications: {size * 9}")
     click.echo(f"Additions: {size * 8}")
 
     click.echo("Fast")
-    click.echo(f"Iterations: {count_iter}")
+    click.echo(f"Convolutions: {count_iter}")
     click.echo(f"Multiplications: {count_mult}")
     # add0 = fast_count * 20 * len(fast_conv)
     # add1 = fast_count * 2 * len(fast_conv)
@@ -561,12 +561,12 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
 
     click.echo("Totals:")
     click.echo("Naive:")
-    click.echo(f"Iterations: {size}")
+    click.echo(f"Convolutions: {size}")
     click.echo(f"Multiplications: {size * 9}")
     click.echo(f"Additions: {size * 8}")
 
     click.echo("Fast:")
-    click.echo(f"Iterations: {count_iter}")
+    click.echo(f"Convolutions: {count_iter}")
     click.echo(f"Multiplications: {count_mult}")
 
 
