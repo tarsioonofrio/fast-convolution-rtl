@@ -311,8 +311,8 @@ def save_example_pdf(b, c, a, bg, d, g, q, path):
     # d = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
     dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
 
-    s_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
-    ss_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
+    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
+    ss_sym = sy.Matrix(sy.symbols(" ".join(f"SS_{i}"for i in range(a.T.shape[0]))))
     # bgs = sy.hadamard_product(q, sy.MatMul(b, g)) mul = sy.MatMul(a.T, bg,
     # c.T, d)
 
@@ -348,21 +348,25 @@ def save_example_pdf(b, c, a, bg, d, g, q, path):
             syt(d)
         ])
     )
-    s_num = sy.hadamard_product(gg_num, dd_num)
+    ss_num = sy.hadamard_product(gg_num, dd_num)
     doc.append(
         tex.Math(escape=False, data=[
-            syt(s_sym), "=", syt(s_num),
+            syt(ss_sym), "=", syt(ss_num),
             "=", syt(gg_num), r"\odot", syt(dd_num),
         ])
     )
-    ss_num = a.T * s_num
+    s_num = a.T * ss_num
     doc.append(
         tex.Math(data=[
-            syt(ss_sym), "=", syt(ss_num), "=", syt(a.T),
-            syt(s_num)
+            syt(s_sym), "=", syt(s_num), "=", syt(a.T),
+            syt(ss_num)
         ])
     )
-
+    output_default = signal.convolve(
+        d, g[::-1, ::-1], mode='valid'
+    )
+    compare_naive = np.all(output_default.reshape(-1) == np.array(s_num).reshape(-1))
+    print(output_default, s_num, compare_naive)
     doc.append(
         tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
     )
