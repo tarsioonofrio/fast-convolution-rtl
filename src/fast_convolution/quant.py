@@ -1,0 +1,56 @@
+import numpy as np
+import sympy as sy
+
+from . import fast
+
+
+def select_func1d(quant_data):
+    mapping = {
+        "shift": shift1d
+    }
+    func = mapping[quant_data["func"]]
+    func_instance = func(**quant_data["params"])
+    return func_instance
+
+
+def select_func2d(quant_data):
+    mapping = {
+        "shift": shift2d
+    }
+    func = mapping[quant_data["func"]]
+    func_instance = func(**quant_data["params"])
+    return func_instance
+
+
+# TODO maybe inject quant transform and inverse functions in fast.conv1d{2d}
+# functions
+def shift1d(bits):
+    def conv1d(g, c, q, b, a):
+        g0 = np.left_shift(g, bits).tolist()
+        bg0 = fast.g_to_bg(q, b, g0)
+        bg = sy.Matrix(np.array(bg0, dtype=int))
+        conv = fast.wrap_convolution(c, bg, a)
+
+        def quant_conv(f):
+            # fq = np.left_shift(f, bits)
+            quant_out = conv(f)
+            out = sy.Matrix(np.right_shift(quant_out, bits))
+            return out
+        return quant_conv
+    return conv1d
+
+
+def shift2d(bits):
+    def conv2d(g, c1, q1, b1, a1, c2, q2, b2, a2):
+        g0 = np.left_shift(g, bits).tolist()
+        bg0 = fast.g_to_bg2d(q1, b1, q2, b2, g0)
+        bg = sy.Matrix(np.array(bg0, dtype=int))
+        conv = fast.wrap_convolution2d(c1, c2, bg, a1, a2)
+
+        def quant_conv(f):
+            # fq = np.left_shift(f, bits)
+            quant_out = conv(f)
+            out = sy.Matrix(np.right_shift(quant_out, bits))
+            return out
+        return quant_conv
+    return conv2d
