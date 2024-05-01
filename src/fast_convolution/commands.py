@@ -200,7 +200,7 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     build_dir.mkdir(parents=True, exist_ok=True)
-    save_pdf(b, c, a, bg, di, build_dir / "convolution")
+    save_build_pdf(b, c, a, bg, di, build_dir / "convolution")
     click.echo("Build ok")
 
 
@@ -240,13 +240,13 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
     build_dir.mkdir(parents=True, exist_ok=True)
     path1 = build_dir / "convolution-axis1"
-    save_pdf(b1, c1, a1, bg1, di1, path1)
+    save_build_pdf(b1, c1, a1, bg1, di1, path1)
     path2 = build_dir / "convolution-axis2"
-    save_pdf(b2, c2, a2, bg2, di2, path2)
+    save_build_pdf(b2, c2, a2, bg2, di2, path2)
     click.echo("Build ok")
 
 
-def save_pdf(b, c, a, bg, di, path):
+def save_build_pdf(b, c, a, bg, di, path):
     bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
     bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
 
@@ -282,6 +282,64 @@ def save_pdf(b, c, a, bg, di, path):
         tex.Math(data=[
             tex_no_esc(cds), "=", tex_no_esc(c.T*cs), "=", tex_no_esc(c.T),
             tex_no_esc(cs)
+        ])
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(s_small), "=", tex_no_esc(a.T*s_big), "=", tex_no_esc(a.T),
+            tex_no_esc(s_big)
+        ])
+    )
+
+    doc.append(
+        tex.Math(data=[r"a^{t} =", tex_no_esc(fast.matrix_to_log2(a.T))], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"b =", tex_no_esc(fast.matrix_to_log2(b))], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"c^{t} =", tex_no_esc(fast.matrix_to_log2(c.T))], escape=False)
+    )
+
+    doc.generate_pdf(path, clean_tex=False)
+
+
+def save_example_pdf(b, c, a, bg, d, g, path):
+    # g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
+    gg = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
+
+    # d = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
+    dd = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
+
+    s_big = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
+    s_small = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
+
+    mul = sy.MatMul(a.T, bg, c.T, d)
+
+    doc = tex.Document()
+    doc.preamble.append(tex.Package('geometry', 'a3paper'))
+    doc.preamble.append(tex.Command('title', '1D Convolution'))
+    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
+    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
+    doc.append(tex.NoEscape(r'\maketitle'))
+
+    doc.append(
+        tex.Math(data=[r"s = a^t {(bg) \odot (c^t d)}"], escape=False)
+    )
+
+    doc.append(
+        tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(gg), "=", tex_no_esc(b*g), "=", tex_no_esc(b),
+            tex_no_esc(g)
+        ])
+    )
+    doc.append(
+        tex.Math(data=[
+            tex_no_esc(dd), "=", tex_no_esc(c.T*d), "=", tex_no_esc(c.T),
+            tex_no_esc(d)
         ])
     )
     doc.append(
@@ -631,7 +689,7 @@ def cmd_example(feature, weight):
         f = np.random.randint(
             feature[0], feature[1], size=c_len
         )
-        di = sy.Matrix(f)
+        d = sy.Matrix(f)
         w = np.random.randint(
             weight[0], weight[1], size=b_len
         )
@@ -641,7 +699,7 @@ def cmd_example(feature, weight):
             feature[0], feature[1], size=c_len[0]*c_len[1]
         )
         f = np.array(f0).reshape(c_len[0], c_len[1])
-        di = sy.Matrix(f)
+        d = sy.Matrix(f)
         w0 = np.random.randint(
             weight[0], weight[1], size=b_len[0] * b_len[1]
         )
@@ -652,7 +710,7 @@ def cmd_example(feature, weight):
         points, c, b, a, q = read_build_1d()
         bg = fast.g_to_bg(q, b, g)
         example_dir.mkdir(parents=True, exist_ok=True)
-        save_pdf(b, c, a, bg, di, example_dir / "example")
+        save_example_pdf(b, c, a, bg, d, g, example_dir / "example")
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
