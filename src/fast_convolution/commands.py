@@ -117,7 +117,7 @@ def read_quant_if_exists():
     return data
 
 
-def tex_no_esc(expr):
+def syt(expr):
     return tex.NoEscape(sy.latex(expr)) 
 
 
@@ -260,7 +260,7 @@ def save_build_pdf(b, c, a, bg, di, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
-    doc.preamble.append(tex.Command('title', '1D Convolution'))
+    doc.preamble.append(tex.Command('title', 'Symbolic 1D Convolution'))
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
@@ -270,41 +270,41 @@ def save_build_pdf(b, c, a, bg, di, path):
     )
 
     doc.append(
-        tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
+        tex.Math(data=[syt(s_small), "=", syt(mul)])
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(bgs), "=", tex_no_esc(b*bs), "=", tex_no_esc(b),
-            tex_no_esc(bs)
+            syt(bgs), "=", syt(b*bs), "=", syt(b),
+            syt(bs)
         ])
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(cds), "=", tex_no_esc(c.T*cs), "=", tex_no_esc(c.T),
-            tex_no_esc(cs)
+            syt(cds), "=", syt(c.T*cs), "=", syt(c.T),
+            syt(cs)
         ])
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(s_small), "=", tex_no_esc(a.T*s_big), "=", tex_no_esc(a.T),
-            tex_no_esc(s_big)
+            syt(s_small), "=", syt(a.T*s_big), "=", syt(a.T),
+            syt(s_big)
         ])
     )
 
     doc.append(
-        tex.Math(data=[r"a^{t} =", tex_no_esc(fast.matrix_to_log2(a.T))], escape=False)
+        tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"b =", tex_no_esc(fast.matrix_to_log2(b))], escape=False)
+        tex.Math(data=[r"b =", syt(fast.matrix_to_log2(b))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"c^{t} =", tex_no_esc(fast.matrix_to_log2(c.T))], escape=False)
+        tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
     )
 
     doc.generate_pdf(path, clean_tex=False)
 
 
-def save_example_pdf(b, c, a, bg, d, g, path):
+def save_example_pdf(b, c, a, bg, d, g, q, path):
     # g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
     gg = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
 
@@ -313,12 +313,14 @@ def save_example_pdf(b, c, a, bg, d, g, path):
 
     s_big = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
     s_small = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
+    # breakpoint()
+    bgs = sy.hadamard_product(q, sy.MatMul(b, g))
 
     mul = sy.MatMul(a.T, bg, c.T, d)
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
-    doc.preamble.append(tex.Command('title', '1D Convolution'))
+    doc.preamble.append(tex.Command('title', 'Numeric 1D Convolution'))
     doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
@@ -328,35 +330,37 @@ def save_example_pdf(b, c, a, bg, d, g, path):
     )
 
     doc.append(
-        tex.Math(data=[tex_no_esc(s_small), "=", tex_no_esc(mul)])
-    )
-    doc.append(
-        tex.Math(data=[
-            tex_no_esc(gg), "=", tex_no_esc(b*g), "=", tex_no_esc(b),
-            tex_no_esc(g)
+        tex.Math(escape=False, data=[
+            syt(s_small), "=", syt(a.T), r"\left[",syt(q), r"\odot \left(", syt(b), syt(g), r"\right)\right]",syt(d)
         ])
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(dd), "=", tex_no_esc(c.T*d), "=", tex_no_esc(c.T),
-            tex_no_esc(d)
+            syt(gg), "=", syt(b*g), "=", syt(b),
+            syt(g)
         ])
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(s_small), "=", tex_no_esc(a.T*s_big), "=", tex_no_esc(a.T),
-            tex_no_esc(s_big)
+            syt(dd), "=", syt(c.T*d), "=", syt(c.T),
+            syt(d)
+        ])
+    )
+    doc.append(
+        tex.Math(data=[
+            syt(s_small), "=", syt(a.T*s_big), "=", syt(a.T),
+            syt(s_big)
         ])
     )
 
     doc.append(
-        tex.Math(data=[r"a^{t} =", tex_no_esc(fast.matrix_to_log2(a.T))], escape=False)
+        tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"b =", tex_no_esc(fast.matrix_to_log2(b))], escape=False)
+        tex.Math(data=[r"b =", syt(fast.matrix_to_log2(b))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"c^{t} =", tex_no_esc(fast.matrix_to_log2(c.T))], escape=False)
+        tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
     )
 
     doc.generate_pdf(path, clean_tex=False)
@@ -428,14 +432,14 @@ def cmd_iterate2d():
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(g2), "=", tex_no_esc(g1 * b2.T), "=", tex_no_esc(g1),
-            tex_no_esc(b2.T)
+            syt(g2), "=", syt(g1 * b2.T), "=", syt(g1),
+            syt(b2.T)
         ], escape=False)
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(gg), "=", tex_no_esc(b1 * g2), "=", tex_no_esc(b1),
-            tex_no_esc(g2)
+            syt(gg), "=", syt(b1 * g2), "=", syt(b1),
+            syt(g2)
         ], escape=False)
     )
 
@@ -444,14 +448,14 @@ def cmd_iterate2d():
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(d2), "=", tex_no_esc(d1 * c2), "=", tex_no_esc(d1),
-            tex_no_esc(c2)
+            syt(d2), "=", syt(d1 * c2), "=", syt(d1),
+            syt(c2)
         ], escape=False)
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(dd), "=", tex_no_esc(c1.T * d2), "=", tex_no_esc(c1.T),
-            tex_no_esc(d2)
+            syt(dd), "=", syt(c1.T * d2), "=", syt(c1.T),
+            syt(d2)
         ], escape=False)
     )
 
@@ -463,14 +467,14 @@ def cmd_iterate2d():
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(s1), "=", tex_no_esc(s2 * a2), "=", tex_no_esc(s2),
-            tex_no_esc(a2)
+            syt(s1), "=", syt(s2 * a2), "=", syt(s2),
+            syt(a2)
         ], escape=False)
     )
     doc.append(
         tex.Math(data=[
-            tex_no_esc(s), "=", tex_no_esc(a1.T * s1), "=", tex_no_esc(a1.T),
-            tex_no_esc(s1)
+            syt(s), "=", syt(a1.T * s1), "=", syt(a1.T),
+            syt(s1)
         ], escape=False)
     )
     path = build_dir / "bind"
@@ -710,7 +714,7 @@ def cmd_example(feature, weight):
         points, c, b, a, q = read_build_1d()
         bg = fast.g_to_bg(q, b, g)
         example_dir.mkdir(parents=True, exist_ok=True)
-        save_example_pdf(b, c, a, bg, d, g, example_dir / "example")
+        save_example_pdf(b, c, a, bg, d, g, q, example_dir / "example")
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
