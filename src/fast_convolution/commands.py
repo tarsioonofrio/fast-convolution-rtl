@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import Path
+from datetime import datetime
 
 import click
 import numpy as np
@@ -115,6 +116,10 @@ def read_quant_if_exists():
     with open(quant_file) as f:
         data = json.load(f)
     return data
+
+def now():
+    return datetime.now().strftime('%Y%m%d-%H%M')
+
 
 
 def syt(expr):
@@ -375,7 +380,7 @@ def save_example_pdf(b, c, a, g, d, q, path):
     doc.generate_pdf(path, clean_tex=False)
 
 
-def cmd_iterate2d():
+def cmd_build_iterate2d():
     dim, c_len, b_len, a_len = read_init()
     with open(build_file) as f:
         build_data = json.load(f)
@@ -433,7 +438,10 @@ def cmd_iterate2d():
     doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
     doc.append(tex.NoEscape(r'\maketitle'))
     doc.append(
-        tex.Math(data=["s=a_1^t [(b_1 g b_2^t) \odot (c_1^t d c_2)]a _2"], escape=False)
+        tex.Math(
+            escape=False,
+            data=[r"s=a_1^t [(b_1 g b_2^t) \odot (c_1^t d c_2)]a_2"],
+        )
     )
 
     doc.append(
@@ -441,8 +449,8 @@ def cmd_iterate2d():
     )
     doc.append(
         tex.Math(data=[
-            syt(g2), "=", syt(g1 * b2.T), "=", syt(g1),
-            syt(b2.T)
+            syt(g2), "=", syt(g1 * b2.T), "=",
+            syt(g1), syt(b2.T)
         ], escape=False)
     )
     doc.append(
@@ -723,10 +731,13 @@ def cmd_example_random(feature, weight):
         points, c, b, a, q = read_build_1d()
         # bg = fast.g_to_bg(q, b, g)
         example_dir.mkdir(parents=True, exist_ok=True)
-        save_example_pdf(b, c, a, g, d, q, example_dir / "example-random")
+        save_example_pdf(
+            b, c, a, g, d, q, example_dir / f"example-random-{now()}"
+        )
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
+        click.echo("Not implemented")
 
 
 def cmd_example_sequential(feature, weight):
@@ -749,9 +760,12 @@ def cmd_example_sequential(feature, weight):
         points, c, b, a, q = read_build_1d()
         # bg = fast.g_to_bg(q, b, g)
         example_dir.mkdir(parents=True, exist_ok=True)
-        save_example_pdf(b, c, a, g, d, q, example_dir / "example-sequential")
+        save_example_pdf(
+            b, c, a, g, d, q, example_dir / f"example-sequential-{now()}"
+        )
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
+        click.echo("Not implemented")
 
 

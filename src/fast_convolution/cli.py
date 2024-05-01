@@ -128,8 +128,8 @@ def bind(): pass
 
 @bind.command()
 def iterate():
-    from .commands import cmd_iterate2d
-    cmd_iterate2d()
+    from .commands import cmd_build_iterate2d
+    cmd_build_iterate2d()
 
 
 @bind.command(help="Not Implemented")
@@ -209,8 +209,10 @@ def random(feature, weight, image_side, integer, loop):
     from .commands import cmd_sim_random
     cmd_sim_random(feature, weight, image_side, integer, loop)
 
+
 @main.group()
 def example(): pass
+
 
 @example.command()
 @click.option(
