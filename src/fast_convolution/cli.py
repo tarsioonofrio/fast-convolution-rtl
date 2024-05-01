@@ -8,10 +8,6 @@ import click
 from .commands import (
     read_init_if_exists, num_points1d, num_points2d,
     default_toom_cook_points1d, default_toom_cook_points2d,
-#     cmd_init, cmd_build_toom_cook1d, cmd_build_toom_cook2d,
-#     cmd_sim_file, cmd_sim_random, cmd_example_user, cmd_example_random,
-#     cmd_iterate2d,
-#     cmd_quant_none, cmd_quant_shift
 )
 
 
@@ -52,6 +48,15 @@ def init1d(in_len, out_len, w):
 def init2d(in_len, out_len, w):
     from .commands import cmd_init
     cmd_init(2, in_len, out_len, w)
+
+
+@main.command()
+@click.option('-i', '--init', flag_value=True)
+@click.option('-b', '--build', flag_value=True)
+@click.option('-q', '--quant', flag_value=True)
+def show(init, build, quant):
+    from .commands import cmd_show
+    cmd_show(init, build, quant)
 
 
 @main.group()

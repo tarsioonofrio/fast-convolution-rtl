@@ -23,6 +23,7 @@ build_file = config_dir / "build.json"
 quant_file = config_dir / "quant.json"
 build_dir = root_path / "build"
 quant_dir = root_path / "quant"
+example_dir = root_path / "example"
 sim_dir = root_path / "sim"
 
 
@@ -159,6 +160,20 @@ def cmd_init(dimensions, in_len, out_len, w):
     with open(init_file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     click.echo("Init ok")
+
+
+def cmd_show(init, build, quant):
+    init_data = read_init_if_exists()
+    if init_file.exists():
+        if init:
+            click.echo(read_init_if_exists())
+        if build and build_file.exists():
+            if init_data["dim"] == 1:
+                click.echo(read_build_1d())
+            elif init_data["dim"] == 2:
+                click.echo(read_build_2d())
+        if quant and quant_file.exists():
+            click.echo(read_quant_if_exists())
 
 
 def cmd_build_toom_cook1d(points):
@@ -610,7 +625,27 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
 
 
 def cmd_example_user(feature, weight):
-    pass
+    dim, c_len, b_len, a_len = read_init()
+
+    if dim == 1:
+        di = sy.Matrix(feature)
+        g = sy.Matrix(weight)
+    elif dim == 2:
+        feat = np.array(feature).reshape(c_len, c_len)
+        di = sy.Matrix(feat)
+        wght = np.array(weight).reshape(b_len, b_len)
+        g = sy.Matrix(wght)
+
+    if dim == 1:
+        points, c, b, a, q = read_build_1d()
+        bg = fast.g_to_bg(q, b, g)
+        build_dir.mkdir(parents=True, exist_ok=True)
+        save_pdf(b, c, a, bg, di, build_dir / "example")
+
+    elif dim == 2:
+        points, c, b, a, q = read_build_2d()
+
+    click.echo("Example ok")
 
 
 def cmd_example_random(feature_random, weight_random):
