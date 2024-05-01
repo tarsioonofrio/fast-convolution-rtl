@@ -210,25 +210,7 @@ def random(feature, weight, image_side, integer, loop):
     cmd_sim_random(feature, weight, image_side, integer, loop)
 
 
-@main.group()
-def example(): pass
-
-
-@example.command()
-@click.option(
-    "--feature", "-f", default=example_path / "karatsuba032.jpg",
-    help=("Feature file, can be a image or json list file.")
-)
-@click.option(
-    "--weight", "-w", default=example_path / "laplace.json",
-    help=("Weight file, need to be a json list file.")
-)
-def file(feature, weight):
-    from .commands import cmd_example_user
-    cmd_example_user(feature, weight)
-
-
-@example.command()
+@main.command()
 @click.option(
     "--feature", "-f", nargs=2, default=[0, 256],
     help=("Minimal and maximal value of feature random data.")
@@ -237,9 +219,10 @@ def file(feature, weight):
     "--weight", "-w", nargs=2, default=[0, 1024],
     help=("Minimal and maximal value of weight random data.")
 )
-def random(feature, weight, integer):
-    from .commands import cmd_example_random
-    cmd_example_random(feature, weight)
+def example(feature, weight):
+    from .commands import cmd_example
+    cmd_example(feature, weight)
+    click.echo("Example ok")
 
 
 if __name__ == '__main__':

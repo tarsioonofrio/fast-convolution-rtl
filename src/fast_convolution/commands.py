@@ -624,23 +624,35 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
     click.echo(f"Multiplications: {count_mult}")
 
 
-def cmd_example_user(feature, weight):
+def cmd_example(feature, weight):
     dim, c_len, b_len, a_len = read_init()
 
     if dim == 1:
-        di = sy.Matrix(feature)
-        g = sy.Matrix(weight)
+        f = np.random.randint(
+            feature[0], feature[1], size=c_len
+        )
+        di = sy.Matrix(f)
+        w = np.random.randint(
+            weight[0], weight[1], size=b_len
+        )
+        g = sy.Matrix(w)
     elif dim == 2:
-        feat = np.array(feature).reshape(c_len, c_len)
-        di = sy.Matrix(feat)
-        wght = np.array(weight).reshape(b_len, b_len)
-        g = sy.Matrix(wght)
+        f0 = np.random.randint(
+            feature[0], feature[1], size=c_len[0]*c_len[1]
+        )
+        f = np.array(f0).reshape(c_len[0], c_len[1])
+        di = sy.Matrix(f)
+        w0 = np.random.randint(
+            weight[0], weight[1], size=b_len[0] * b_len[1]
+        )
+        w = np.array(w0).reshape(b_len[0], b_len[1])
+        g = sy.Matrix(w)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
         bg = fast.g_to_bg(q, b, g)
-        build_dir.mkdir(parents=True, exist_ok=True)
-        save_pdf(b, c, a, bg, di, build_dir / "example")
+        example_dir.mkdir(parents=True, exist_ok=True)
+        save_pdf(b, c, a, bg, di, example_dir / "example")
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
@@ -648,5 +660,3 @@ def cmd_example_user(feature, weight):
     click.echo("Example ok")
 
 
-def cmd_example_random(feature_random, weight_random):
-    pass
