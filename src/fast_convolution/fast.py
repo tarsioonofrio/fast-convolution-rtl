@@ -287,32 +287,29 @@ def g_to_bg(cq, b, g):
 
 
 def g_to_bg2d(cq1, b1, cq2, b2, g):
-    #breakpoint()
     bg = (sy.diag(*cq2) * b2) * sy.Matrix(g) * (sy.diag(*cq1) * b1).T
     return bg
 
 
-def conv1d(g, c, q, b, a, type_int=False):
-    bg0 = g_to_bg(q, b, g)
-    bg = bg0 if type_int is False else sy.Matrix(np.array(bg0, dtype=int))
+def conv1d(g, c, q, b, a):
+    bg = g_to_bg(q, b, g)
     f = wrap_convolution(c, bg, a)
     return f
 
 
-def toomcook_conv1d(d_size, g_size, points, g, type_int=False):
+def toomcook_conv1d(d_size, g_size, points, g):
     c, q, b, a = toom_cook(d_size, g_size, points)
-    f = conv1d(g, c, q, b, a, type_int)
+    f = conv1d(g, c, q, b, a)
     return f
 
 
-def conv2d(g, c1, q1, b1, a1, c2, q2, b2, a2, type_int=False):
-    bg0 = g_to_bg2d(q1, b1, q2, b2, g)
-    bg = bg0 if type_int is False else sy.Matrix(np.array(bg0, dtype=int))
+def conv2d(g, c1, q1, b1, a1, c2, q2, b2, a2):
+    bg = g_to_bg2d(q1, b1, q2, b2, g)
     f = wrap_convolution2d(c1, c2, bg, a1, a2)
     return f
 
 
-def toomcook_conv2d(d_size, g_size, points, g, type_int=False):
+def toomcook_conv2d(d_size, g_size, points, g):
     c1, q1, b1, a1 = toom_cook(d_size, g_size, points)
     c2, q2, b2, a2 = toom_cook(d_size, g_size, points)
     f = conv2d(g, c1, q1, b1, a1, c2, q2, b2, a2)
