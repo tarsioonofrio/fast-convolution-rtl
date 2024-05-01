@@ -182,9 +182,9 @@ def cmd_build_toom_cook1d(points):
     list_points = [np.inf if p == 'inf' else int(p) for p in points]
 
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
-    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len))))
+    d = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len))))
-    bg = fast.g_to_bg(q, b, g)
+    # bg = fast.g_to_bg(q, b, g)
     qr = [
         [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
         for i in q
@@ -200,8 +200,7 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     build_dir.mkdir(parents=True, exist_ok=True)
-    save_build_pdf(b, c, a, bg, di, build_dir / "convolution")
-    click.echo("Build ok")
+    save_build_pdf(b, c, a, g, d, sy.Matrix(q), build_dir / "convolution")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -246,17 +245,11 @@ def cmd_build_toom_cook2d(points1d, points2d):
     click.echo("Build ok")
 
 
-def save_build_pdf(b, c, a, bg, di, path):
-    bs = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
-    bgs = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-
-    cs = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
-    cds = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
-
-    s_big = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
-    s_small = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
-
-    mul = sy.MatMul(a.T, bg, c.T, di)
+def save_build_pdf(b, c, a, g, d, q, path):
+    gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
+    dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
+    ss_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
+    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
@@ -270,24 +263,31 @@ def save_build_pdf(b, c, a, bg, di, path):
     )
 
     doc.append(
-        tex.Math(data=[syt(s_small), "=", syt(mul)])
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(bgs), "=", syt(b*bs), "=", syt(b),
-            syt(bs)
+        tex.Math(escape=False, data=[
+            syt(s_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
+            syt(b), syt(g), r"\right)\right\} \odot", syt(d)
         ])
     )
+    gg_num = sy.hadamard_product(q, b * g)
     doc.append(
-        tex.Math(data=[
-            syt(cds), "=", syt(c.T*cs), "=", syt(c.T),
-            syt(cs)
+        tex.Math(escape=False, data=[
+            syt(gg_sym), "=", syt(gg_num),
+            "=", syt(q), r"\odot", syt(b*g), "=",
+            syt(q), r"\odot \left(", syt(b), syt(g), r"\right)"
         ])
     )
+    dd_num = c.T*d
     doc.append(
         tex.Math(data=[
-            syt(s_small), "=", syt(a.T*s_big), "=", syt(a.T),
-            syt(s_big)
+            syt(dd_sym), "=", syt(dd_num), "=", syt(c.T),
+            syt(d)
+        ])
+    )
+
+    doc.append(
+        tex.Math(data=[
+            syt(s_sym), "=", syt(a.T*ss_sym), "=", syt(a.T),
+            syt(ss_sym)
         ])
     )
 
@@ -304,17 +304,11 @@ def save_build_pdf(b, c, a, bg, di, path):
     doc.generate_pdf(path, clean_tex=False)
 
 
-def save_example_pdf(b, c, a, bg, d, g, q, path):
-    # g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
+def save_example_pdf(b, c, a, g, d, q, path):
     gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-
-    # d = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
     dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
-
-    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[1]))))
-    ss_sym = sy.Matrix(sy.symbols(" ".join(f"SS_{i}"for i in range(a.T.shape[0]))))
-    # bgs = sy.hadamard_product(q, sy.MatMul(b, g)) mul = sy.MatMul(a.T, bg,
-    # c.T, d)
+    ss_sym = sy.Matrix(sy.symbols(" ".join(f"SS_{i}"for i in range(a.T.shape[1]))))
+    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
@@ -329,8 +323,8 @@ def save_example_pdf(b, c, a, bg, d, g, q, path):
 
     doc.append(
         tex.Math(escape=False, data=[
-            syt(ss_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
-            syt(b), syt(g), r"\right)\right\}", syt(d)
+            syt(s_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
+            syt(b), syt(g), r"\right) \right\} \odot", syt(d)
         ])
     )
     gg_num = sy.hadamard_product(q, b * g)
@@ -365,8 +359,10 @@ def save_example_pdf(b, c, a, bg, d, g, q, path):
     output_default = signal.convolve(
         d, g[::-1, ::-1], mode='valid'
     )
-    compare_naive = np.all(output_default.reshape(-1) == np.array(s_num).reshape(-1))
-    print(output_default, s_num, compare_naive)
+    compare_naive = np.all(
+        output_default.reshape(-1) == np.array(s_num).reshape(-1)
+    )
+    print("Result:", compare_naive)
     doc.append(
         tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
     )
@@ -376,7 +372,6 @@ def save_example_pdf(b, c, a, bg, d, g, q, path):
     doc.append(
         tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
     )
-
     doc.generate_pdf(path, clean_tex=False)
 
 
@@ -700,7 +695,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
     click.echo(f"Multiplications: {count_mult}")
 
 
-def cmd_example(feature, weight):
+def cmd_example_random(feature, weight):
     dim, c_len, b_len, a_len = read_init()
 
     if dim == 1:
@@ -726,13 +721,37 @@ def cmd_example(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        bg = fast.g_to_bg(q, b, g)
+        # bg = fast.g_to_bg(q, b, g)
         example_dir.mkdir(parents=True, exist_ok=True)
-        save_example_pdf(b, c, a, bg, d, g, q, example_dir / "example")
+        save_example_pdf(b, c, a, g, d, q, example_dir / "example-random")
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
 
 
+def cmd_example_sequential(feature, weight):
+    dim, c_len, b_len, a_len = read_init()
+
+    if dim == 1:
+        f = np.arange(feature, feature + c_len)
+        d = sy.Matrix(f)
+        w = np.arange(weight, weight + b_len)
+        g = sy.Matrix(w)
+    elif dim == 2:
+        f0 = np.random.randint(feature, feature + c_len[0]*c_len[1])
+        f = np.array(f0).reshape(c_len[0], c_len[1])
+        d = sy.Matrix(f)
+        w0 = np.random.randint(weight, weight + b_len[0] * b_len[1])
+        w = np.array(w0).reshape(b_len[0], b_len[1])
+        g = sy.Matrix(w)
+
+    if dim == 1:
+        points, c, b, a, q = read_build_1d()
+        # bg = fast.g_to_bg(q, b, g)
+        example_dir.mkdir(parents=True, exist_ok=True)
+        save_example_pdf(b, c, a, g, d, q, example_dir / "example-sequential")
+
+    elif dim == 2:
+        points, c, b, a, q = read_build_2d()
 
 

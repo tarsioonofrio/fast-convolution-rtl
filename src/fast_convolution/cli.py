@@ -209,8 +209,10 @@ def random(feature, weight, image_side, integer, loop):
     from .commands import cmd_sim_random
     cmd_sim_random(feature, weight, image_side, integer, loop)
 
+@main.group()
+def example(): pass
 
-@main.command()
+@example.command()
 @click.option(
     "--feature", "-f", nargs=2, default=[0, 256],
     help=("Minimal and maximal value of feature random data.")
@@ -219,9 +221,24 @@ def random(feature, weight, image_side, integer, loop):
     "--weight", "-w", nargs=2, default=[0, 1024],
     help=("Minimal and maximal value of weight random data.")
 )
-def example(feature, weight):
-    from .commands import cmd_example
-    cmd_example(feature, weight)
+def random(feature, weight):
+    from .commands import cmd_example_random
+    cmd_example_random(feature, weight)
+    click.echo("Example ok")
+
+
+@example.command()
+@click.option(
+    "--feature", "-f", default=0,
+    help=("Minimal value of sequential feature data.")
+)
+@click.option(
+    "--weight", "-w", default=0,
+    help=("Minimal value of sequential weight data.")
+)
+def sequential(feature, weight):
+    from .commands import cmd_example_sequential
+    cmd_example_sequential(feature, weight)
     click.echo("Example ok")
 
 
