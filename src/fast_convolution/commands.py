@@ -657,6 +657,6 @@ def cmd_example(feature, weight):
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
 
-    click.echo("Example ok")
+
 
 
