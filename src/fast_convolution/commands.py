@@ -306,17 +306,15 @@ def save_build_pdf(b, c, a, bg, di, path):
 
 def save_example_pdf(b, c, a, bg, d, g, q, path):
     # g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b.shape[1]))))
-    gg = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
+    gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
 
     # d = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
-    dd = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
+    dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
 
-    s_big = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
-    s_small = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
-    # breakpoint()
-    bgs = sy.hadamard_product(q, sy.MatMul(b, g))
-
-    mul = sy.MatMul(a.T, bg, c.T, d)
+    s_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
+    ss_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
+    # bgs = sy.hadamard_product(q, sy.MatMul(b, g)) mul = sy.MatMul(a.T, bg,
+    # c.T, d)
 
     doc = tex.Document()
     doc.preamble.append(tex.Package('geometry', 'a3paper'))
@@ -331,25 +329,37 @@ def save_example_pdf(b, c, a, bg, d, g, q, path):
 
     doc.append(
         tex.Math(escape=False, data=[
-            syt(s_small), "=", syt(a.T), r"\left[",syt(q), r"\odot \left(", syt(b), syt(g), r"\right)\right]",syt(d)
+            syt(ss_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
+            syt(b), syt(g), r"\right)\right\}", syt(d)
         ])
     )
+    gg_num = sy.hadamard_product(q, b * g)
     doc.append(
-        tex.Math(data=[
-            syt(gg), "=", syt(b*g), "=", syt(b),
-            syt(g)
+        tex.Math(escape=False, data=[
+            syt(gg_sym), "=", syt(gg_num),
+            "=", syt(q), r"\odot", syt(b*g), "=",
+            syt(q), r"\odot \left(", syt(b), syt(g), r"\right)"
         ])
     )
+    dd_num = c.T*d
     doc.append(
         tex.Math(data=[
-            syt(dd), "=", syt(c.T*d), "=", syt(c.T),
+            syt(dd_sym), "=", syt(dd_num), "=", syt(c.T),
             syt(d)
         ])
     )
+    s_num = sy.hadamard_product(gg_num, dd_num)
+    doc.append(
+        tex.Math(escape=False, data=[
+            syt(s_sym), "=", syt(s_num),
+            "=", syt(gg_num), r"\odot", syt(dd_num),
+        ])
+    )
+    ss_num = a.T * s_num
     doc.append(
         tex.Math(data=[
-            syt(s_small), "=", syt(a.T*s_big), "=", syt(a.T),
-            syt(s_big)
+            syt(ss_sym), "=", syt(ss_num), "=", syt(a.T),
+            syt(s_num)
         ])
     )
 
