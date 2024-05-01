@@ -442,10 +442,9 @@ def cmd_sim_file(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-
         conv_func = (
             fast.conv1d if len(quant_data) == 0
-            else quant.select_func(quant_data)
+            else quant.select_func1d(quant_data)
         )
         fast_conv = [
             conv_func(
@@ -465,7 +464,11 @@ def cmd_sim_file(feature, weight):
         count_mult = count_iter * len(points) * len(fast_conv)
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
-        fast_conv = fast.conv2d(
+        conv_func = (
+            fast.conv2d if len(quant_data) == 0
+            else quant.select_func2d(quant_data)
+        )
+        fast_conv = conv_func(
             wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
         )
         output_fast = fast.filter2d_slide2d(
@@ -512,13 +515,7 @@ def cmd_sim_file(feature, weight):
 
 def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
     dim, c_len, b_len, a_len = read_init()
-
-    # with open('quant.json') as f:
-    #     quant_file = json.load(f)
-
-    # constant = quant_file["const"]
-    integer = False
-
+    quant_data = read_quant_if_exists()
     feat = np.random.randint(
          feature_random[0], feature_random[1], size=image_side ** 2
      )
@@ -547,9 +544,13 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
+        conv_func = (
+            fast.conv1d if len(quant_data) == 0
+            else quant.select_func1d(quant_data)
+        )
         fast_conv = [
-            fast.conv1d(
-                wght_arr[i], c, q, b, a, type_int=integer
+            conv_func(
+                wght_arr[i], c, q, b, a
             )
             for i in range(b_len)
         ]
@@ -565,7 +566,11 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
         count_mult = count_iter * len(points) * len(fast_conv)
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
-        fast_conv = fast.conv2d(
+        conv_func = (
+            fast.conv2d if len(quant_data) == 0
+            else quant.select_func2d(quant_data)
+        )
+        fast_conv = conv_func(
             wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
         )
         output_fast = fast.filter2d_slide2d(
@@ -576,7 +581,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
         )
         count_mult = count_iter * len(points[0]) * len(points[1])
 
-    if integer:
+    if len(quant_data) != 0:
         rmse = metrics.root_mean_squared_error(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
