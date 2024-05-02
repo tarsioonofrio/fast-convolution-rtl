@@ -180,7 +180,8 @@ def sim(): pass
 )
 def file(feature, weight):
     from .commands import cmd_sim_file
-    cmd_sim_file(feature, weight)
+    text = cmd_sim_file(feature, weight)
+    click.echo(text)
 
 
 @sim.command()
@@ -194,7 +195,7 @@ def file(feature, weight):
 )
 @click.option(
     "--loop", "-L", default=1,
-    help=("Total of execution loops.")
+    help=("Total of execution loops. Not implemented")
 )
 @click.option(
     "--feature", "-f", nargs=2, default=[0, 256],
@@ -204,10 +205,9 @@ def file(feature, weight):
     "--weight", "-w", nargs=2, default=[0, 1024],
     help=("Minimal and maximal value of weight random data.")
 )
-@click.option("--integer", "--int", "-i", flag_value=True)
-def random(feature, weight, image_side, integer, loop):
+def random(feature, weight, image_side, loop):
     from .commands import cmd_sim_random
-    cmd_sim_random(feature, weight, image_side, integer, loop)
+    cmd_sim_random(feature, weight, image_side, loop)
 
 
 @main.group()

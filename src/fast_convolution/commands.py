@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -530,9 +531,7 @@ def cmd_sim_file(feature, weight):
     )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
-    print(
-        f"Output default and naive are equals: {compare_naive}"
-    )
+    text_equal = f"Output default and naive are equals: {compare_naive}\n"
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
@@ -578,36 +577,36 @@ def cmd_sim_file(feature, weight):
         mae = metrics.mean_absolute_error(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        click.echo(f"RMSE : {rmse}")
-        click.echo(f"MAE : {mae}")
+        text_metric = (
+            f"RMSE : {rmse}\n"
+            f"MAE : {mae}\n"
+        )
     else:
         compare_fast = np.all(output_default == output_fast)
-        click.echo(
-            f"Output default and fast are equals: {compare_fast}"
-        )
+        text_metric = f"Output default and fast are equals: {compare_fast}\n"
 
     size = output_default.size
+    text = (
+        f"Feature: {feature}\n"
+        f"Weights: {weight}\n"
+        f"{text_equal}"
+        f"{text_metric}"
+        "Totals\n"
+        "Naive\n"
+        f"Convolutions: {size}\n"
+        f"Multiplications: {size * 9}\n"
+        f"Additions: {size * 8}\n"
+        "Fast\n"
+        f"Convolutions: {count_iter}\n"
+        f"Multiplications: {count_mult}\n"
+    )
+    sim_dir.mkdir(exist_ok=True, parents=True)
+    with open(sim_dir / f"file-{now()}.txt", 'w') as f:
+        f.write(text)
+    return text
 
-    click.echo("Totals")
-    click.echo("Naive")
-    click.echo(f"Convolutions: {size}")
-    click.echo(f"Multiplications: {size * 9}")
-    click.echo(f"Additions: {size * 8}")
 
-    click.echo("Fast")
-    click.echo(f"Convolutions: {count_iter}")
-    click.echo(f"Multiplications: {count_mult}")
-    # add0 = fast_count * 20 * len(fast_conv)
-    # add1 = fast_count * 2 * len(fast_conv)
-    # click.echo(f"Additions: {add0 + add1}")
-    # click.echo(f"* Additions for each batch processed: {add0}")
-    # click.echo(f"* Additions to join batches: {add1}")
-    # click.echo(
-    #     f"Extra operations - bit shifts and etc: {fast_count * 9 * len(fast_conv)}"
-    # )
-
-
-def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
+def cmd_sim_random(feature_random, weight_random, image_side, loop):
     dim, c_len, b_len, a_len = read_init()
     quant_data = read_quant_if_exists()
     feat = np.random.randint(
@@ -632,9 +631,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
     )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
-    print(
-        f"Output default and naive are equals: {compare_naive}"
-    )
+    text_equal = f"Output default and naive are equals: {compare_naive}\n"
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
@@ -682,25 +679,34 @@ def cmd_sim_random(feature_random, weight_random, image_side, integer, loop):
         mae = metrics.mean_absolute_error(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        click.echo(f"RMSE : {rmse}")
-        click.echo(f"MAE : {mae}")
+        text_metric = (
+            f"RMSE : {rmse}\n"
+            f"MAE : {mae}\n"
+        )
     else:
         compare_fast = np.all(output_default == output_fast)
-        click.echo(
-            f"Output default and fast are equals: {compare_fast}"
-        )
+        text_metric = f"Output default and fast are equals: {compare_fast}\n"
 
     size = output_default.size
-
-    click.echo("Totals:")
-    click.echo("Naive:")
-    click.echo(f"Convolutions: {size}")
-    click.echo(f"Multiplications: {size * 9}")
-    click.echo(f"Additions: {size * 8}")
-
-    click.echo("Fast:")
-    click.echo(f"Convolutions: {count_iter}")
-    click.echo(f"Multiplications: {count_mult}")
+    text = (
+        f"Feature: {feature_random}\n"
+        f"Weights: {weight_random}\n"
+        f"Image side: {image_side}\n"
+        f"{text_equal}"
+        f"{text_metric}"
+        "Totals\n"
+        "Naive\n"
+        f"Convolutions: {size}\n"
+        f"Multiplications: {size * 9}\n"
+        f"Additions: {size * 8}\n"
+        "Fast\n"
+        f"Convolutions: {count_iter}\n"
+        f"Multiplications: {count_mult}\n"
+    )
+    sim_dir.mkdir(exist_ok=True, parents=True)
+    with open(sim_dir / f"random-{now()}.txt", 'w') as f:
+        f.write(text)
+    return text
 
 
 def cmd_example_random(feature, weight):
