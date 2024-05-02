@@ -253,6 +253,7 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
 def save_build_pdf(b, c, a, g, d, q, path):
     gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
+    gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
     dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
     ss_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
     s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
@@ -271,7 +272,7 @@ def save_build_pdf(b, c, a, g, d, q, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(s_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
-            syt(b), syt(g), r"\right)\right\} \odot", syt(d)
+            syt(b), syt(g), r"\right)\right\} \odot \left(", syt(c.T), syt(d), r"\right)"
         ])
     )
     gg_num = sy.hadamard_product(q, b * g)
@@ -330,7 +331,7 @@ def save_example_pdf(b, c, a, g, d, q, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(s_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
-            syt(b), syt(g), r"\right) \right\} \odot", syt(d)
+            syt(b), syt(g), r"\right)\right\} \odot \left(", syt(c.T), syt(d), r"\right)"
         ])
     )
     gg_num = sy.hadamard_product(q, b * g)
