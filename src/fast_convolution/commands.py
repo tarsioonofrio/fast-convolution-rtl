@@ -266,13 +266,14 @@ def save_build_pdf(b, c, a, g, d, q, path):
     doc.append(tex.NoEscape(r'\maketitle'))
 
     doc.append(
-        tex.Math(data=[r"s = a^t {(bg) \odot (c^t d)}"], escape=False)
+        tex.Math(data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"], escape=False)
     )
 
     doc.append(
         tex.Math(escape=False, data=[
-            syt(s_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
-            syt(b), syt(g), r"\right)\right\} \odot \left(", syt(c.T), syt(d), r"\right)"
+            syt(s_sym), "=", syt(a.T), r"\left\{ \left[", syt(q),
+            r"\odot \left(", syt(b), syt(g), r"\right) \right]",
+            r"\odot \left(", syt(c.T), syt(d), r"\right) \right\}"
         ])
     )
     gg_num = sy.hadamard_product(q, b * g)
@@ -325,13 +326,17 @@ def save_example_pdf(b, c, a, g, d, q, path):
     doc.append(tex.NoEscape(r'\maketitle'))
 
     doc.append(
-        tex.Math(data=[r"s = a^t {(bg) \odot (c^t d)}"], escape=False)
+        tex.Math(
+            escape=False,
+            data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"]
+        )
     )
 
     doc.append(
         tex.Math(escape=False, data=[
-            syt(s_sym), "=", syt(a.T), r"\left\{", syt(q), r"\odot \left(",
-            syt(b), syt(g), r"\right)\right\} \odot \left(", syt(c.T), syt(d), r"\right)"
+            syt(s_sym), "=", syt(a.T), r"\left\{ \left[", syt(q),
+            r"\odot \left(", syt(b), syt(g), r"\right) \right]",
+            r"\odot \left(", syt(c.T), syt(d), r"\right) \right\}"
         ])
     )
     gg_num = sy.hadamard_product(q, b * g)
