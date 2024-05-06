@@ -128,8 +128,8 @@ def bind(): pass
 
 @bind.command()
 def iterate():
-    from .commands import cmd_build_iterate2d
-    cmd_build_iterate2d()
+    from .commands import cmd_build2d_bind_iterate
+    cmd_build2d_bind_iterate()
 
 
 @bind.command(help="Not Implemented")

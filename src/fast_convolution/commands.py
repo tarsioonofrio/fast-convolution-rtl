@@ -15,6 +15,7 @@ from sklearn import metrics
 
 from . import fast
 from . import quant
+from . import latex
 from .naive import naive_convolve
 
 
@@ -122,11 +123,6 @@ def now():
     return datetime.now().strftime('%Y%m%d-%H%M')
 
 
-
-def syt(expr):
-    return tex.NoEscape(sy.latex(expr)) 
-
-
 def cmd_init(dimensions, in_len, out_len, w):
     if init_file.exists():
         click.echo(
@@ -206,7 +202,7 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     build_dir.mkdir(parents=True, exist_ok=True)
-    save_build_pdf(b, c, a, g, d, sy.Matrix(q), build_dir / "convolution")
+    latex.save_build_pdf(b, c, a, g, d, sy.Matrix(q), build_dir / "convolution")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -245,264 +241,17 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
     build_dir.mkdir(parents=True, exist_ok=True)
     path1 = build_dir / "convolution-axis1"
-    save_build_pdf(b1, c1, a1, bg1, di1, path1)
+    latex.save_build_pdf(b1, c1, a1, bg1, di1, path1)
     path2 = build_dir / "convolution-axis2"
-    save_build_pdf(b2, c2, a2, bg2, di2, path2)
+    latex.save_build_pdf(b2, c2, a2, bg2, di2, path2)
     click.echo("Build ok")
 
 
-def save_build_pdf(b, c, a, g, d, q, path):
-    gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-    gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-    dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
-    ss_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
-    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
-
-    doc = tex.Document()
-    doc.preamble.append(tex.Package('geometry', 'a3paper'))
-    doc.preamble.append(tex.Command('title', 'Symbolic 1D Convolution'))
-    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
-    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
-    doc.append(tex.NoEscape(r'\maketitle'))
-
-    doc.append(
-        tex.Math(data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"], escape=False)
-    )
-
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(s_sym), "=", syt(a.T), r"\left\{ \left[", syt(q),
-            r"\odot \left(", syt(b), syt(g), r"\right) \right]",
-            r"\odot \left(", syt(c.T), syt(d), r"\right) \right\}"
-        ])
-    )
-    gg_num = sy.hadamard_product(q, b * g)
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q), r"\odot", syt(b*g), "=",
-            syt(q), r"\odot \left(", syt(b), syt(g), r"\right)"
-        ])
-    )
-    dd_num = c.T*d
-    doc.append(
-        tex.Math(data=[
-            syt(dd_sym), "=", syt(dd_num), "=", syt(c.T),
-            syt(d)
-        ])
-    )
-
-    doc.append(
-        tex.Math(data=[
-            syt(s_sym), "=", syt(a.T*ss_sym), "=", syt(a.T),
-            syt(ss_sym)
-        ])
-    )
-
-    doc.append(
-        tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"b =", syt(fast.matrix_to_log2(b))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
-    )
-
-    doc.generate_pdf(path, clean_tex=False)
-
-
-def save_example_pdf(b, c, a, g, d, q, path):
-    gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
-    dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
-    ss_sym = sy.Matrix(sy.symbols(" ".join(f"SS_{i}"for i in range(a.T.shape[1]))))
-    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
-
-    doc = tex.Document()
-    doc.preamble.append(tex.Package('geometry', 'a3paper'))
-    doc.preamble.append(tex.Command('title', 'Numeric 1D Convolution'))
-    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
-    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
-    doc.append(tex.NoEscape(r'\maketitle'))
-
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"]
-        )
-    )
-
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(s_sym), "=", syt(a.T), r"\left\{ \left[", syt(q),
-            r"\odot \left(", syt(b), syt(g), r"\right) \right]",
-            r"\odot \left(", syt(c.T), syt(d), r"\right) \right\}"
-        ])
-    )
-    gg_num = sy.hadamard_product(q, b * g)
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q), r"\odot", syt(b*g), "=",
-            syt(q), r"\odot \left(", syt(b), syt(g), r"\right)"
-        ])
-    )
-    dd_num = c.T*d
-    doc.append(
-        tex.Math(data=[
-            syt(dd_sym), "=", syt(dd_num), "=", syt(c.T),
-            syt(d)
-        ])
-    )
-    ss_num = sy.hadamard_product(gg_num, dd_num)
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(ss_sym), "=", syt(ss_num),
-            "=", syt(gg_num), r"\odot", syt(dd_num),
-        ])
-    )
-    s_num = a.T * ss_num
-    doc.append(
-        tex.Math(data=[
-            syt(s_sym), "=", syt(s_num), "=", syt(a.T),
-            syt(ss_num)
-        ])
-    )
-    output_default = signal.convolve(
-        d, g[::-1, ::-1], mode='valid'
-    )
-    compare_naive = np.all(
-        output_default.reshape(-1) == np.array(s_num).reshape(-1)
-    )
-    print("Result:", compare_naive)
-    doc.append(
-        tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"b =", syt(fast.matrix_to_log2(b))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
-    )
-    doc.generate_pdf(path, clean_tex=False)
-
-
-def cmd_build_iterate2d():
-    dim, c_len, b_len, a_len = read_init()
-    with open(build_file) as f:
-        build_data = json.load(f)
-
-    p1, p2 = build_data["p"]
-    c1 = sy.Matrix(build_data["c"][0])
-    c2 = sy.Matrix(build_data["c"][1])
-    q1, q2 = build_data["q"]
-    b1 = sy.Matrix(build_data["b"][0])
-    b2 = sy.Matrix(build_data["b"][1])
-    a1 = sy.Matrix(build_data["a"][0])
-    a2 = sy.Matrix(build_data["a"][1])
-
-    d1 = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0] * c_len[1])))
-    )
-    d2 = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"\\delta_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    dd = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    g1 = sy.Matrix(
-        b_len[0], b_len[0],
-        sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
-    )
-    g2 = sy.Matrix(
-        b_len[0], c_len[0],
-        sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
-    )
-    gg = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    s2 = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    s1 = sy.Matrix(
-        c_len[0], b_len[0],
-        sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
-    )
-    s = sy.Matrix(
-        a_len[0], a_len[0],
-        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(b_len[0] * b_len[1])))
-    )
-
-    doc = tex.Document()
-    doc.preamble.append(tex.Package('geometry', 'a1paper'))
-    doc.preamble.append(tex.Command('title', 'Iterated 2D Convolution'))
-    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
-    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
-    doc.append(tex.NoEscape(r'\maketitle'))
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[r"s=a_1^t [(b_1 g b_2^t) \odot (c_1^t d c_2)]a_2"],
-        )
-    )
-
-    doc.append(
-        tex.Math(data=[r"G = b_1 g b_2^t"], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(g2), "=", syt(g1 * b2.T), "=",
-            syt(g1), syt(b2.T)
-        ], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(gg), "=", syt(b1 * g2), "=", syt(b1),
-            syt(g2)
-        ], escape=False)
-    )
-
-    doc.append(
-        tex.Math(data=[r"D = c_1^t d c_2"], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(d2), "=", syt(d1 * c2), "=", syt(d1),
-            syt(c2)
-        ], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(dd), "=", syt(c1.T * d2), "=", syt(c1.T),
-            syt(d2)
-        ], escape=False)
-    )
-
-    doc.append(
-        tex.Math(data=[r"S = G \odot D"], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"s = a_1^t S a_2"], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(s1), "=", syt(s2 * a2), "=", syt(s2),
-            syt(a2)
-        ], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[
-            syt(s), "=", syt(a1.T * s1), "=", syt(a1.T),
-            syt(s1)
-        ], escape=False)
-    )
-    path = build_dir / "bind"
-    doc.generate_pdf(path, clean_tex=False)
+def cmd_build2d_bind_iterate():
+    path = build_dir / "bind-iterated"
+    init_data = read_init()
+    build_data = read_build_2d()
+    latex.save_build2d_bind_iterated(init_data, build_data, path)
 
 
 def cmd_quant_none():
@@ -717,6 +466,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
 
 def cmd_example_random(feature, weight):
     dim, c_len, b_len, a_len = read_init()
+    example_dir.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
         f = np.random.randint(
@@ -741,19 +491,20 @@ def cmd_example_random(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        # bg = fast.g_to_bg(q, b, g)
-        example_dir.mkdir(parents=True, exist_ok=True)
-        save_example_pdf(
+        latex.save_example_pdf(
             b, c, a, g, d, q, example_dir / f"example-random-{now()}"
         )
 
     elif dim == 2:
-        points, c, b, a, q = read_build_2d()
-        click.echo("Not implemented")
+        latex.save_example_bind_iterated(
+            read_init(), read_build_2d(), d, g,
+            example_dir / f"example-random-{now()}"
+        )
 
 
 def cmd_example_sequential(feature, weight):
     dim, c_len, b_len, a_len = read_init()
+    example_dir.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
         f = np.arange(feature, feature + c_len)
@@ -761,23 +512,25 @@ def cmd_example_sequential(feature, weight):
         w = np.arange(weight, weight + b_len)
         g = sy.Matrix(w)
     elif dim == 2:
-        f0 = np.random.randint(feature, feature + c_len[0]*c_len[1])
+        f0 = np.arange(feature, feature + c_len[0]*c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
         d = sy.Matrix(f)
-        w0 = np.random.randint(weight, weight + b_len[0] * b_len[1])
+        w0 = np.arange(weight, weight + b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
         g = sy.Matrix(w)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        # bg = fast.g_to_bg(q, b, g)
-        example_dir.mkdir(parents=True, exist_ok=True)
-        save_example_pdf(
+        latex.save_example_pdf(
             b, c, a, g, d, q, example_dir / f"example-sequential-{now()}"
         )
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
-        click.echo("Not implemented")
+        latex.save_example_bind_iterated(
+            read_init(), read_build_2d(), d, g,
+            example_dir / f"example-random-{now()}"
+        )
+
 
 

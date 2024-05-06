@@ -282,12 +282,12 @@ def toom_cook(d_size, g_size, points):
     return c_mtx, cq, b_mtx, a_mtx
 
 
-def g_to_bg(cq, b, g):
-    return sy.diag(*(sy.diag(*cq) * b * sy.Matrix(g)).tolist())
+def g_to_bg(q, b, g):
+    return sy.diag(*(sy.diag(*q) * b * sy.Matrix(g)).tolist())
 
 
-def g_to_bg2d(cq1, b1, cq2, b2, g):
-    bg = (sy.diag(*cq2) * b2) * sy.Matrix(g) * (sy.diag(*cq1) * b1).T
+def g_to_bg2d(q1, b1, q2, b2, g):
+    bg = (sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T
     return bg
 
 
