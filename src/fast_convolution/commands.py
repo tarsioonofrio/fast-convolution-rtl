@@ -254,6 +254,13 @@ def cmd_build2d_bind_iterate():
     latex.save_build2d_bind_iterated(init_data, build_data, path)
 
 
+def cmd_build2d_bind_nest():
+    path = build_dir / "bind-nest"
+    init_data = read_init()
+    build_data = read_build_2d()
+    latex.save_build2d_bind_iterated(init_data, build_data, path)
+
+
 def cmd_quant_none():
     quant_file.unlink(missing_ok=True)
 
@@ -526,7 +533,6 @@ def cmd_example_sequential(feature, weight):
         )
 
     elif dim == 2:
-        points, c, b, a, q = read_build_2d()
         latex.save_example_bind_iterated(
             read_init(), read_build_2d(), d, g,
             example_dir / f"example-random-{now()}"

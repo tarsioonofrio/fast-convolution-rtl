@@ -132,9 +132,10 @@ def iterate():
     cmd_build2d_bind_iterate()
 
 
-@bind.command(help="Not Implemented")
+@bind.command()
 def nest():
-    pass
+    from .commands import cmd_build2d_bind_nest
+    cmd_build2d_bind_nest()
 
 
 @main.group()
