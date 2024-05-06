@@ -251,14 +251,14 @@ def cmd_build2d_bind_iterate():
     path = build_dir / "bind-iterated"
     init_data = read_init()
     build_data = read_build_2d()
-    latex.save_build2d_bind_iterated(init_data, build_data, path)
+    latex.save_build2d_bind_iterate(init_data, build_data, path)
 
 
 def cmd_build2d_bind_nest():
     path = build_dir / "bind-nest"
     init_data = read_init()
     build_data = read_build_2d()
-    latex.save_build2d_bind_iterated(init_data, build_data, path)
+    latex.save_build2d_bind_nest(init_data, build_data, path)
 
 
 def cmd_quant_none():
@@ -503,7 +503,7 @@ def cmd_example_random(feature, weight):
         )
 
     elif dim == 2:
-        latex.save_example_bind_iterated(
+        latex.save_example_bind_iterate(
             read_init(), read_build_2d(), d, g,
             example_dir / f"example-random-{now()}"
         )
@@ -533,7 +533,7 @@ def cmd_example_sequential(feature, weight):
         )
 
     elif dim == 2:
-        latex.save_example_bind_iterated(
+        latex.save_example_bind_iterate(
             read_init(), read_build_2d(), d, g,
             example_dir / f"example-random-{now()}"
         )
