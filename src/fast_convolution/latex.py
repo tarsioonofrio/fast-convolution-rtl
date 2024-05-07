@@ -498,7 +498,7 @@ def save_build2d_bind_nest(init_data, build_data, path):
     doc.append(
         tex.Math(
             data=[
-                syt(cc_sym), "=", syt(cc_num),
+                "C =", syt(cc_num),
                 "=", syt(c1.T), r"\otimes", syt(c2.T)
             ],
             escape=False
@@ -511,11 +511,14 @@ def save_build2d_bind_nest(init_data, build_data, path):
     doc.append(
         tex.Math(
             data=[
-                syt(aa_sym), "=", syt(aa_num),
+                "A =", syt(aa_num),
                 "=", syt(a1.T), r"\otimes", syt(a2.T)
             ],
             escape=False
         )
+    )
+    doc.append(
+        tex.Math(data=[r"s = CD"], escape=False)
     )
     dd_num = cc_num * d_sym.reshape(d_sym.shape[0] * d_sym.shape[1], 1)
     doc.append(
@@ -538,8 +541,12 @@ def save_build2d_bind_nest(init_data, build_data, path):
         )
     )
     doc.append(
+        tex.Math(data=[r"s = AS"], escape=False)
+    )
+    s_num = aa_num * ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1)
+    doc.append(
         tex.Math(data=[
-            syt(s_sym), 
+            syt(s_sym.reshape(s_sym.shape[0] * s_sym.shape[1], 1)), "=", syt(s_num), 
             "=", syt(aa_num), syt(ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1))
         ])
     )
