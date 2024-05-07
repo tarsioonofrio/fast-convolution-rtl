@@ -13,7 +13,6 @@ from .commands import (
 
 root = Path(os.getcwd())
 example_path = Path(__file__).resolve().parent.parent.parent / "images"
-
 init_data = read_init_if_exists()
 
 
