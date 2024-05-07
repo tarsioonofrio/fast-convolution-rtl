@@ -412,7 +412,7 @@ def save_example_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     print("Result:", compare_naive)
 
 
-def save_build2d_bind_nest(init_data, build_data, path):
+def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -429,6 +429,156 @@ def save_build2d_bind_nest(init_data, build_data, path):
     )
 
     g_sym1 = sy.Matrix(
+        b_len[0], b_len[0],
+        sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
+    )
+    g_sym2 = sy.Matrix(
+        b_len[0], c_len[0],
+        sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
+    )
+    gg_sym = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    d_num = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"d_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    dd_sym = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    ss_sym = sy.Matrix(
+        c_len[0], c_len[0],
+        sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+    )
+    s_sym = sy.Matrix(
+        a_len[0], a_len[0],
+        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[1])))
+    )
+
+    doc = tex.Document()
+    doc.preamble.append(tex.Package('geometry', 'a0paper'))
+    doc.preamble.append(tex.Command('title', 'Symbolic 2D Nested Convolution'))
+    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
+    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
+    doc.append(tex.NoEscape(r'\maketitle'))
+
+    doc.append(
+        tex.Math(
+            escape=False,
+            data=[r"s=(a_1^t \otimes a_2^t) \{[(q_1 \odot b_1) g (q_2 \odot b_2)^t] \odot (c_1^t \otimes c_2^t)\} d"],
+        )
+    )
+    doc.append(
+        tex.Math(data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False)
+    )
+    g_num2 = sy.Matrix(g_num1) * (sy.diag(*q1) * b1).T
+    doc.append(
+        tex.Math(escape=False, data=[
+            syt(g_sym2), "=", syt(g_num2),
+            "=", syt(g_sym1), r"\odot", syt((sy.diag(*q1) * b1).T),
+            "=", syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
+        ])
+    )
+
+    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g_num2)
+    doc.append(
+        tex.Math(escape=False, data=[
+            syt(gg_sym), "=", syt(gg_num),
+            "=", syt(q2), r"\odot", syt(b2*g_sym2),
+            "=", "\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_sym2),
+        ])
+    )
+
+    doc.append(
+        tex.Math(data=[r"C = c_1^t \otimes c_2^t"], escape=False)
+    )
+    cc_num = TensorProduct(c1.T, c2.T)
+    doc.append(
+        tex.Math(
+            data=[
+                "C =", syt(cc_num),
+                "=", syt(c1.T), r"\otimes", syt(c2.T)
+            ],
+            escape=False
+        )
+    )
+    doc.append(
+        tex.Math(data=[r"A = a_1^t \otimes a_2^t"], escape=False)
+    )
+    aa_num = TensorProduct(a1.T, a2.T)
+    doc.append(
+        tex.Math(
+            data=[
+                "A =", syt(aa_num),
+                "=", syt(a1.T), r"\otimes", syt(a2.T)
+            ],
+            escape=False
+        )
+    )
+    doc.append(
+        tex.Math(data=[r"s = CD"], escape=False)
+    )
+    dd_num = cc_num * d_num.reshape(d_num.shape[0] * d_num.shape[1], 1)
+    doc.append(
+        tex.Math(data=[
+            syt(dd_sym.reshape(dd_sym.shape[0] * dd_sym.shape[1], 1)),
+            "=", syt(dd_num),
+            "=", syt(cc_num), syt(d_num.reshape(d_num.shape[0] * d_num.shape[1], 1))
+        ])
+    )
+    doc.append(
+        tex.Math(data=[r"S = G \odot D"], escape=False)
+    )
+    ss_num = sy.hadamard_product(gg_num, dd_num)
+    doc.append(
+        tex.Math(
+            data=[
+                syt(ss_sym), "=", syt(ss_num),
+                "=", syt(gg_num), r"\odot", syt(dd_num),
+            ],
+            escape=False
+        )
+    )
+    doc.append(
+        tex.Math(data=[r"s = AS"], escape=False)
+    )
+    s_num = aa_num * ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1)
+    doc.append(
+        tex.Math(data=[
+            syt(s_sym.reshape(s_num.shape[0] * s_sym.shape[1], 1)), "=", syt(s_num), 
+            "=", syt(aa_num), syt(ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1))
+        ])
+    )
+
+    doc.append(
+        tex.Math(data=[r"A =", syt(fast.matrix_to_log2(aa_num))], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num.T))], escape=False)
+    )
+
+    doc.generate_pdf(path, clean_tex=False)
+
+
+def save_build2d_bind_nest(init_data, build_data, path):
+    dim, c_len, b_len, a_len = init_data
+    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+
+    aa_shape = a1.shape[0] * a2.shape[0], a1.shape[1] * a2.shape[1],
+    aa_sym = sy.Matrix(
+        aa_shape[1], aa_shape[0],
+        sy.symbols(" ".join(f"A_{i}" for i in range(aa_shape[0] * aa_shape[1])))
+    )
+
+    cc_shape = c1.shape[0] * c2.shape[0], c1.shape[1] * c2.shape[1]
+    cc_sym = sy.Matrix(
+        cc_shape[1], cc_shape[0],
+        sy.symbols(" ".join(f"C_{i}"for i in range(cc_shape[0] * cc_shape[1])))
+    )
+
+    g_num1 = sy.Matrix(
         b_len[0], b_len[0],
         sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
     )
@@ -473,13 +623,12 @@ def save_build2d_bind_nest(init_data, build_data, path):
     doc.append(
         tex.Math(data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False)
     )
-    g_num2 = sy.Matrix(g_sym1) * (sy.diag(*q1) * b1).T
+    g_num2 = sy.Matrix(g_num1) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(escape=False, data=[
             syt(g_sym2), "=", syt(g_num2),
-            "=", syt(g_sym1), r"\odot", syt((sy.diag(*q1) * b1).T),
-            "=",syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t",
-            "=",syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
+            "=", syt(g_num1), r"\odot", syt((sy.diag(*q1) * b1).T),
+            "=",syt(g_num1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t",
         ])
     )
 
@@ -553,150 +702,6 @@ def save_build2d_bind_nest(init_data, build_data, path):
 
     doc.append(
         tex.Math(data=[r"A =", syt(fast.matrix_to_log2(aa_num))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num.T))], escape=False)
-    )
-
-    doc.generate_pdf(path, clean_tex=False)
-
-
-
-def save_example2d_bind_nest(init_data, build_data, path):
-    dim, c_len, b_len, a_len = init_data
-    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-
-    aa_sym = sy.Matrix(
-        sy.symbols(" ".join(f"A_{i}"for i in range(a_len[0])))
-    )
-    cc_sym = sy.Matrix(
-        sy.symbols(" ".join(f"C_{i}"for i in range(c_len[0])))
-    )
-
-    g_sym1 = sy.Matrix(
-        b_len[0], b_len[0],
-        sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
-    )
-    g_sym2 = sy.Matrix(
-        b_len[0], c_len[0],
-        sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
-    )
-    gg_sym = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    d_sym = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"d_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    dd_sym = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    ss_sym = sy.Matrix(
-        c_len[0], c_len[0],
-        sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
-    )
-    s_sym = sy.Matrix(
-        a_len[0], a_len[0],
-        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(b_len[0] * b_len[1])))
-    )
-
-    doc = tex.Document()
-    doc.preamble.append(tex.Package('geometry', 'a0paper'))
-    doc.preamble.append(tex.Command('title', 'Symbolic 2D Nested Convolution'))
-    doc.preamble.append(tex.Command('author', 'Fast-Convolution Python Library'))
-    doc.preamble.append(tex.Command('date', tex.NoEscape(r'\today')))
-    doc.append(tex.NoEscape(r'\maketitle'))
-
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[r"s=(a_1^t \otimes a_2^t) \{[(q_1 \odot b_1) g (q_2 \odot b_2)^t] \odot (c_1^t \otimes c_2^t)\} d"],
-        )
-    )
-    doc.append(
-        tex.Math(data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False)
-    )
-    g_num2 = sy.Matrix(g_sym1) * (sy.diag(*q1) * b1).T
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(g_sym2), "=", syt(g_num2),
-            "=", syt(g_sym1), r"\odot", syt((sy.diag(*q1) * b1).T),
-            "=",syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t",
-            "=",syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
-        ])
-    )
-
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g_sym2)
-    doc.append(
-        tex.Math(escape=False, data=[
-            syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q2), r"\odot", syt(b2*g_sym2),
-            r"= \left(", syt(q2), r"\odot", syt(b2), r"\right)", syt(g_num2),
-            r"= \left(", syt(q2), r"\odot", syt(b2), r"\right)", syt(g_sym2),
-        ])
-    )
-    doc.append(
-        tex.Math(data=[r"C = c_1^t \otimes c_2^t"], escape=False)
-    )
-    cc_num = TensorProduct(c1.T, c2.T)
-    doc.append(
-        tex.Math(
-            data=[
-                syt(cc_sym), "=", syt(cc_num),
-                "=", syt(c1.T), r"\otimes", syt(c2.T)
-            ],
-            escape=False
-        )
-    )
-    doc.append(
-        tex.Math(data=[r"A = a_1^t \otimes a_2^t"], escape=False)
-    )
-    aa_num = TensorProduct(a1.T, a2.T)
-    doc.append(
-        tex.Math(
-            data=[
-                syt(aa_sym), "=", syt(aa_num),
-                "=", syt(a1.T), r"\otimes", syt(a2.T)
-            ],
-            escape=False
-        )
-    )
-    dd_num = cc_num * d_sym.reshape(d_sym.shape[0] * d_sym.shape[1], 1)
-    doc.append(
-        tex.Math(data=[
-            syt(dd_sym), "=", syt(dd_num),
-            "=", syt(cc_num), syt(d_sym),
-            "=", syt(cc_sym), syt(d_sym)
-        ])
-    )
-    doc.append(
-        tex.Math(data=[r"S = G \odot D"], escape=False)
-    )
-    ss_num = sy.hadamard_product(
-        gg_num, dd_num.reshape(gg_num.shape[0], gg_num.shape[1])
-    )
-    doc.append(
-        tex.Math(
-            data=[
-                syt(ss_sym),"=", syt(ss_num),
-                "=", syt(gg_num), r"\odot", syt(dd_num)
-            ],
-            escape=False
-        )
-    )
-    s_num = aa_num * ss_num.reshape(ss_num.shape[0] *  ss_num.shape[1], 1)
-    doc.append(
-        tex.Math(data=[
-            syt(aa_sym), "=", syt(s_num),
-            "=", syt(aa_num), syt(ss_num),
-            "=", syt(aa_sym), syt(ss_sym)
-        ])
-    )
-
-    doc.append(
-        tex.Math(data=[r"a =", syt(fast.matrix_to_log2(aa_num))], escape=False)
     )
     doc.append(
         tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num.T))], escape=False)
