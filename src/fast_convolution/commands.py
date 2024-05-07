@@ -20,18 +20,19 @@ from .naive import naive_convolve
 
 
 root_path = Path(os.getcwd())
-config_dir = root_path / "config"
-init_file = config_dir / "init.json"
-build_file = config_dir / "build.json"
-quant_file = config_dir / "quant.json"
-build_dir = root_path / "build"
-quant_dir = root_path / "quant"
-example_dir = root_path / "example"
-sim_dir = root_path / "sim"
+dir_config = root_path / "config"
+file_init = dir_config / "init.json"
+file_build = dir_config / "build.json"
+file_bind = dir_config / "bind.json"
+file_quant = dir_config / "quant.json"
+dir_build = root_path / "build"
+dir_quant = root_path / "quant"
+dir_example = root_path / "example"
+dir_sim = root_path / "sim"
 
 
 def read_init():
-    with open(init_file) as f:
+    with open(file_init) as f:
         data = json.load(f)
     c = data["c"]
     a = data["a"]
@@ -41,7 +42,7 @@ def read_init():
 
 
 def read_build_1d():
-    with open(build_file) as f:
+    with open(file_build) as f:
         data = json.load(f)
     p = data["p"]
     c = sy.Matrix(data["c"])
@@ -54,7 +55,7 @@ def read_build_1d():
 
 
 def read_build_2d():
-    with open(build_file) as f:
+    with open(file_build) as f:
         data = json.load(f)
     p = sy.Matrix(data["p"][0]), sy.Matrix(data["p"][1])
     c = sy.Matrix(data["c"][0]), sy.Matrix(data["c"][1])
@@ -68,15 +69,15 @@ def read_build_2d():
 
 
 def read_init_if_exists():
-    if init_file.exists() is False:
+    if file_init.exists() is False:
         return {}
-    with open(init_file) as f:
+    with open(file_init) as f:
         data = json.load(f)
     return data
 
 
 def read_num_points():
-    if init_file.exists() is False:
+    if file_init.exists() is False:
         return 1
     dim, c, b, a = read_init()
     return c
@@ -113,18 +114,36 @@ def default_toom_cook_points2d(size0, axis=None):
 
 
 def read_quant_if_exists():
-    if quant_file.exists() is False:
+    if file_quant.exists() is False:
         return {}
-    with open(quant_file) as f:
+    with open(file_quant) as f:
         data = json.load(f)
     return data
+
 
 def now():
     return datetime.now().strftime('%Y%m%d-%H%M')
 
 
+def write_bind(func, param=None):
+    data = {
+        "func": func,
+        "params": {param}
+    }
+    with open(file_bind, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+def read_bind_if_exists():
+    if file_bind.exists() is False:
+        return {}
+    with open(file_bind) as f:
+        data = json.load(f)
+    return data
+
+
 def cmd_init(dimensions, in_len, out_len, w):
-    if init_file.exists():
+    if file_init.exists():
         click.echo(
             message="init.json existis, fconv model already initialized"
         )
@@ -158,23 +177,23 @@ def cmd_init(dimensions, in_len, out_len, w):
         "a": a.tolist(),
         "b": b.tolist(),
     }
-    init_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(init_file, 'w', encoding='utf-8') as f:
+    file_init.parent.mkdir(parents=True, exist_ok=True)
+    with open(file_init, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     click.echo("Init ok")
 
 
 def cmd_show(init, build, quant):
     init_data = read_init_if_exists()
-    if init_file.exists():
+    if file_init.exists():
         if init:
             click.echo(read_init_if_exists())
-        if build and build_file.exists():
+        if build and file_build.exists():
             if init_data["dim"] == 1:
                 click.echo(read_build_1d())
             elif init_data["dim"] == 2:
                 click.echo(read_build_2d())
-        if quant and quant_file.exists():
+        if quant and file_quant.exists():
             click.echo(read_quant_if_exists())
 
 
@@ -198,11 +217,11 @@ def cmd_build_toom_cook1d(points):
         "b": np.array(b, dtype=int).tolist(),
         "a": np.array(a, dtype=int).tolist(),
     }
-    with open(build_file, 'w', encoding='utf-8') as f:
+    with open(file_build, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    build_dir.mkdir(parents=True, exist_ok=True)
-    latex.save_build_pdf(b, c, a, g, d, sy.Matrix(q), build_dir / "convolution")
+    dir_build.mkdir(parents=True, exist_ok=True)
+    latex.save_build_pdf(b, c, a, g, d, sy.Matrix(q), dir_build / "convolution")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -236,33 +255,35 @@ def cmd_build_toom_cook2d(points1d, points2d):
         "b": [np.array(b1, dtype=int).tolist(), np.array(b2, dtype=int).tolist()],
         "a": [np.array(a1, dtype=int).tolist(), np.array(a2, dtype=int).tolist()],
     }
-    with open(build_file, 'w', encoding='utf-8') as f:
+    with open(file_build, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    build_dir.mkdir(parents=True, exist_ok=True)
-    path1 = build_dir / "convolution-axis1"
+    dir_build.mkdir(parents=True, exist_ok=True)
+    path1 = dir_build / "convolution-axis1"
     latex.save_build_pdf(b1, c1, a1, bg1, di1, path1)
-    path2 = build_dir / "convolution-axis2"
+    path2 = dir_build / "convolution-axis2"
     latex.save_build_pdf(b2, c2, a2, bg2, di2, path2)
     click.echo("Build ok")
 
 
 def cmd_build2d_bind_iterate():
-    path = build_dir / "bind-iterated"
+    path = dir_build / "bind-iterated"
     init_data = read_init()
     build_data = read_build_2d()
+    write_bind("iterate")
     latex.save_build2d_bind_iterate(init_data, build_data, path)
 
 
 def cmd_build2d_bind_nest():
-    path = build_dir / "bind-nest"
+    path = dir_build / "bind-nest"
     init_data = read_init()
     build_data = read_build_2d()
+    write_bind("nest")
     latex.save_build2d_bind_nest(init_data, build_data, path)
 
 
 def cmd_quant_none():
-    quant_file.unlink(missing_ok=True)
+    file_quant.unlink(missing_ok=True)
 
 
 def cmd_quant_shift(bits):
@@ -272,7 +293,7 @@ def cmd_quant_shift(bits):
             "bits": bits
         }
     }
-    with open(quant_file, 'w', encoding='utf-8') as f:
+    with open(file_quant, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
@@ -362,8 +383,8 @@ def cmd_sim_file(feature, weight):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    sim_dir.mkdir(exist_ok=True, parents=True)
-    with open(sim_dir / f"file-{now()}.txt", 'w') as f:
+    dir_sim.mkdir(exist_ok=True, parents=True)
+    with open(dir_sim / f"file-{now()}.txt", 'w') as f:
         f.write(text)
     return text
 
@@ -465,15 +486,15 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    sim_dir.mkdir(exist_ok=True, parents=True)
-    with open(sim_dir / f"random-{now()}.txt", 'w') as f:
+    dir_sim.mkdir(exist_ok=True, parents=True)
+    with open(dir_sim / f"random-{now()}.txt", 'w') as f:
         f.write(text)
     return text
 
 
 def cmd_example_random(feature, weight):
     dim, c_len, b_len, a_len = read_init()
-    example_dir.mkdir(parents=True, exist_ok=True)
+    dir_example.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
         f = np.random.randint(
@@ -499,19 +520,26 @@ def cmd_example_random(feature, weight):
     if dim == 1:
         points, c, b, a, q = read_build_1d()
         latex.save_example_pdf(
-            b, c, a, g, d, q, example_dir / f"example-random-{now()}"
+            b, c, a, g, d, q, dir_example / f"example-random-{now()}"
         )
 
     elif dim == 2:
-        latex.save_example_bind_iterate(
-            read_init(), read_build_2d(), d, g,
-            example_dir / f"example-random-{now()}"
-        )
+        data_bind = read_bind_if_exists()
+        if data_bind["func"] == "iterate":
+            latex.save_example_bind_iterate(
+                read_init(), read_build_2d(), d, g,
+                dir_example / f"example-random-{now()}"
+            )
+        if data_bind["func"] == "nest":
+            latex.save_example_bind_nest(
+                read_init(), read_build_2d(), d, g,
+                dir_example / f"example-random-{now()}"
+            )
 
 
 def cmd_example_sequential(feature, weight):
     dim, c_len, b_len, a_len = read_init()
-    example_dir.mkdir(parents=True, exist_ok=True)
+    dir_example.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
         f = np.arange(feature, feature + c_len)
@@ -529,14 +557,18 @@ def cmd_example_sequential(feature, weight):
     if dim == 1:
         points, c, b, a, q = read_build_1d()
         latex.save_example_pdf(
-            b, c, a, g, d, q, example_dir / f"example-sequential-{now()}"
+            b, c, a, g, d, q, dir_example / f"example-seq-{now()}"
         )
 
     elif dim == 2:
-        latex.save_example_bind_iterate(
-            read_init(), read_build_2d(), d, g,
-            example_dir / f"example-random-{now()}"
-        )
-
-
-
+        data_bind = read_bind_if_exists()
+        if data_bind["func"] == "iterate":
+            latex.save_example_bind_iterate(
+                read_init(), read_build_2d(), d, g,
+                dir_example / f"example-seq-{now()}"
+            )
+        if data_bind["func"] == "nest":
+            latex.save_example_bind_nest(
+                read_init(), read_build_2d(), d, g,
+                dir_example / f"example-seq-{now()}"
+            )

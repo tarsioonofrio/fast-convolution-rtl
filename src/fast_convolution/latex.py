@@ -628,7 +628,7 @@ def save_build2d_bind_nest(init_data, build_data, path):
         tex.Math(escape=False, data=[
             syt(g_sym2), "=", syt(g_num2),
             "=", syt(g_num1), r"\odot", syt((sy.diag(*q1) * b1).T),
-            "=",syt(g_num1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t",
+            "=", syt(g_num1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t",
         ])
     )
 
@@ -695,7 +695,8 @@ def save_build2d_bind_nest(init_data, build_data, path):
     s_num = aa_num * ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1)
     doc.append(
         tex.Math(data=[
-            syt(s_sym.reshape(s_sym.shape[0] * s_sym.shape[1], 1)), "=", syt(s_num), 
+            syt(s_sym.reshape(s_sym.shape[0] * s_sym.shape[1], 1)),
+            "=", syt(s_num),
             "=", syt(aa_num), syt(ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1))
         ])
     )
