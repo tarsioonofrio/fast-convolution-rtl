@@ -357,7 +357,7 @@ def cmd_sim_file(feature, weight):
         r2 = metrics.r2_score(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        text_metric = (f"R2 : {r2*100}%\n")
+        text_metric = (f"R2: {r2}\n")
     else:
         compare_fast = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {compare_fast}\n"
@@ -453,7 +453,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         r2 = metrics.r2_score(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        text_metric = (f"R2 : {r2*100}%\n")
+        text_metric = (f"R2: {r2}%\n")
     else:
         compare_fast = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {compare_fast}\n"
