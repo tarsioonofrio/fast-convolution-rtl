@@ -125,10 +125,10 @@ def now():
     return datetime.now().strftime('%Y%m%d-%H%M')
 
 
-def write_bind(func, param=None):
+def write_bind(func, params=None):
     data = {
         "func": func,
-        "params": {param}
+        "params": params
     }
     with open(file_bind, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

@@ -440,7 +440,7 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
         c_len[0], c_len[0],
         sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
-    d_num = sy.Matrix(
+    d_sym = sy.Matrix(
         c_len[0], c_len[0],
         sy.symbols(" ".join(f"d_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
@@ -477,7 +477,8 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(g_sym2), "=", syt(g_num2),
-            "=", syt(g_sym1), r"\odot", syt((sy.diag(*q1) * b1).T),
+            "=", syt(g_num1), r"\odot", syt((sy.diag(*q1) * b1).T),
+            "=", syt(g_num1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
             "=", syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
         ])
     )
@@ -486,7 +487,8 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q2), r"\odot", syt(b2*g_sym2),
+            "=", syt(q2), r"\odot", syt(b2*g_num2),
+            "=", "\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_num2),
             "=", "\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_sym2),
         ])
     )
@@ -518,25 +520,28 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
         )
     )
     doc.append(
-        tex.Math(data=[r"s = CD"], escape=False)
+        tex.Math(data=[r"D = Cd"], escape=False)
     )
-    dd_num = cc_num * d_num.reshape(d_num.shape[0] * d_num.shape[1], 1)
+    dd_num = cc_num * d_num1.reshape(d_num1.shape[0] * d_num1.shape[1], 1)
     doc.append(
         tex.Math(data=[
-            syt(dd_sym.reshape(dd_sym.shape[0] * dd_sym.shape[1], 1)),
+            syt(dd_sym.reshape(dd_num.shape[0] * dd_num.shape[1], 1)),
             "=", syt(dd_num),
-            "=", syt(cc_num), syt(d_num.reshape(d_num.shape[0] * d_num.shape[1], 1))
+            "=", syt(cc_num), syt(d_num1.reshape(d_num1.shape[0] * d_num1.shape[1], 1)),
+            "= C", syt(d_sym.reshape(d_sym.shape[0] * d_sym.shape[1], 1))
         ])
     )
     doc.append(
         tex.Math(data=[r"S = G \odot D"], escape=False)
     )
-    ss_num = sy.hadamard_product(gg_num, dd_num)
+    ss_num = sy.hadamard_product(
+        gg_num, dd_num.reshape(gg_num.shape[0], gg_num.shape[1])
+    )
     doc.append(
         tex.Math(
             data=[
                 syt(ss_sym), "=", syt(ss_num),
-                "=", syt(gg_num), r"\odot", syt(dd_num),
+                "=", syt(gg_num), r"\odot", syt(dd_num.reshape(gg_num.shape[0], gg_num.shape[1])),
             ],
             escape=False
         )
@@ -547,7 +552,7 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     s_num = aa_num * ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1)
     doc.append(
         tex.Math(data=[
-            syt(s_sym.reshape(s_num.shape[0] * s_sym.shape[1], 1)), "=", syt(s_num), 
+            syt(s_sym.reshape(s_num.shape[0] * s_num.shape[1], 1)), "=", syt(s_num), 
             "=", syt(aa_num), syt(ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1))
         ])
     )
@@ -560,6 +565,14 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     )
 
     doc.generate_pdf(path, clean_tex=False)
+
+    output_default = signal.convolve(
+        d_num1, g_num1[::-1, ::-1], mode='valid'
+    )
+    compare_naive = np.all(
+        output_default.reshape(-1) == np.array(s_num).reshape(-1)
+    )
+    print("Result:", compare_naive)
 
 
 def save_build2d_bind_nest(init_data, build_data, path):
@@ -667,7 +680,7 @@ def save_build2d_bind_nest(init_data, build_data, path):
         )
     )
     doc.append(
-        tex.Math(data=[r"s = CD"], escape=False)
+        tex.Math(data=[r"D = Cd"], escape=False)
     )
     dd_num = cc_num * d_sym.reshape(d_sym.shape[0] * d_sym.shape[1], 1)
     doc.append(
