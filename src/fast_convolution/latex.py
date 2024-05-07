@@ -704,7 +704,7 @@ def save_build2d_bind_nest(init_data, build_data, path):
         tex.Math(data=[r"A =", syt(fast.matrix_to_log2(aa_num))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num.T))], escape=False)
+        tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num))], escape=False)
     )
 
     doc.generate_pdf(path, clean_tex=False)
