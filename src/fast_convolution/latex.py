@@ -96,7 +96,16 @@ def save_example_pdf(b, c, a, g_num, d_num, q, path):
             data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"]
         )
     )
-
+    doc.append(
+        tex.Math(data=[
+            "d =", syt(d_sym), "=", syt(d_num)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            "g =", syt(g_sym), "=", syt(g_num)
+        ], escape=False)
+    )
     doc.append(
         tex.Math(escape=False, data=[
             syt(s_sym), "=", syt(a.T), r"\left\{ \left[", syt(q),
@@ -327,6 +336,16 @@ def save_example_bind_iterate(init_data, build_data, d_num1, g_num1, path):
         )
     )
     doc.append(
+        tex.Math(data=[
+            "d =", syt(d_sym1), "=", syt(d_num1)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            "g =", syt(g_sym1), "=", syt(g_num1)
+        ], escape=False)
+    )
+    doc.append(
         tex.Math(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"],
             escape=False
@@ -471,6 +490,16 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
         )
     )
     doc.append(
+        tex.Math(data=[
+            "d =", syt(d_sym), "=", syt(d_num1)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            "g =", syt(g_sym1), "=", syt(g_num1)
+        ], escape=False)
+    )
+    doc.append(
         tex.Math(data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False)
     )
     g_num2 = sy.Matrix(g_num1) * (sy.diag(*q1) * b1).T
@@ -553,7 +582,8 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(data=[
             syt(s_sym.reshape(s_num.shape[0] * s_num.shape[1], 1)), "=", syt(s_num), 
-            "=", syt(aa_num), syt(ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1))
+            "=", syt(aa_num), syt(ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1)),
+            "= A", syt(ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1))
         ])
     )
 
