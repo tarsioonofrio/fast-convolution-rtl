@@ -354,16 +354,10 @@ def cmd_sim_file(feature, weight):
         count_mult = count_iter * len(points[0]) * len(points[1])
 
     if len(quant_data) != 0:
-        rmse = metrics.root_mean_squared_error(
+        r2 = metrics.r2_score(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        mae = metrics.mean_absolute_error(
-            output_default.reshape(-1), output_fast.reshape(-1)
-        )
-        text_metric = (
-            f"RMSE : {rmse}\n"
-            f"MAE : {mae}\n"
-        )
+        text_metric = (f"R2 : {r2*100}%\n")
     else:
         compare_fast = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {compare_fast}\n"
@@ -456,16 +450,10 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         count_mult = count_iter * len(points[0]) * len(points[1])
 
     if len(quant_data) != 0:
-        rmse = metrics.root_mean_squared_error(
+        r2 = metrics.r2_score(
             output_default.reshape(-1), output_fast.reshape(-1)
         )
-        mae = metrics.mean_absolute_error(
-            output_default.reshape(-1), output_fast.reshape(-1)
-        )
-        text_metric = (
-            f"RMSE : {rmse}\n"
-            f"MAE : {mae}\n"
-        )
+        text_metric = (f"R2 : {r2*100}%\n")
     else:
         compare_fast = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {compare_fast}\n"

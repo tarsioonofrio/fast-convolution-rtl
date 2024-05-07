@@ -179,6 +179,10 @@ def sim(): pass
     "--weight", "-w", default=example_path / "laplace.json",
     help=("Weight file, need to be a json list file.")
 )
+# @click.option("--mae", flag_value=True, help="Mean absolute error")
+# @click.option("--mse", flag_value=True, help="Mean squared error")
+# @click.option("--rmse", flag_value=True, help="Root mean squared error")
+# @click.option("--r2", flag_value=True, help="R2", default=True)
 def file(feature, weight):
     from .commands import cmd_sim_file
     text = cmd_sim_file(feature, weight)
