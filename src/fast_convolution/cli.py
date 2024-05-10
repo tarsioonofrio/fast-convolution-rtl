@@ -22,7 +22,7 @@ def main(ctx): pass
 
 
 @main.group(
-    short_help="Initialize fast convolution repo with the sizes of vectors.",
+    short_help="Initialize fast convolution repo.",
     help=("Size of two vectors to be convoluted. The two sizes must be in "
           "format Out = In - W + 1 or In = Out + W - 1 where In is the number of"
           "elements in the input, Out is the number of elements in the the "
@@ -49,16 +49,17 @@ def init2d(in_len, out_len, w):
     cmd_init(2, in_len, out_len, w)
 
 
-@main.command()
+@main.command(help="Show config files")
 @click.option('-i', '--init', flag_value=True)
 @click.option('-b', '--build', flag_value=True)
 @click.option('-q', '--quant', flag_value=True)
 def show(init, build, quant):
     from .commands import cmd_show
     cmd_show(init, build, quant)
+    click.echo("Init")
 
 
-@main.group()
+@main.group(help="Build fast convolution")
 def build(): pass
 
 
@@ -77,7 +78,7 @@ def toom_cook1d(points):
     # TODO break if user was trying to use for 2D
     from .commands import cmd_build_toom_cook1d
     cmd_build_toom_cook1d(points)
-    click.echo("Builded 1D Toom Cook")
+    click.echo("Build 1D Toom Cook")
 
 
 @build_d1.command()
@@ -110,7 +111,7 @@ def build_d2(): pass
 def toom_cook2d(points_1d, points_2d):
     from .commands import cmd_build_toom_cook2d
     cmd_build_toom_cook2d(points_1d, points_2d)
-    click.echo("Builded 2D Toom Cook dimension.")
+    click.echo("Build 2D Toom Cook dimension.")
 
 
 # @build_d2.command()
@@ -121,23 +122,23 @@ def toom_cook2d(points_1d, points_2d):
 # def cyclic_to_linear(points): pass
 
 
-@build_d2.group()
+@build_d2.group(help="Bind multiple dimensions")
 def bind(): pass
 
 
-@bind.command()
+@bind.command(help="Iterated multidimensional bind")
 def iterate():
     from .commands import cmd_build2d_bind_iterate
     cmd_build2d_bind_iterate()
 
 
-@bind.command()
+@bind.command(help="Nested multidimensional bind")
 def nest():
     from .commands import cmd_build2d_bind_nest
     cmd_build2d_bind_nest()
 
 
-@main.group()
+@main.group(help="Quantization")
 # @click.option(
 #     "--constant", "--const", "-c", type=int, default=1,
 #     help=("Constant to multiply the weight.")
@@ -149,13 +150,13 @@ def nest():
 def quant(): pass
 
 
-@quant.command(name="none")
+@quant.command(help="Set quantization to none", name="none")
 def no_quant():
     from .commands import cmd_quant_none
     cmd_quant_none()
 
 
-@quant.command()
+@quant.command(help="Shift quantization")
 @click.option(
     "--bits", "-b", default=2, show_default=True,
     help=("Number of bits to be shifted.")
@@ -163,13 +164,15 @@ def no_quant():
 def shift(bits):
     from .commands import cmd_quant_shift
     cmd_quant_shift(bits)
+    click.echo("Shift quantization")
 
 
-@main.group()
+
+@main.group(help="Simulation")
 def sim(): pass
 
 
-@sim.command()
+@sim.command("Simulation using file")
 @click.option(
     "--feature", "-f", default=example_path / "karatsuba032.jpg",
     help=("Feature file, can be a image or json list file.")
@@ -188,7 +191,7 @@ def file(feature, weight):
     click.echo(text)
 
 
-@sim.command()
+@sim.command(help="Simulation with random numbers")
 # @click.option(
 #     "--constant", "--const", "-c", type=int, default=1,
 #     help=("Constant to multiply the weight.")
@@ -209,16 +212,16 @@ def file(feature, weight):
     "--weight", "-w", nargs=2, default=[0, 1024],
     help=("Minimal and maximal value of weight random data.")
 )
-def random(feature, weight, image_side, loop):
+def rand(feature, weight, image_side, loop):
     from .commands import cmd_sim_random
     cmd_sim_random(feature, weight, image_side, loop)
 
 
-@main.group()
+@main.group(help="Create example")
 def example(): pass
 
 
-@example.command()
+@example.command(help="Example with random numbers")
 @click.option(
     "--feature", "-f", nargs=2, default=[0, 256],
     help=("Minimal and maximal value of feature random data.")
@@ -227,13 +230,13 @@ def example(): pass
     "--weight", "-w", nargs=2, default=[0, 1024],
     help=("Minimal and maximal value of weight random data.")
 )
-def random(feature, weight):
+def rand(feature, weight):
     from .commands import cmd_example_random
     cmd_example_random(feature, weight)
-    click.echo("Example ok")
+    click.echo("Random example")
 
 
-@example.command()
+@example.command(help="Example with sequential numbers")
 @click.option(
     "--feature", "-f", default=0,
     help=("Minimal value of sequential feature data.")
@@ -242,10 +245,10 @@ def random(feature, weight):
     "--weight", "-w", default=0,
     help=("Minimal value of sequential weight data.")
 )
-def sequential(feature, weight):
+def seq(feature, weight):
     from .commands import cmd_example_sequential
     cmd_example_sequential(feature, weight)
-    click.echo("Example ok")
+    click.echo("Sequential example")
 
 
 if __name__ == '__main__':

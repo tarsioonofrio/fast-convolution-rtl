@@ -251,24 +251,24 @@ def toom_cook(d_size, g_size, points):
     )
     di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(d_size))))
     gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_size))))
-    _a_mtx = [[(b**e) for e, d in enumerate(di)] for b in bi if b != sy.oo]
-    _b_mtx = [[(b**e) for e, d in enumerate(gi)] for b in bi if b != sy.oo]
+    _am = [[(b**e) for e, d in enumerate(di)] for b in bi if b != sy.oo]
+    _bm = [[(b**e) for e, d in enumerate(gi)] for b in bi if b != sy.oo]
     bi_inf = [x for x in bi if x != sy.oo]
-    _cq = [
+    _q = [
         1/sy.expand(np.prod([(b0 - b) for b in i]))
         for b0, i in
         zip(bi_inf, itertools.combinations(reversed(bi_inf), len(bi_inf)-1))
     ]
     if sy.oo in bi:
         _a_inf = [[0] * (len(di) - 1) + [1]]
-        a_mtx = sy.Matrix(_a_mtx + _a_inf)
+        am = sy.Matrix(_am + _a_inf)
         _b_inf = [[0] * (len(gi) - 1) + [1]]
-        b_mtx = sy.Matrix(_b_mtx + _b_inf)
-        cq = _cq + [1]
+        bm = sy.Matrix(_bm + _b_inf)
+        q = _q + [1]
     else:
-        a_mtx = sy.Matrix(_a_mtx)
-        b_mtx = sy.Matrix(_b_mtx)
-        cq = _cq
+        am = sy.Matrix(_am)
+        bm = sy.Matrix(_bm)
+        q = _q
 
     # bg_mtx = sy.diag(*(sy.diag(*cq) * b_mtx * gi).tolist())
     # bg_mtx = g2bg(cq, b_mtx)
@@ -278,8 +278,8 @@ def toom_cook(d_size, g_size, points):
     ]
     c0 = sy.Matrix([s.subs({x: 0}) for s in cd])
     c1 = sy.Matrix([[d.coeff(c, 1) for c in xi] for d in cd])
-    c_mtx = sy.Matrix(c0.T.tolist() + c1.T.tolist())
-    return c_mtx, cq, b_mtx, a_mtx
+    cm = sy.Matrix(c0.T.tolist() + c1.T.tolist())
+    return cm, sy.Matrix(q), bm, am
 
 
 def g_to_bg(q, b, g):

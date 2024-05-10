@@ -148,6 +148,7 @@ def cmd_init(dimensions, in_len, out_len, w):
             message="init.json existis, fconv model already initialized"
         )
         click.Abort()
+        click.echo(file_init)
         exit(1)
     in_arr = np.array(in_len)
     w_arr = np.array(w)
@@ -180,7 +181,6 @@ def cmd_init(dimensions, in_len, out_len, w):
     file_init.parent.mkdir(parents=True, exist_ok=True)
     with open(file_init, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-    click.echo("Init ok")
 
 
 def cmd_show(init, build, quant):
@@ -260,10 +260,9 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
     dir_build.mkdir(parents=True, exist_ok=True)
     path1 = dir_build / "convolution-axis1"
-    latex.save_build_pdf(b1, c1, a1, bg1, di1, path1)
+    latex.save_build_pdf(b1, c1, a1, g1, di1, q1, path1)
     path2 = dir_build / "convolution-axis2"
-    latex.save_build_pdf(b2, c2, a2, bg2, di2, path2)
-    click.echo("Build ok")
+    latex.save_build_pdf(b2, c2, a2, g2, di2, q2, path2)
 
 
 def cmd_build2d_bind_iterate():
