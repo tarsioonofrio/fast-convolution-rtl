@@ -31,6 +31,16 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
         )
     )
     doc.append(
+        tex.Math(data=[
+            "d =", syt(d_sym)
+        ], escape=False)
+    )
+    doc.append(
+        tex.Math(data=[
+            "g =", syt(g_sym)
+        ], escape=False)
+    )
+    doc.append(
         tex.Math(escape=False, data=[
             syt(s_sym), "=", syt(a.T), r"\left\{ \left[", syt(q),
             r"\odot \left(", syt(b), syt(g_sym), r"\right) \right]",
@@ -226,7 +236,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
         tex.Math(escape=False, data=[
             syt(g_sym2), "=", syt(g_num2),
             "=", syt(g_sym1), r"\odot", syt((sy.diag(*q1) * b1).T),
-            "=",syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
+            "=", syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
         ])
     )
 
@@ -234,8 +244,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q2), r"\odot", syt(b2*g_sym2),
-            r"= \left(", syt(q2), r"\odot", syt(b2), r"\right)", syt(g_num2),
+            "=", syt(sy.diag(*q2) * b2), r"\odot", syt(g_sym2),
             r"= \left(", syt(q2), r"\odot", syt(b2), r"\right)", syt(g_sym2),
         ])
     )
@@ -250,7 +259,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
             "=", syt(d_sym1), syt(c2)
         ], escape=False)
     )
-    dd_num = c1.T * d_num2
+    dd_num = c1.T * d_sym2
     doc.append(
         tex.Math(data=[
             syt(dd_sym), "=", syt(dd_num),
@@ -361,8 +370,8 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q2), r"\odot", syt(b2*g_sym2),
-            "=", "\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_sym2),
+            "=", syt(sy.diag(*q2) * b2), r"\odot", syt(g_sym2),
+            r"= \left(", syt(q2), r"\odot", syt(b2), r"\right)", syt(g_sym2),
         ])
     )
 
@@ -513,9 +522,9 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q2), r"\odot", syt(b2*g_num2),
-            "=", "\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_num2),
-            "=", "\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_sym2),
+            "=", syt(sy.diag(*q2) * b2), r"\odot", syt(g_num2),
+            "=", r"\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_num2),
+            "=", r"\left(", syt(q2), r"\odot" , syt(b2), r"\right)", syt(g_sym2),
         ])
     )
 
@@ -676,7 +685,7 @@ def build_2d_bind_nest(init_data, build_data, path):
     doc.append(
         tex.Math(escape=False, data=[
             syt(gg_sym), "=", syt(gg_num),
-            "=", syt(q2), r"\odot", syt(b2*g_sym2),
+            "=", syt(sy.diag(*q2) * b2), r"\odot", syt(g_sym2),
             r"= \left(", syt(q2), r"\odot", syt(b2), r"\right)", syt(g_sym2),
         ])
     )

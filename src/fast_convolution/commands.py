@@ -506,7 +506,7 @@ def cmd_example_random(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        latex.save_example_pdf(
+        latex.example_1d(
             b, c, a, g, d, q, dir_example / f"example-random-{now()}"
         )
 
@@ -543,7 +543,7 @@ def cmd_example_sequential(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        latex.save_example_pdf(
+        latex.example_1d(
             b, c, a, g, d, q, dir_example / f"example-seq-{now()}"
         )
 
