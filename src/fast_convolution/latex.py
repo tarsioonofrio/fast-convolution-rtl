@@ -11,7 +11,7 @@ def syt(expr):
     return tex.NoEscape(sy.latex(expr)) 
 
 
-def save_build_pdf(b, c, a, g_sym, d_sym, q, path):
+def build_1d(b, c, a, g_sym, d_sym, q, path):
     gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
     dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(c.T.shape[1]))))
     ss_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
@@ -75,7 +75,7 @@ def save_build_pdf(b, c, a, g_sym, d_sym, q, path):
     doc.generate_pdf(path, clean_tex=False)
 
 
-def save_example_pdf(b, c, a, g_num, d_num, q, path):
+def example_1d(b, c, a, g_num, d_num, q, path):
     g_sym = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_num.shape[0]))))
     d_sym = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
     gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
@@ -165,7 +165,7 @@ def save_example_pdf(b, c, a, g_num, d_num, q, path):
     print("Result:", compare_naive)
 
 
-def save_build2d_bind_iterated(init_data, build_data, path):
+def build_2d_bind_iterated(init_data, build_data, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -279,7 +279,7 @@ def save_build2d_bind_iterated(init_data, build_data, path):
     doc.generate_pdf(path, clean_tex=False)
 
 
-def save_example_bind_iterate(init_data, build_data, d_num1, g_num1, path):
+def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -428,7 +428,7 @@ def save_example_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     print("Result:", compare_naive)
 
 
-def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
+def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -602,7 +602,7 @@ def save_example_bind_nest(init_data, build_data, d_num1, g_num1, path):
     print("Result:", compare_naive)
 
 
-def save_build2d_bind_nest(init_data, build_data, path):
+def build_2d_bind_nest(init_data, build_data, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 

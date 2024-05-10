@@ -221,7 +221,7 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     dir_build.mkdir(parents=True, exist_ok=True)
-    latex.save_build_pdf(b, c, a, g, d, sy.Matrix(q), dir_build / "convolution")
+    latex.build_1d(b, c, a, g, d, sy.Matrix(q), dir_build / "convolution")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -260,9 +260,9 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
     dir_build.mkdir(parents=True, exist_ok=True)
     path1 = dir_build / "convolution-axis1"
-    latex.save_build_pdf(b1, c1, a1, g1, di1, q1, path1)
+    latex.build_1d(b1, c1, a1, g1, di1, q1, path1)
     path2 = dir_build / "convolution-axis2"
-    latex.save_build_pdf(b2, c2, a2, g2, di2, q2, path2)
+    latex.build_1d(b2, c2, a2, g2, di2, q2, path2)
 
 
 def cmd_build2d_bind_iterate():
@@ -270,7 +270,7 @@ def cmd_build2d_bind_iterate():
     init_data = read_init()
     build_data = read_build_2d()
     write_bind("iterate")
-    latex.save_build2d_bind_iterated(init_data, build_data, path)
+    latex.build_2d_bind_iterated(init_data, build_data, path)
 
 
 def cmd_build2d_bind_nest():
@@ -278,7 +278,7 @@ def cmd_build2d_bind_nest():
     init_data = read_init()
     build_data = read_build_2d()
     write_bind("nest")
-    latex.save_build2d_bind_nest(init_data, build_data, path)
+    latex.build_2d_bind_nest(init_data, build_data, path)
 
 
 def cmd_quant_none():
@@ -513,12 +513,12 @@ def cmd_example_random(feature, weight):
     elif dim == 2:
         data_bind = read_bind_if_exists()
         if data_bind["func"] == "iterate":
-            latex.save_example_bind_iterate(
+            latex.example_2d_bind_iterate(
                 read_init(), read_build_2d(), d, g,
                 dir_example / f"example-random-{now()}"
             )
         if data_bind["func"] == "nest":
-            latex.save_example_bind_nest(
+            latex.example_2d_bind_nest(
                 read_init(), read_build_2d(), d, g,
                 dir_example / f"example-random-{now()}"
             )
@@ -550,12 +550,12 @@ def cmd_example_sequential(feature, weight):
     elif dim == 2:
         data_bind = read_bind_if_exists()
         if data_bind["func"] == "iterate":
-            latex.save_example_bind_iterate(
+            latex.example_2d_bind_iterate(
                 read_init(), read_build_2d(), d, g,
                 dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
-            latex.save_example_bind_nest(
+            latex.example_2d_bind_nest(
                 read_init(), read_build_2d(), d, g,
                 dir_example / f"example-seq-{now()}"
             )

@@ -129,7 +129,7 @@ def test_example_2d_rand():
     assert result.returncode == 0
 
 
-def test_sim_1d_seq():
+def test_sim_1d_file():
     result = subprocess.run(
         ['fast-conv', 'sim', 'file'],
         capture_output=True,
@@ -147,7 +147,7 @@ def test_sim_1d_rand():
     assert result.returncode == 0
 
 
-def test_sim_2d_seq():
+def test_sim_2d_file():
     result = subprocess.run(
         ['fast-conv', 'sim', 'file'],
         capture_output=True,
