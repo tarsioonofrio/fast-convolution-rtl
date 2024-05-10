@@ -126,7 +126,7 @@ def toom_cook2d(points_1d, points_2d):
 def bind(): pass
 
 
-@bind.command(help="Iterated multidimensional bind")
+@bind.command(name="iter", help="Iterated multidimensional bind")
 def iterate():
     from .commands import cmd_build2d_bind_iterate
     cmd_build2d_bind_iterate()
@@ -172,7 +172,7 @@ def shift(bits):
 def sim(): pass
 
 
-@sim.command("Simulation using file")
+@sim.command(help="Simulation using file")
 @click.option(
     "--feature", "-f", default=example_path / "karatsuba032.jpg",
     help=("Feature file, can be a image or json list file.")

@@ -270,7 +270,7 @@ def cmd_build2d_bind_iterate():
     init_data = read_init()
     build_data = read_build_2d()
     write_bind("iterate")
-    latex.save_build2d_bind_iterate(init_data, build_data, path)
+    latex.save_build2d_bind_iterated(init_data, build_data, path)
 
 
 def cmd_build2d_bind_nest():

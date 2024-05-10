@@ -165,7 +165,7 @@ def save_example_pdf(b, c, a, g_num, d_num, q, path):
     print("Result:", compare_naive)
 
 
-def save_build2d_bind_iterated(init_data, build_data, d_num1, g_num1, path):
+def save_build2d_bind_iterated(init_data, build_data, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -221,12 +221,11 @@ def save_build2d_bind_iterated(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False)
     )
-    g_num2 = sy.Matrix(g_num1) * (sy.diag(*q1) * b1).T
+    g_num2 = sy.Matrix(g_sym1) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(escape=False, data=[
             syt(g_sym2), "=", syt(g_num2),
-            "=", syt(g_num1), r"\odot", syt((sy.diag(*q1) * b1).T),
-            "=",syt(g_num1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t",
+            "=", syt(g_sym1), r"\odot", syt((sy.diag(*q1) * b1).T),
             "=",syt(g_sym1), r"\left(", syt(q1), r"\odot", syt(b1), r"\right)^t"
         ])
     )
@@ -244,11 +243,10 @@ def save_build2d_bind_iterated(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(data=[r"D = c_1^t d c_2"], escape=False)
     )
-    d_num2 = d_num1 * c2
+    d_num2 = d_sym1 * c2
     doc.append(
         tex.Math(data=[
             syt(d_sym2), "=", syt(d_num2),
-            "=", syt(d_num1), syt(c2),
             "=", syt(d_sym1), syt(c2)
         ], escape=False)
     )
@@ -256,7 +254,6 @@ def save_build2d_bind_iterated(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(data=[
             syt(dd_sym), "=", syt(dd_num),
-            "=", syt(c1.T), syt(d_num2),
             "=", syt(c1.T), syt(d_sym2)
         ], escape=False)
     )

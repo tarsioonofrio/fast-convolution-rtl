@@ -57,16 +57,16 @@ def test_build_2d_toom_cook():
     assert result.returncode == 0
 
 
-def test_build_2d_toom_cook():
+def test_build_2d_bind_iterate():
     result = subprocess.run(
-        ['fast-conv', 'build', '2d', 'bind', 'iterate'],
+        ['fast-conv', 'build', '2d', 'bind', 'iter'],
         capture_output=True,
         cwd=tmp_dir2
     )
     assert result.returncode == 0
 
 
-def test_build_2d_toom_cook():
+def test_build_2d_bind_nest():
     result = subprocess.run(
         ['fast-conv', 'build', '2d', 'bind', 'nest'],
         capture_output=True,
@@ -129,8 +129,6 @@ def test_example_2d_rand():
     assert result.returncode == 0
 
 
-
-
 def test_sim_1d_seq():
     result = subprocess.run(
         ['fast-conv', 'sim', 'file'],
@@ -149,16 +147,16 @@ def test_sim_1d_rand():
     assert result.returncode == 0
 
 
-def test_example_2d_seq():
+def test_sim_2d_seq():
     result = subprocess.run(
-        ['fast-conv', 'sim', 'seq'],
+        ['fast-conv', 'sim', 'file'],
         capture_output=True,
         cwd=tmp_dir2
     )
     assert result.returncode == 0
 
 
-def test_example_2d_rand():
+def test_sim_2d_rand():
     result = subprocess.run(
         ['fast-conv', 'sim', ' rand'],
         capture_output=True,
