@@ -215,6 +215,14 @@ def matrix_to_log2(mtx):
     return log2_matrix(log2_lst(mtx))
 
 
+def count_sums(mtx):
+    m_log = matrix_to_log2(mtx)
+    m_sum = [
+        [1 if -1 in m.args else len(m.args) for m in r] for r in m_log.tolist()
+    ]
+    return np.sum(m_sum)
+
+
 def wrap_convolution(c, bg, a):
     filt = to_filter(c, bg, a)
     def convolution(f):
