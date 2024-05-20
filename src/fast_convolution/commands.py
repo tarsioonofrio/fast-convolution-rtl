@@ -376,10 +376,16 @@ def cmd_sim_file(feature, weight):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    dir_sim.mkdir(exist_ok=True, parents=True)
-    with open(dir_sim / f"file-{now()}.txt", 'w') as f:
+    path = dir_sim / f"file-{now()}"
+    path.mkdir(exist_ok=True, parents=True)
+    with open(path / "sim.txt", 'w') as f:
         f.write(text)
+ 
+    for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
+        np.savetxt(path / f"{name}.txt", arr, fmt='%d')
+
     return text
+
 
 
 def cmd_sim_random(feature_random, weight_random, image_side, loop):
@@ -473,9 +479,14 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    dir_sim.mkdir(exist_ok=True, parents=True)
-    with open(dir_sim / f"random-{now()}.txt", 'w') as f:
+    path = dir_sim / f"random-{now()}"
+    path.mkdir(exist_ok=True, parents=True)
+    with open(path / "sim.txt", 'w') as f:
         f.write(text)
+ 
+    for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
+        np.savetxt(path / f"{name}.txt", arr, fmt='%d')
+
     return text
 
 
