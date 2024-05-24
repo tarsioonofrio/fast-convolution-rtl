@@ -227,7 +227,7 @@ def cmd_build_toom_cook1d(points):
     a_sum = fast.count_sums(a)
     c_sum = fast.count_sums(c)
     text = (
-        f"Total multiplications: {len(b_len)}\n"
+        f"Total multiplications: {(b_len)}\n"
         f"Sums:\n"
         f"A: {a_sum}\n"
         f"C: {c_sum}\n"
@@ -282,7 +282,7 @@ def cmd_build_toom_cook2d(points1d, points2d):
     c1_sum = fast.count_sums(c1)
     c2_sum = fast.count_sums(c2)
     text = (
-        f"Total multiplications: {len(b_len[0] * b_len[1])}\n"
+        f"Total multiplications: {b_len[0] * b_len[1]}\n"
         f"Sums:\n"
         f"A: {a1_sum + a2_sum}\n"
         f"C: {c1_sum + c2_sum}\n"
