@@ -221,7 +221,20 @@ def cmd_build_toom_cook1d(points):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     dir_build.mkdir(parents=True, exist_ok=True)
-    latex.build_1d(b, c, a, g, d, sy.Matrix(q), dir_build / "convolution")
+    path = dir_build / "convolution"
+    latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
+
+    a_sum = fast.count_sums(a)
+    c_sum = fast.count_sums(c)
+    text = (
+        f"Total multiplications: {len(b_len)}\n"
+        f"Sums:\n"
+        f"A: {a_sum}\n"
+        f"C: {c_sum}\n"
+        f"Total: {a_sum + c_sum}\n"
+    )
+    with open(f"{path}_info.txt", "w") as f:
+        f.write(text)
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -263,6 +276,22 @@ def cmd_build_toom_cook2d(points1d, points2d):
     latex.build_1d(b1, c1, a1, g1, di1, q1, path1)
     path2 = dir_build / "convolution-axis2"
     latex.build_1d(b2, c2, a2, g2, di2, q2, path2)
+
+    a1_sum = fast.count_sums(a1)
+    a2_sum = fast.count_sums(a2)
+    c1_sum = fast.count_sums(c1)
+    c2_sum = fast.count_sums(c2)
+    text = (
+        f"Total multiplications: {len(b_len[0] * b_len[1])}\n"
+        f"Sums:\n"
+        f"A: {a1_sum + a2_sum}\n"
+        f"C: {c1_sum + c2_sum}\n"
+        f"Total: {a1_sum + a2_sum + c1_sum + c2_sum}\n"
+    )
+    path = dir_build / "convolution-axis"
+    with open(f"{path}_info.txt", "w") as f:
+        f.write(text)
+
 
 
 def cmd_build2d_bind_iterate():

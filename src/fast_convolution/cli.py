@@ -214,7 +214,8 @@ def file(feature, weight):
 )
 def rand(feature, weight, image_side, loop):
     from .commands import cmd_sim_random
-    cmd_sim_random(feature, weight, image_side, loop)
+    text = cmd_sim_random(feature, weight, image_side, loop)
+    click.echo(text)
 
 
 @main.group(help="Create example")
