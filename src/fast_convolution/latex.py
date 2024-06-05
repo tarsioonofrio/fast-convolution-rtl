@@ -84,18 +84,6 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
 
     doc.generate_pdf(path, clean_tex=False)
 
-    a_sum = fast.count_sums(a)
-    c_sum = fast.count_sums(c)
-    text = (
-        f"Total multiplications: {np.array(b).shape[0]}\n"
-        f"Sums:\n"
-        f"A: {a_sum}\n"
-        f"C: {c_sum}\n"
-        f"Total: {a_sum + c_sum}\n"
-    )
-    with open(f"{path}_info.txt", "w") as f:
-        f.write(text)
-
 
 def example_1d(b, c, a, g_num, d_num, q, path):
     g_sym = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_num.shape[0]))))
@@ -298,21 +286,6 @@ def build_2d_bind_iterated(init_data, build_data, path):
         ], escape=False)
     )
     doc.generate_pdf(path, clean_tex=False)
-
-    a1_sum = fast.count_sums(a1)
-    a2_sum = fast.count_sums(a2)
-    c1_sum = fast.count_sums(c1)
-    c2_sum = fast.count_sums(c2)
-    text = (
-        f"Total multiplications: {len(gg_num)}\n"
-        f"Sums:\n"
-        f"A: {a1_sum + a2_sum}\n"
-        f"C: {c1_sum + c2_sum}\n"
-        f"Total: {a1_sum + a2_sum + c1_sum + c2_sum}\n"
-    )
-    with open(f"{path}_info.txt", "w") as f:
-        f.write(text)
-
 
 
 def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
