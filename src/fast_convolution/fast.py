@@ -381,3 +381,28 @@ def c3x3_5m20a9e(g):
     bg = g_to_bg(cq, b, g)
     f = wrap_convolution(c, bg, a)
     return f
+
+
+def csa_lst(mtx, positive=True):
+    lst = log2_lst(mtx)
+    max_pow = max_power(lst, positive)
+    max_lst = [
+        [[1 if len(c) > 0 and p in c["z"] and c["s"] == 1 else 0
+          for c in r]
+         for r in lst]
+        for p in range(max_pow + 1)
+    ]
+    return max_lst
+
+
+def max_power(lst, positive=True):
+    signal = 1 if positive else -1
+    max_pow = max([0] + [max([0] + [
+        max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal
+    ]) for r in lst]
+    )
+    return max_pow
+
+
+
+

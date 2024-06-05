@@ -26,6 +26,7 @@ file_build = dir_config / "build.json"
 file_bind = dir_config / "bind.json"
 file_quant = dir_config / "quant.json"
 dir_build = root_path / "build"
+dir_csa = dir_build / "csa"
 dir_quant = root_path / "quant"
 dir_example = root_path / "example"
 dir_sim = root_path / "sim"
@@ -233,8 +234,31 @@ def cmd_build_toom_cook1d(points):
         f"C: {c_sum}\n"
         f"Total: {a_sum + c_sum}\n"
     )
+
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
+    max_pow = {
+        (n, s): fast.max_power(fast.log2_lst(lst), positive=typ)
+        for lst, n in zip([a, c], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+    dir_csa.mkdir(parents=True, exist_ok=True)
+    with open(dir_csa / "config.txt", "w") as f:
+        for (n, s), p in max_pow.items():
+            f.write(f"{p} {n} {s}\n")
+
+    csa = {
+        (n, s): fast.csa_lst(lst, positive=typ)
+        for lst, n in zip([a, c], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+    for (n, s), lst in csa.items():
+        with open(dir_csa / f"{n}{s}.txt", "w") as f:
+            for power in lst:
+                for line in power:
+                    # breakpoint()
+                    f.write(" ".join(map(str, line)) + "\n")
+                f.write("\n")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -291,7 +315,6 @@ def cmd_build_toom_cook2d(points1d, points2d):
     path = dir_build / "convolution-axis"
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
-
 
 
 def cmd_build2d_bind_iterate():
