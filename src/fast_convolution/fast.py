@@ -360,7 +360,6 @@ def filter2d_slide2d(filt, in_arr, out_shape, in_size=5, out_size=3):
                 new = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new[:row, :col] = f
                 out = filt(new)
-                breakpoint()
                 out_arr[r:r+row, c:c+col] = out[:row, :col]
     return out_arr
 
@@ -385,9 +384,10 @@ def c3x3_5m20a9e(g):
 
 def csa_lst(mtx, positive=True):
     lst = log2_lst(mtx)
-    max_pow = max_power(lst, positive)
+    signal = 1 if positive else -1
+    max_pow = max_power(lst, signal)
     max_lst = [
-        [[1 if len(c) > 0 and p in c["z"] and c["s"] == 1 else 0
+        [[1 if len(c) > 0 and p in c["z"] and c["s"] == signal else 0
           for c in r]
          for r in lst]
         for p in range(max_pow + 1)
