@@ -237,6 +237,7 @@ def cmd_build_toom_cook1d(points):
 
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
+
     max_pow = {
         (n, s): fast.max_power(fast.log2_lst(lst), positive=typ)
         for lst, n in zip([a.T, c.T], ["a", "c"])
@@ -244,6 +245,7 @@ def cmd_build_toom_cook1d(points):
     }
 
     dir_csa.mkdir(parents=True, exist_ok=True)
+
     with open(dir_csa / "config.txt", "w") as f:
         for (n, s), p in max_pow.items():
             f.write(f"{p} {n} {s}\n")
@@ -253,11 +255,15 @@ def cmd_build_toom_cook1d(points):
         for lst, n in zip([a.T, c.T], ["a", "c"])
         for typ, s in zip([True, False], ["p", "n"])
     }
+
+    with open(dir_csa / "info.txt", "w") as f:
+        for (n, s), lst in csa.items():
+            f.write(f"{np.sum(lst)} {n} {s}\n")
+
     for (n, s), lst in csa.items():
         with open(dir_csa / f"{n}{s}.txt", "w") as f:
             for power in lst:
                 for line in power:
-                    # breakpoint()
                     f.write(" ".join(map(str, line)) + "\n")
                 f.write("\n")
 
