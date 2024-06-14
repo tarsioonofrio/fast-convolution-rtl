@@ -26,7 +26,6 @@ file_build = dir_config / "build.json"
 file_bind = dir_config / "bind.json"
 file_quant = dir_config / "quant.json"
 dir_build = root_path / "build"
-dir_csa = dir_build / "csa"
 dir_quant = root_path / "quant"
 dir_example = root_path / "example"
 dir_sim = root_path / "sim"
@@ -224,7 +223,6 @@ def cmd_build_toom_cook1d(points):
     dir_build.mkdir(parents=True, exist_ok=True)
     path = dir_build / "convolution"
     latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
-
     a_sum = fast.count_sums(a)
     c_sum = fast.count_sums(c)
     text = (
@@ -234,38 +232,11 @@ def cmd_build_toom_cook1d(points):
         f"C: {c_sum}\n"
         f"Total: {a_sum + c_sum}\n"
     )
-
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
 
-    max_pow = {
-        (n, s): fast.max_power(fast.log2_lst(lst), positive=typ)
-        for lst, n in zip([a.T, c.T], ["a", "c"])
-        for typ, s in zip([True, False], ["p", "n"])
-    }
+    fast.write_csa_parcels(a, c, path / "csa")
 
-    dir_csa.mkdir(parents=True, exist_ok=True)
-
-    with open(dir_csa / "config.txt", "w") as f:
-        for (n, s), p in max_pow.items():
-            f.write(f"{p} {n} {s}\n")
-
-    csa = {
-        (n, s): fast.csa_lst(lst, positive=typ)
-        for lst, n in zip([a.T, c.T], ["a", "c"])
-        for typ, s in zip([True, False], ["p", "n"])
-    }
-
-    with open(dir_csa / "info.txt", "w") as f:
-        for (n, s), lst in csa.items():
-            f.write(f"{np.sum(lst)} {n} {s}\n")
-
-    for (n, s), lst in csa.items():
-        with open(dir_csa / f"{n}{s}.txt", "w") as f:
-            for power in lst:
-                for line in power:
-                    f.write(" ".join(map(str, line)) + "\n")
-                f.write("\n")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -329,7 +300,7 @@ def cmd_build2d_bind_iterate():
     init_data = read_init()
     build_data = read_build_2d()
     write_bind("iterate")
-    latex.build_2d_bind_iterated(init_data, build_data, path)
+    latex.build_2d_bind_iterated(init_data, build_data)
 
 
 def cmd_build2d_bind_nest():
@@ -338,6 +309,11 @@ def cmd_build2d_bind_nest():
     build_data = read_build_2d()
     write_bind("nest")
     latex.build_2d_bind_nest(init_data, build_data, path)
+
+    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+    a = np.kron(a1, a2)
+    c = np.kron(c1, c2)
+    fast.write_csa_parcels(a, c, path / "csa")
 
 
 def cmd_quant_none():

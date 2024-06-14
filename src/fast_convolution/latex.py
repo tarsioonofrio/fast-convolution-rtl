@@ -285,7 +285,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
             syt(ss_sym1)
         ], escape=False)
     )
-    doc.generate_pdf(path, clean_tex=False)
+    doc.generate_pdf(path / "bind-iterated", clean_tex=False)
 
 
 def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
@@ -757,7 +757,7 @@ def build_2d_bind_nest(init_data, build_data, path):
         tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num))], escape=False)
     )
 
-    doc.generate_pdf(path, clean_tex=False)
+    doc.generate_pdf(path / "bind-nest", clean_tex=False)
 
     a_sum = fast.count_sums(aa_num)
     c_sum = fast.count_sums(cc_num)
@@ -768,6 +768,6 @@ def build_2d_bind_nest(init_data, build_data, path):
         f"C: {c_sum}\n"
         f"Total: {a_sum + c_sum}\n"
     )
-    with open(f"{path}_info.txt", "w") as f:
+    with open(f"info.txt", "w") as f:
         f.write(text)
 

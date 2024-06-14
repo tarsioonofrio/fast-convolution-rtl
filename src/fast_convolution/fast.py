@@ -404,5 +404,33 @@ def max_power(lst, positive=True):
     return max_pow
 
 
+def write_csa_parcels(a, c, path):
+    max_pow = {
+        (n, s): max_power(log2_lst(lst), positive=typ)
+        for lst, n in zip([a.T, c.T], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
 
+    path.mkdir(parents=True, exist_ok=True)
+
+    with open(path / "config.txt", "w") as f:
+        for (n, s), p in max_pow.items():
+            f.write(f"{p} {n} {s}\n")
+
+    csa = {
+        (n, s): csa_lst(lst, positive=typ)
+        for lst, n in zip([a.T, c.T], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+
+    with open(path / "info.txt", "w") as f:
+        for (n, s), lst in csa.items():
+            f.write(f"{np.sum(lst)} {n} {s}\n")
+
+    for (n, s), lst in csa.items():
+        with open(path / f"{n}{s}.txt", "w") as f:
+            for power in lst:
+                for line in power:
+                    f.write(" ".join(map(str, line)) + "\n")
+                f.write("\n")
 
