@@ -3,4 +3,4 @@ project(c C)
 
 set(CMAKE_C_STANDARD 90)
 
-add_executable(c main.c naive.c naive.h fast.c fast.h)
+add_executable(c main.c convolution.c convolution.h example.h)
