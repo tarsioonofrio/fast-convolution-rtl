@@ -5,6 +5,9 @@
 #ifndef C_CONVOLUTION_H
 #define C_CONVOLUTION_H
 
-void naive_convolution(const int *weight, const int *feature, int *output, int f_row, int f_col, int g_col, int w_row, int w_col);
+void naive_convolution(const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,
+                       int out_col);
+
+void matrix_mul(const int *in1, const int *in2, int *out, int row, int col, int equal_dim);
 
 #endif //C_CONVOLUTION_H
