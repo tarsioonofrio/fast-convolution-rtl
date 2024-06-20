@@ -297,14 +297,16 @@ def cmd_build_toom_cook2d(points1d, points2d):
 
 def cmd_build2d_bind_iterate():
     path = dir_build / "bind-iterated"
+    path.mkdir(parents=True, exist_ok=True)
     init_data = read_init()
     build_data = read_build_2d()
     write_bind("iterate")
-    latex.build_2d_bind_iterated(init_data, build_data)
+    latex.build_2d_bind_iterated(init_data, build_data, path)
 
 
 def cmd_build2d_bind_nest():
     path = dir_build / "bind-nest"
+    path.mkdir(parents=True, exist_ok=True)
     init_data = read_init()
     build_data = read_build_2d()
     write_bind("nest")
