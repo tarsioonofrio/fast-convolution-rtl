@@ -14,3 +14,5 @@ __pycache__/
 \#*\#
 .\#*
 .venv/
+
+src/fast_convolution/c/cmake-build-debug/
