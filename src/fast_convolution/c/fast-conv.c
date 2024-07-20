@@ -7,14 +7,14 @@
 #define C_SIZE 5
 
 int main() {
-    const int mb[C_SIZE*A_SIZE] = {
+    const float mb[C_SIZE*A_SIZE] = {
             1, 0, 0,
             1, 1, 1,
             1, -1, 1,
             1, 2, 4,
             0, 0, 1,
     };
-    const int mc[C_SIZE*C_SIZE] = {
+    const float mc[C_SIZE*C_SIZE] = {
         2, -1,-2, 1,0,
         0, -2, -1, 1, 0,
         0, 2, -3, 1, 0,
@@ -26,11 +26,11 @@ int main() {
         0, 1, -1, 2, 0,
         0, 1, 1, 4, 1,
     };
-    int md[C_SIZE] = {0, 1, 2, 3, 4};
-    int mg[B_SIZE] = {0, 1, 2};
+    float md[C_SIZE] = {0, 1, 2, 3, 4};
+    float mg[B_SIZE] = {0, 1, 2};
     float mq[C_SIZE] = {1/2, -1/2, -1/6, 1/6, 1};
-    int mdd[C_SIZE] = {0};
-    int mbg[C_SIZE] = {0};
+    float mdd[C_SIZE] = {0};
+    float mbg[C_SIZE] = {0};
     float mgg[C_SIZE] = {0};
     float mss[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
@@ -39,15 +39,15 @@ int main() {
 
     // G=q.(b*g)
     // bg=b*g
-    matrix_mul_int(mb, mg, mbg, C_SIZE, B_SIZE, 1);
+    matrix_mul_float(mb, mg, mbg, C_SIZE, B_SIZE, 1);
     printf("bg=b*g: ");
     for (r=0; r < C_SIZE; r++) {
-        printf("%d\t", mbg[r]);
+        printf("%f\t", mbg[r]);
     };
     printf("\n");
 
     // G=q.bg
-    hadamart_product_float((float *)mbg, mq, mgg, C_SIZE);
+    hadamart_product_float(mbg, mq, mgg, C_SIZE);
     printf("G=q.bg: ");
     for (r=0; r < C_SIZE; r++) {
         printf("%f\t", mgg[r]);
@@ -55,10 +55,10 @@ int main() {
     printf("\n");
 
     // D=ct*d
-    matrix_mul_int(mc, md, mdd, C_SIZE, C_SIZE, 1);
+    matrix_mul_float(mc, md, mdd, C_SIZE, C_SIZE, 1);
     printf("D=ct*d: ");
     for (r=0; r < C_SIZE; r++) {
-        printf("%d\t", mdd[r]);
+        printf("%f\t", mdd[r]);
     };
     printf("\n");
 
