@@ -18,12 +18,12 @@ void naive_convolution(const int *weight, const int *feature, int *output, int f
     }
 }
 
-void matrix_mul(const int *in1, const int *in2, int *out, int row, int col, int equal_dim) {
+void matrix_mul(const int *in1, const int *in2, int *out, int row1, int col2_row1, int col2) {
     int r, c, t;
-    for (r=0; r < row; r++) {
-        for (c = 0; c < col; c++) {
-            for (t = 0; t < equal_dim; t++) {
-                out[r * col + c] = out[r * col + c] + in1[r * equal_dim + t] * in2[t * col + c];
+    for (r=0; r < row1; r++) {
+        for (c = 0; c < col2; c++) {
+            for (t = 0; t < col2_row1; t++) {
+                out[r * col2 + c] = out[r * col2 + c] + in1[r * col2_row1 + t] * in2[t * col2 + c];
             }
         }
     }
