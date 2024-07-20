@@ -90,7 +90,7 @@ def example_1d(b, c, a, g_num, d_num, q, path):
     d_sym = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c.T.shape[0]))))
     gg_sym = sy.Matrix(sy.symbols(" ".join(f"G_{i}"for i in range(b.shape[0]))))
     dd_sym = sy.Matrix(sy.symbols(" ".join(f"D_{i}"for i in range(d_num.shape[0]))))
-    ss_sym = sy.Matrix(sy.symbols(" ".join(f"SS_{i}"for i in range(a.T.shape[1]))))
+    ss_sym = sy.Matrix(sy.symbols(" ".join(f"S_{i}"for i in range(a.T.shape[1]))))
     s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}"for i in range(a.T.shape[0]))))
 
     doc = tex.Document()
@@ -140,7 +140,7 @@ def example_1d(b, c, a, g_num, d_num, q, path):
             "=", syt(c.T), syt(d_sym)
         ])
     )
-    ss_num = sy.hadamard_product(gg_num, dd_num)
+    ssx_num = sy.hadamard_product(gg_num, dd_num)
     doc.append(
         tex.Math(escape=False, data=[
             syt(ss_sym), "=", syt(ss_num),
