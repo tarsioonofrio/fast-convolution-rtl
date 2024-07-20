@@ -39,9 +39,11 @@ int main() {
     float ms[A_SIZE] = {0};
 
     int r;
-    int a_size = A_SIZE, b_size=B_SIZE, c_size=C_SIZE;
-    to_bg(mb, mg, mq, mbg, mgg, b_size, c_size);
+    int a_size = A_SIZE;
+    int b_size=B_SIZE;
+    int c_size=C_SIZE;
 
+    to_bg(mb, mg, mq, mbg, mgg, b_size, c_size);
     fast_conv1d_float(ms, ma, mss, mdd, mgg, mc, md, a_size, c_size);
 
     printf("s=S*a: ");
