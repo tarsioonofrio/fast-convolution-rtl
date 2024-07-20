@@ -9,10 +9,14 @@ void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col
         );
 
-void matrix_mul_int(const int *in1, const int *in2, int *out, int row1, int col2_row1, int col2);
-void matrix_mul_float(const float *in1, const float *in2, float *out, int row1, int col2_row1, int col2);
+void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const float *mgg, const float *mc,
+                       const float *md, int a_size, int c_size);
 
-void hadamart_product_int(const int *in1, const int *in2, int *out, int row);
-void hadamart_product_float(const float *in1, const float *in2, float *out, int row);
+
+void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
+void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, int col2_row1, int col2);
+
+void hadamart_product(int *out, const int *in1, const int *in2, int row);
+void hadamart_product_float(float *out, const float *in1, const float *in2, int row);
 
 #endif //C_CONVOLUTION_H

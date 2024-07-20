@@ -6,6 +6,8 @@
 #define B_SIZE 3
 #define C_SIZE 5
 
+void to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size);
+
 int main() {
     const float mb[C_SIZE*A_SIZE] = {
             1, 0, 0,
@@ -38,42 +40,10 @@ int main() {
 
     int r;
     int a_size = A_SIZE, b_size=B_SIZE, c_size=C_SIZE;
+    to_bg(mb, mg, mq, mbg, mgg, b_size, c_size);
 
-    // G=q.(b*g)
-    // bg=b*g
-    matrix_mul_float(mb, mg, mbg, c_size, b_size, 1);
-    printf("bg=b*g: ");
-    for (r=0; r < c_size; r++) {
-        printf("%.3f\t", mbg[r]);
-    };
-    printf("\n");
+    fast_conv1d_float(ms, ma, mss, mdd, mgg, mc, md, a_size, c_size);
 
-    // G=q.bg
-    hadamart_product_float(mq,mbg, mgg, c_size);
-    printf("G=q.bg: ");
-    for (r=0; r < c_size; r++) {
-        printf("%.3f\t", mgg[r]);
-    };
-    printf("\n");
-
-    // D=ct*d
-    matrix_mul_float(mc, md, mdd, c_size, c_size, 1);
-    printf("D=ct*d: ");
-    for (r=0; r < c_size; r++) {
-        printf("%.3f\t", mdd[r]);
-    };
-    printf("\n");
-
-    // S=D.G
-    hadamart_product_float((float *)mdd, mgg, mss, c_size);
-    printf("S=D.G: ");
-    for (r=0; r < c_size; r++) {
-        printf("%.3f\t", mss[r]);
-    };
-    printf("\n");
-
-    // s=S*a
-    matrix_mul_float(ma, mss, ms, a_size, c_size, 1);
     printf("s=S*a: ");
     for (r=0; r < a_size; r++) {
         printf("%.3f\t", ms[r]);
@@ -81,5 +51,26 @@ int main() {
     printf("\n");
 
     return 0;
+}
+
+void
+to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size) {
+    // G=q.(b*g)
+    // bg=b*g
+    matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
+//    printf("bg=b*g: ");
+//    for (r=0; r < c_size; r++) {
+//        printf("%.3f\t", mbg[r]);
+//    };
+//    printf("\n");
+
+    // G=q.bg
+    hadamart_product_float(mgg, mq, mbg, c_size);
+//    printf("G=q.bg: ");
+//    for (r=0; r < c_size; r++) {
+//        printf("%.3f\t", mgg[r]);
+//    };
+//    printf("\n");
+
 }
 

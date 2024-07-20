@@ -15,7 +15,7 @@ int main() {
     int row1=4, col1=4, row2=4, col2=4, row3=4, col3=4;
     int r;
     int c;
-    matrix_mul_int(feature_fast_4_4, m2, m3, row1, col1, col2);
+    matrix_mul(m3, feature_fast_4_4, m2, row1, col1, col2);
 
     for (r=0; r < row3; r++) {
         for (c = 0; c < col3; c++) {
