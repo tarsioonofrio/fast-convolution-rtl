@@ -16,7 +16,7 @@ int main() {
             48, 49, 50, 51, 52, 53, 54, 55,
             56, 57, 58, 59, 60, 61, 62, 63,
     };
-    const float feature_out[FOUT_SIZE*FOUT_SIZE] = {0};
+    float feature_out[FOUT_SIZE*FOUT_SIZE] = {0};
 
     const float feature_gold[FOUT_SIZE*FOUT_SIZE] = {
             5, 8, 11, 14, 17, 20,
@@ -61,20 +61,28 @@ int main() {
     to_bg(mb, mg, mq, mgg, b_size, c_size);
 
     for (r=0; r < FIN_SIZE; r++) {
-        for (c=0; c <= FIN_SIZE - C_SIZE; c=c+A_SIZE) {
+        for (c=0; c <= FIN_SIZE - A_SIZE; c=c+A_SIZE) {
             for (i = 0; i < C_SIZE; i++) {
-                md[i] = feature_in[r*FIN_SIZE + c + i];
-            };
-            for (i = 0; i < A_SIZE; i++) {
-                ms[i] = 0;
-            };
-
-//            printf("r:%d c:%d ", r, c);
-//            print_array_float(md, c_size, "d: ");
+                if (c + i < FIN_SIZE) {
+                    md[i] = feature_in[r * FIN_SIZE + c + i];
+                }
+                else {
+                    md[i] = 0;
+                }
+            }
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
-            print_array_float(ms, A_SIZE, "ms: ");
+//            print_array1d_float(ms, A_SIZE, "ms: ");
+            for (i = 0; i < C_SIZE; i++) {
+                if (c + i < FOUT_SIZE) {
+                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
+                }
+                else {
+                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
+                }
+            }
         }
     }
+    print_array2d_float(feature_out, FOUT_SIZE,  FOUT_SIZE, "fout: ");
 
 
     return 0;

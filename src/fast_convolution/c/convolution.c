@@ -62,6 +62,10 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
                        int c_size) {
     float mss[C_SIZE] = {0};
     float mdd[C_SIZE] = {0};
+    int i = 0;
+    for (i = 0; i < A_SIZE; i++) {
+        ms[i] = 0;
+    };
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
     // S=D.G
@@ -76,9 +80,9 @@ to_bg(const float *mb, const float *mg, const float *mq, float *mgg, int b_size,
     // G=q.(b*g)
     // bg=b*g
     matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
-    //print_array_float(mbg, c_size, "bg=b*g: ");
+    //print_array1d_float(mbg, c_size, "bg=b*g: ");
     // G=q.bg
     hadamart_product_float(mgg, mq, mbg, c_size);
-    //print_array_float(mgg, c_size, "G=q.bg: ");
+    //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
