@@ -2,6 +2,7 @@
 // Created by tarsio on 19/06/2024.
 //
 
+#include "example.h"
 #include <stdio.h>
 #include "convolution.h"
 #include "config.h"
@@ -75,7 +76,7 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
 }
 
 void
-to_bg(const float *mb, const float *mg, const float *mq, float *mgg, int b_size, int c_size) {
+to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size, int c_size) {
     float mbg[C_SIZE] = {0};
     // G=q.(b*g)
     // bg=b*g
@@ -86,3 +87,29 @@ to_bg(const float *mb, const float *mg, const float *mq, float *mgg, int b_size,
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
+void filter1d_slide1d(
+        float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
+        float *ms, int a_size, int c_size) {
+    int r, c, i;
+    for (r=0; r < FIN_SIZE; r++) {
+        for (c=0; c <= FIN_SIZE - A_SIZE; c=c+A_SIZE) {
+            for (i = 0; i < C_SIZE; i++) {
+                if (c + i < FIN_SIZE) {
+                    md[i] = feature_in[r * FIN_SIZE + c + i];
+                }
+                else {
+                    md[i] = 0;
+                }
+            }
+            fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
+            for (i = 0; i < C_SIZE; i++) {
+                if (c + i < FOUT_SIZE) {
+                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
+                }
+                else {
+                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
+                }
+            }
+        }
+    }
+}

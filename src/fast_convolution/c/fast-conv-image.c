@@ -58,30 +58,9 @@ int main() {
     int b_size=B_SIZE;
     int c_size=C_SIZE;
 
-    to_bg(mb, mg, mq, mgg, b_size, c_size);
+    to_bg(mgg, mq, mb, mg, b_size, c_size);
 
-    for (r=0; r < FIN_SIZE; r++) {
-        for (c=0; c <= FIN_SIZE - A_SIZE; c=c+A_SIZE) {
-            for (i = 0; i < C_SIZE; i++) {
-                if (c + i < FIN_SIZE) {
-                    md[i] = feature_in[r * FIN_SIZE + c + i];
-                }
-                else {
-                    md[i] = 0;
-                }
-            }
-            fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
-//            print_array1d_float(ms, A_SIZE, "ms: ");
-            for (i = 0; i < C_SIZE; i++) {
-                if (c + i < FOUT_SIZE) {
-                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
-                }
-                else {
-                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
-                }
-            }
-        }
-    }
+    filter1d_slide1d(feature_out, feature_in, mc, ma, md, mgg, ms, a_size, c_size);
     print_array2d_float(feature_out, FOUT_SIZE,  FOUT_SIZE, "fout: ");
 
 

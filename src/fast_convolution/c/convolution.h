@@ -11,7 +11,10 @@ void naive_convolution(
 
 void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size);
-void to_bg(const float *mb, const float *mg, const float *mq, float *mgg, int b_size, int c_size);
+void filter1d_slide1d(float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
+                      float *ms, int a_size, int c_size);
+
+void to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size, int c_size);
 
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
