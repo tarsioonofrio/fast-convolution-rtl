@@ -9,9 +9,9 @@ void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col
         );
 
-void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const float *mgg, const float *mc,
-                       const float *md, int a_size, int c_size);
-void to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size);
+void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
+                       int c_size);
+void to_bg(const float *mb, const float *mg, const float *mq, float *mgg, int b_size, int c_size);
 
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);

@@ -2,23 +2,20 @@
 // Created by tarsio on 19/06/2024.
 //
 
-#include "example.h"
 #include <stdio.h>
 #include "convolution.h"
+#include "config.h"
+#include "util.h"
 
-void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const float *mgg, const float *mc,
-                       const float *md, int a_size, int c_size);
-
-void to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size);
 
 void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,int out_col) {
-    int fi, fj, wi, wj;
-    for (fi=0; fi < f_row - w_row + 1; fi++){
-        for (fj=0; fj < f_col - w_col + 1; fj++){
-            for (wi=0; wi < w_row; wi++){
-                for (wj=0; wj < w_col; wj++){
-                    output[fi * out_col + fj] = output[fi * out_col + fj] + feature[(fi + wi) * f_col + (fj + wj)] * weight[wi * w_col + wj];
+    int fr, fc, wr, wc;
+    for (fr=0; fr < f_row - w_row + 1; fr++){
+        for (fc=0; fc < f_col - w_col + 1; fc++){
+            for (wr=0; wr < w_row; wr++){
+                for (wc=0; wc < w_col; wc++){
+                    output[fr * out_col + fc] = output[fr * out_col + fc] + feature[(fr + wr) * f_col + (fc + wc)] * weight[wr * w_col + wc];
                 }
             }
         }
@@ -61,8 +58,10 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
     }
 }
 
-void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const float *mgg, const float *mc,
-                       const float *md, int a_size, int c_size) {
+void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
+                       int c_size) {
+    float mss[C_SIZE] = {0};
+    float mdd[C_SIZE] = {0};
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
     // S=D.G
@@ -72,43 +71,14 @@ void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const
 }
 
 void
-to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size) {
+to_bg(const float *mb, const float *mg, const float *mq, float *mgg, int b_size, int c_size) {
+    float mbg[C_SIZE] = {0};
     // G=q.(b*g)
     // bg=b*g
     matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
-//    printf("bg=b*g: ");
-//    for (r=0; r < c_size; r++) {
-//        printf("%.3f\t", mbg[r]);
-//    };
-//    printf("\n");
-
+    //print_array_float(mbg, c_size, "bg=b*g: ");
     // G=q.bg
     hadamart_product_float(mgg, mq, mbg, c_size);
-//    printf("G=q.bg: ");
-//    for (r=0; r < c_size; r++) {
-//        printf("%.3f\t", mgg[r]);
-//    };
-//    printf("\n");
-
+    //print_array_float(mgg, c_size, "G=q.bg: ");
 }
 
-void
-to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size) {
-    // G=q.(b*g)
-    // bg=b*g
-    matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
-//    printf("bg=b*g: ");
-//    for (r=0; r < c_size; r++) {
-//        printf("%.3f\t", mbg[r]);
-//    };
-//    printf("\n");
-
-    // G=q.bg
-    hadamart_product_float(mgg, mq, mbg, c_size);
-//    printf("G=q.bg: ");
-//    for (r=0; r < c_size; r++) {
-//        printf("%.3f\t", mgg[r]);
-//    };
-//    printf("\n");
-
-}

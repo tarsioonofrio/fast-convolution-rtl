@@ -2,12 +2,7 @@
 #include "convolution.h"
 #include "example.h"
 #include "util.h"
-
-#define A_SIZE 3
-#define B_SIZE 3
-#define C_SIZE 5
-#define FIN_SIZE 8
-#define FOUT_SIZE 6
+#include "config.h"
 
 
 int main() {
@@ -55,29 +50,31 @@ int main() {
     const float mq[C_SIZE] = {1.0f/2.0f, -1.0f/2.0f, -1.0f/6.0f, 1.0f/6.0f, 1.0f};
 
     float md[C_SIZE] = {0};
-    float mdd[C_SIZE] = {0};
-    float mbg[C_SIZE] = {0};
     float mgg[C_SIZE] = {0};
-    float mss[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
-    int r, c;
+    int r, c, i;
     int a_size = A_SIZE;
     int b_size=B_SIZE;
     int c_size=C_SIZE;
 
-    to_bg(mb, mg, mq, mbg, mgg, b_size, c_size);
+    to_bg(mb, mg, mq, mgg, b_size, c_size);
 
-    for (c=0; c < FIN_SIZE; c=c+A_SIZE) {
-        for (r=0; r < c_size; r++) {
-            md[r] = feature_in[r];
-            printf("%.3f\t", md[r]);
-        };
-        print_array_float(md, c_size, "md");
-//        fast_conv1d_float(ms, ma, mss, mdd, mgg, mc, md, a_size, c_size);
+    for (r=0; r < FIN_SIZE; r++) {
+        for (c=0; c <= FIN_SIZE - C_SIZE; c=c+A_SIZE) {
+            for (i = 0; i < C_SIZE; i++) {
+                md[i] = feature_in[r*FIN_SIZE + c + i];
+            };
+            for (i = 0; i < A_SIZE; i++) {
+                ms[i] = 0;
+            };
+
+//            printf("r:%d c:%d ", r, c);
+//            print_array_float(md, c_size, "d: ");
+            fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
+            print_array_float(ms, A_SIZE, "ms: ");
+        }
     }
-
-    fast_conv1d_float(ms, ma, mss, mdd, mgg, mc, md, a_size, c_size);
 
 
     return 0;

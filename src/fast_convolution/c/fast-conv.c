@@ -41,8 +41,8 @@ int main() {
     int b_size=B_SIZE;
     int c_size=C_SIZE;
 
-    to_bg(mb, mg, mq, mbg, mgg, b_size, c_size);
-    fast_conv1d_float(ms, ma, mss, mdd, mgg, mc, md, a_size, c_size);
+    to_bg(mb, mg, mq, mgg, b_size, c_size);
+    fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
 
     printf("s=S*a: ");
     for (r=0; r < a_size; r++) {

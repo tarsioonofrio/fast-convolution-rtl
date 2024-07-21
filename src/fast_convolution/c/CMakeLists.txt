@@ -3,6 +3,6 @@ project(c C)
 
 set(CMAKE_C_STANDARD 90)
 
-add_executable(simple-conv simple-conv.c convolution.c convolution.h example.h util.c util.h)
-add_executable(fast-conv fast-conv.c convolution.c convolution.h example.h util.c util.h)
-add_executable(fast-conv-image fast-conv-image.c convolution.c convolution.h example.h util.c util.h)
+add_executable(simple-conv simple-conv.c convolution.c convolution.h example.h util.c util.h config.h)
+add_executable(fast-conv fast-conv.c convolution.c convolution.h example.h util.c util.h config.h)
+add_executable(fast-conv-image fast-conv-image.c convolution.c convolution.h example.h util.c util.h config.h)
