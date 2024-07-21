@@ -10,13 +10,14 @@
 
 
 void naive_convolution(
-        const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,int out_col) {
+        const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
     int fr, fc, wr, wc;
-    for (fr=0; fr < f_row - w_row + 1; fr++){
-        for (fc=0; fc < f_col - w_col + 1; fc++){
-            for (wr=0; wr < w_row; wr++){
-                for (wc=0; wc < w_col; wc++){
-                    output[fr * out_col + fc] = output[fr * out_col + fc] + feature[(fr + wr) * f_col + (fc + wc)] * weight[wr * w_col + wc];
+    for (fr = 0; fr < f_row - w_row + 1; fr++) {
+        for (fc = 0; fc < f_col - w_col + 1; fc++) {
+            for (wr = 0; wr < w_row; wr++) {
+                for (wc = 0; wc < w_col; wc++) {
+                    output[fr * out_col + fc] = output[fr * out_col + fc] +
+                                                feature[(fr + wr) * f_col + (fc + wc)] * weight[wr * w_col + wc];
                 }
             }
         }
@@ -25,7 +26,7 @@ void naive_convolution(
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2) {
     int r, c, t;
-    for (r=0; r < row1; r++) {
+    for (r = 0; r < row1; r++) {
         for (c = 0; c < col2; c++) {
             for (t = 0; t < col2_row1; t++) {
                 out[r * col2 + c] = out[r * col2 + c] + in1[r * col2_row1 + t] * in2[t * col2 + c];
@@ -36,7 +37,7 @@ void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row
 
 void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, int col2_row1, int col2) {
     int r, c, t;
-    for (r=0; r < row1; r++) {
+    for (r = 0; r < row1; r++) {
         for (c = 0; c < col2; c++) {
             for (t = 0; t < col2_row1; t++) {
                 out[r * col2 + c] = out[r * col2 + c] + in1[r * col2_row1 + t] * in2[t * col2 + c];
@@ -47,14 +48,14 @@ void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, 
 
 void hadamart_product(int *out, const int *in1, const int *in2, int row) {
     int r;
-    for (r=0; r < row; r++) {
+    for (r = 0; r < row; r++) {
         out[r] = in1[r] * in2[r];
     }
 }
 
 void hadamart_product_float(float *out, const float *in1, const float *in2, int row) {
     int r;
-    for (r=0; r < row; r++) {
+    for (r = 0; r < row; r++) {
         out[r] = in1[r] * in2[r];
     }
 }
@@ -91,13 +92,12 @@ void filter1d_slide1d(
         float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
         float *ms, int a_size, int c_size) {
     int r, c, i;
-    for (r=0; r < FIN_SIZE; r++) {
-        for (c=0; c <= FIN_SIZE - A_SIZE; c=c+A_SIZE) {
+    for (r = 0; r < FIN_SIZE; r++) {
+        for (c = 0; c <= FIN_SIZE - A_SIZE; c = c + A_SIZE) {
             for (i = 0; i < C_SIZE; i++) {
                 if (c + i < FIN_SIZE) {
                     md[i] = feature_in[r * FIN_SIZE + c + i];
-                }
-                else {
+                } else {
                     md[i] = 0;
                 }
             }
@@ -105,8 +105,7 @@ void filter1d_slide1d(
             for (i = 0; i < C_SIZE; i++) {
                 if (c + i < FOUT_SIZE) {
                     feature_out[r * FOUT_SIZE + c + i] = ms[i];
-                }
-                else {
+                } else {
                     feature_out[r * FOUT_SIZE + c + i] = ms[i];
                 }
             }
