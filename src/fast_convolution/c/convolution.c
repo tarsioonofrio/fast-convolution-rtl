@@ -88,7 +88,7 @@ to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size,
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
-void filter1d_slide1d(
+void filter1d_slide1d_float(
         float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
         float *ms, int a_size, int c_size) {
     int r, c, i;
