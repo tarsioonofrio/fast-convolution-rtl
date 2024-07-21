@@ -6,8 +6,6 @@
 #define B_SIZE 3
 #define C_SIZE 5
 
-void to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size);
-
 int main() {
     const float mb[C_SIZE*A_SIZE] = {
             1, 0, 0,
@@ -53,26 +51,5 @@ int main() {
     printf("\n");
 
     return 0;
-}
-
-void
-to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size) {
-    // G=q.(b*g)
-    // bg=b*g
-    matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
-//    printf("bg=b*g: ");
-//    for (r=0; r < c_size; r++) {
-//        printf("%.3f\t", mbg[r]);
-//    };
-//    printf("\n");
-
-    // G=q.bg
-    hadamart_product_float(mgg, mq, mbg, c_size);
-//    printf("G=q.bg: ");
-//    for (r=0; r < c_size; r++) {
-//        printf("%.3f\t", mgg[r]);
-//    };
-//    printf("\n");
-
 }
 

@@ -9,6 +9,8 @@
 void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const float *mgg, const float *mc,
                        const float *md, int a_size, int c_size);
 
+void to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size);
+
 void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,int out_col) {
     int fi, fj, wi, wj;
@@ -67,4 +69,46 @@ void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const
     hadamart_product_float(mss, mdd, mgg, c_size);
     // s=S*a
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
+}
+
+void
+to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size) {
+    // G=q.(b*g)
+    // bg=b*g
+    matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
+//    printf("bg=b*g: ");
+//    for (r=0; r < c_size; r++) {
+//        printf("%.3f\t", mbg[r]);
+//    };
+//    printf("\n");
+
+    // G=q.bg
+    hadamart_product_float(mgg, mq, mbg, c_size);
+//    printf("G=q.bg: ");
+//    for (r=0; r < c_size; r++) {
+//        printf("%.3f\t", mgg[r]);
+//    };
+//    printf("\n");
+
+}
+
+void
+to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size) {
+    // G=q.(b*g)
+    // bg=b*g
+    matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
+//    printf("bg=b*g: ");
+//    for (r=0; r < c_size; r++) {
+//        printf("%.3f\t", mbg[r]);
+//    };
+//    printf("\n");
+
+    // G=q.bg
+    hadamart_product_float(mgg, mq, mbg, c_size);
+//    printf("G=q.bg: ");
+//    for (r=0; r < c_size; r++) {
+//        printf("%.3f\t", mgg[r]);
+//    };
+//    printf("\n");
+
 }

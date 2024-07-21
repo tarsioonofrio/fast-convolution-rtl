@@ -11,6 +11,7 @@ void naive_convolution(
 
 void fast_conv1d_float(float *ms, const float *ma, float *mss, float *mdd, const float *mgg, const float *mc,
                        const float *md, int a_size, int c_size);
+void to_bg(const float *mb, const float *mg, const float *mq, float *mbg, float *mgg, int b_size, int c_size);
 
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
@@ -18,5 +19,7 @@ void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, 
 
 void hadamart_product(int *out, const int *in1, const int *in2, int row);
 void hadamart_product_float(float *out, const float *in1, const float *in2, int row);
+
+
 
 #endif //C_CONVOLUTION_H
