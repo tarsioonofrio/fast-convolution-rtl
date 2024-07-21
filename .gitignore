@@ -1,7 +1,7 @@
 
 .idea/
 dist/
-src/fast_convolution.egg-info/
+fast_convolution.egg-info/
 
 .ipynb_checkpoints/
 
@@ -13,6 +13,8 @@ __pycache__/
 
 \#*\#
 .\#*
+
 .venv/
 
-src/fast_convolution/c/cmake-build-debug/
+cmake-build-debug/
+
