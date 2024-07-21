@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "convolution.h"
+#include "libs/convolution.h"
 #include "example.h"
-#include "util.h"
-#include "config.h"
+#include "libs/util.h"
+#include "build.h"
 
 
 int main() {

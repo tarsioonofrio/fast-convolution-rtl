@@ -2,10 +2,10 @@
 // Created by tarsio on 19/06/2024.
 //
 
-#include "example.h"
+#include "../example.h"
 #include <stdio.h>
 #include "convolution.h"
-#include "config.h"
+#include "../build.h"
 #include "util.h"
 
 
@@ -106,7 +106,34 @@ void filter1d_slide1d_float(
                 if (c + i < FOUT_SIZE) {
                     feature_out[r * FOUT_SIZE + c + i] = ms[i];
                 } else {
-                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
+                    feature_out[r * FOUT_SIZE + c + i] = 0;
+                }
+            }
+        }
+    }
+}
+
+void filter1d_slide2d_float(
+        float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
+        float *ms, int a_size, int c_size) {
+    int r, c, rd, cd;
+    for (r = 0; r < FIN_SIZE; r++) {
+        for (c = 0; c <= FIN_SIZE - A_SIZE; c = c + A_SIZE) {
+            for (rd = 0; rd < C_SIZE; rd++) {
+                for (cd = 0; cd < C_SIZE; cd++) {
+                    if ((r + rd < FIN_SIZE) && (c + cd < FIN_SIZE) ) {
+                        md[rd] = feature_in[r * FIN_SIZE + c + rd];
+                    } else {
+                        md[rd] = 0;
+                    }
+                }
+            }
+            fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
+            for (rd = 0; rd < C_SIZE; rd++) {
+                if (c + rd < FOUT_SIZE) {
+                    feature_out[r * FOUT_SIZE + c + rd] = ms[rd];
+                } else {
+                    feature_out[r * FOUT_SIZE + c + rd] = 0;
                 }
             }
         }

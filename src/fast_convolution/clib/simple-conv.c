@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "convolution.h"
+#include "libs/convolution.h"
 #include "example.h"
 
 int main() {
