@@ -53,7 +53,6 @@ int main() {
     float mgg[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
-    int r, c, i;
     int a_size = A_SIZE;
     int b_size = B_SIZE;
     int c_size = C_SIZE;
