@@ -17,6 +17,7 @@ from . import fast
 from . import quant
 from . import latex
 from .naive import naive_convolve
+from .utils import c_header
 
 
 root_path = Path(os.getcwd())
@@ -29,6 +30,7 @@ dir_build = root_path / "build"
 dir_quant = root_path / "quant"
 dir_example = root_path / "example"
 dir_sim = root_path / "sim"
+dir_lib = root_path / "lib"
 
 
 def read_init():
@@ -181,6 +183,16 @@ def cmd_init(dimensions, in_len, out_len, w):
     file_init.parent.mkdir(parents=True, exist_ok=True)
     with open(file_init, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    init_path = dir_lib / "init.h"
+    if dimensions == 1:
+        dict_defs = {
+            "A_SIZE": a,
+            "B_SIZE": b,
+            "C_SIZE": c,
+        }
+        c_header(init_path, [], dict_defs)
 
 
 def cmd_show(init, build, quant):
@@ -234,9 +246,18 @@ def cmd_build_toom_cook1d(points):
     )
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
-
     fast.write_csa_parcels(a, c, path / "csa")
 
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    init_path = dir_lib / "build.h"
+    if dim == 1:
+        list_array = [
+            {"name": "c", "type": "int", "value": np.array(c, dtype=int).tolist(), "shape": np.array(c, dtype=int).shape},
+            {"name": "b", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
+            {"name": "a", "type": "int", "value": np.array(a, dtype=int).tolist(), "shape": np.array(a, dtype=int).shape},
+            {"name": "q", "type": "int", "value": qr, "shape": len(qr)},
+        ]
+        c_header(init_path, list_array, {})
 
 
 def cmd_build_toom_cook2d(points1d, points2d):

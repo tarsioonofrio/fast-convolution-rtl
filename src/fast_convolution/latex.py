@@ -140,7 +140,7 @@ def example_1d(b, c, a, g_num, d_num, q, path):
             "=", syt(c.T), syt(d_sym)
         ])
     )
-    ssx_num = sy.hadamard_product(gg_num, dd_num)
+    ss_num = sy.hadamard_product(gg_num, dd_num)
     doc.append(
         tex.Math(escape=False, data=[
             syt(ss_sym), "=", syt(ss_num),

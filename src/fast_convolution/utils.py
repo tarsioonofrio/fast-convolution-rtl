@@ -101,34 +101,42 @@ def conv_circ_fft(signal, kernel):
     return np.real(np.fft.ifft(np.fft.fft(signal)*np.fft.fft(kern)))
 
 
-def c_header(path, list_array, list_scalar):
-    source_str = """
-    #ifndef C_EXAMPLE_H
-    #define C_EXAMPLE_H
-    {code}
-    #endif //C_EXAMPLE_H
-    """
+def c_header(path, list_array, dict_defs):
+    source_str = (
+        "#ifndef C_EXAMPLE_H\n"
+        "#define C_EXAMPLE_H\n\n"
+        "{code}\n"
+        "#endif //C_EXAMPLE_H\n"
+    )
+    array_str = (
+        "const {type} {name}[size] = {{\n"
+        "{value}\n"
+        "}}\n"
+    )
+    def_str = "#define {key} {value}\n"
+    list_def = []
+    if len(dict_defs) > 0:
+        for k, v in dict_defs.items():
+            definition = def_str.format(key=k, value=v)
+            list_def.append(definition)
 
-    array_str = """
-    const {type} {name}[size] = {
-    {value}
-    }
-    """
     list_data = []
-    for array in list_array:
-        typ = array["type"]
-        name = array["name"]
-        shape = array["shape"]
-        value = np.array(array["value"]).reshape((shape))
-        value_str = ["\t" + ", ".join(map(str, v)) for v in value]
-        size = "*".join(map(str, shape))
-        array_str.format(type=typ, name=name, value=value_str, size=size)
+    if len(list_array) > 0:
+        for array in list_array:
+            typ = array["type"]
+            name = array["name"]
+            shape = array["shape"]
+            value = np.array(array["value"]).reshape((shape))
+            value_str = ["\t" + ", ".join(map(str, v)) for v in value]
+            size = "*".join(map(str, shape))
+            #breakpoint()
+            array = array_str.format(
+                type=typ, name=name, value=value_str, size=size
+            )
+            list_data.append(array)
 
-    string = source_str.format(code=array_str)
-    with open(path) as f:
-        f.write(string)
-
-
-
-
+    list_def_data = list_def + ["\n"] + list_data
+    source = source_str.format(code="".join(list_def_data))
+    with open(path, "w") as f:
+        f.write(source)
 
