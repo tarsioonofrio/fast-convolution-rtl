@@ -11,8 +11,8 @@ int main() {
 
     for (gi = 0; gi < g_row; gi++) {
         for (gj = 0; gj < g_col; gj++) {
-            printf("%d\t", gold_gold[gi * g_col + gj]);
-            if (gold_gold[gi * g_col + gj] != output[gi * g_col + gj]) {
+            printf("%d\t", gold[gi * g_col + gj]);
+            if (gold[gi * g_col + gj] != output[gi * g_col + gj]) {
                 printf("Err %d %d\n", gi, gj);
             }
         }
