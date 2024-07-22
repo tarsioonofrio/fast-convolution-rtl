@@ -5,6 +5,8 @@
 #ifndef C_BUILD_H
 #define C_BUILD_H
 
+#include "config.h"
+
 const float mb[C_SIZE * A_SIZE] = {
         1, 0, 0,
         1, 1, 1,
@@ -24,8 +26,6 @@ const float ma[A_SIZE * C_SIZE] = {
         0, 1, -1, 2, 0,
         0, 1, 1, 4, 1,
 };
-const float md[C_SIZE] = {0, 1, 2, 3, 4};
-const float mg[B_SIZE] = {0, 1, 2};
 const float mq[C_SIZE] = {1.0f / 2.0f, -1.0f / 2.0f, -1.0f / 6.0f, 1.0f / 6.0f, 1.0f};
 
 

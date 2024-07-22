@@ -3,7 +3,7 @@
 #include "libs/util.h"
 #include "test1d/config.h"
 #include "test1d/build.h"
-#include "test1d/example.h"
+#include "test1d/sim.h"
 
 
 
@@ -29,27 +29,7 @@ int main() {
             125, 128, 131, 134, 137, 140,
     };
 
-    const float mb[C_SIZE * A_SIZE] = {
-            1, 0, 0,
-            1, 1, 1,
-            1, -1, 1,
-            1, 2, 4,
-            0, 0, 1,
-    };
-    const float mc[C_SIZE * C_SIZE] = {
-            2, -1, -2, 1, 0,
-            0, -2, -1, 1, 0,
-            0, 2, -3, 1, 0,
-            0, -1, 0, 1, 0,
-            0, 2, -1, -2, 1,
-    };
-    const float ma[A_SIZE * C_SIZE] = {
-            1, 1, 1, 1, 0,
-            0, 1, -1, 2, 0,
-            0, 1, 1, 4, 1,
-    };
     const float mg[B_SIZE] = {0, 1, 2};
-    const float mq[C_SIZE] = {1.0f / 2.0f, -1.0f / 2.0f, -1.0f / 6.0f, 1.0f / 6.0f, 1.0f};
 
     float mgg[C_SIZE] = {0};
 
