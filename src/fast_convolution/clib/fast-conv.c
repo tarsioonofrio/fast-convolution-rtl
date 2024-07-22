@@ -1,39 +1,16 @@
 #include <stdio.h>
 #include "libs/convolution.h"
-#include "example.h"
+#include "test1d/config.h"
+#include "test1d/build.h"
+#include "test1d/example.h"
 
 #define A_SIZE 3
 #define B_SIZE 3
 #define C_SIZE 5
 
 int main() {
-    const float mb[C_SIZE * A_SIZE] = {
-            1, 0, 0,
-            1, 1, 1,
-            1, -1, 1,
-            1, 2, 4,
-            0, 0, 1,
-    };
-    const float mc[C_SIZE * C_SIZE] = {
-            2, -1, -2, 1, 0,
-            0, -2, -1, 1, 0,
-            0, 2, -3, 1, 0,
-            0, -1, 0, 1, 0,
-            0, 2, -1, -2, 1,
-    };
-    const float ma[A_SIZE * C_SIZE] = {
-            1, 1, 1, 1, 0,
-            0, 1, -1, 2, 0,
-            0, 1, 1, 4, 1,
-    };
-    const float md[C_SIZE] = {0, 1, 2, 3, 4};
-    const float mg[B_SIZE] = {0, 1, 2};
-    const float mq[C_SIZE] = {1.0f / 2.0f, -1.0f / 2.0f, -1.0f / 6.0f, 1.0f / 6.0f, 1.0f};
 
-    float mdd[C_SIZE] = {0};
-    float mbg[C_SIZE] = {0};
     float mgg[C_SIZE] = {0};
-    float mss[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
     int r;

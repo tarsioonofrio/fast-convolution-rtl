@@ -12,9 +12,9 @@ void naive_convolution(
 void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size);
 
-void filter1d_slide1d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md,
-                            const float *mgg,
-                            float *ms, int a_size, int c_size);
+void
+filter1d_slide1d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
+                       int a_size, int c_size);
 void filter1d_slide2d_float(
         float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
         float *ms, int a_size, int c_size);

@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include "libs/convolution.h"
-#include "example.h"
 #include "libs/util.h"
-#include "build.h"
+#include "test1d/config.h"
+#include "test1d/build.h"
+#include "test1d/example.h"
+
 
 
 int main() {
@@ -49,9 +51,7 @@ int main() {
     const float mg[B_SIZE] = {0, 1, 2};
     const float mq[C_SIZE] = {1.0f / 2.0f, -1.0f / 2.0f, -1.0f / 6.0f, 1.0f / 6.0f, 1.0f};
 
-    float md[C_SIZE] = {0};
     float mgg[C_SIZE] = {0};
-    float ms[A_SIZE] = {0};
 
     int a_size = A_SIZE;
     int b_size = B_SIZE;
@@ -59,7 +59,7 @@ int main() {
 
     to_bg(mgg, mq, mb, mg, b_size, c_size);
 
-    filter1d_slide1d_float(feature_out, feature_in, mc, ma, md, mgg, ms, a_size, c_size);
+    filter1d_slide1d_float(feature_out, feature_in, mc, ma, mgg, a_size, c_size);
     print_array2d_float(feature_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
 
 

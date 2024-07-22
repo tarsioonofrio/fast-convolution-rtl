@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "libs/convolution.h"
-#include "example.h"
+#include "test1d/example.h"
 
 int main() {
     const int m2[4 * 4] = {
