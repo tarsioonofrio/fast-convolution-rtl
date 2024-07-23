@@ -102,11 +102,12 @@ def conv_circ_fft(signal, kernel):
 
 
 def c_header(path, list_array, dict_defs):
+    name = path.stem.upper()
     source_str = (
-        "#ifndef C_EXAMPLE_H\n"
-        "#define C_EXAMPLE_H\n\n"
+        f"#ifndef C_{name}_H\n"
+        f"#define C_{name}_H\n\n"
         "{code}\n"
-        "#endif //C_EXAMPLE_H\n"
+        f"#endif //C_{name}_H\n"
     )
     array_str = (
         "const {type} {name}[{size}] = {{\n"

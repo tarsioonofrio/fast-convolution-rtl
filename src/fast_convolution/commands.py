@@ -445,10 +445,16 @@ def cmd_sim_file(feature, weight):
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "sim.h"
     list_array = [
-        {"name": "feat_in", "type": "int", "value": feat_arr.tolist(), "shape": feat_arr.shape},
         {"name": "weight", "type": "int", "value": wght_arr.tolist(), "shape": wght_arr.shape},
+        {"name": "feat_in", "type": "int", "value": feat_arr.tolist(), "shape": feat_arr.shape},
+        {"name": "gold", "type": "int", "value": output_fast.tolist(), "shape": output_fast.shape},
     ]
-    c_header(init_path, list_array, {})
+    dict_def = {
+        "W_SIZE": wght_arr.shape[0],
+        "FIN_SIZE": feat_arr.shape[0],
+        "FOUT_SIZE": output_fast.shape[0],
+    }
+    c_header(init_path, list_array, dict_def)
 
     return text
 
