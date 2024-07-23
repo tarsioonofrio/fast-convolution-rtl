@@ -255,7 +255,7 @@ def cmd_build_toom_cook1d(points):
             {"name": "c", "type": "int", "value": np.array(c, dtype=int).tolist(), "shape": np.array(c, dtype=int).shape},
             {"name": "b", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
             {"name": "a", "type": "int", "value": np.array(a, dtype=int).tolist(), "shape": np.array(a, dtype=int).shape},
-            {"name": "q", "type": "int", "value": qr, "shape": len(qr)},
+            {"name": "q", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
         ]
         c_header(init_path, list_array, {})
 

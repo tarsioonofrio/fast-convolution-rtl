@@ -109,7 +109,7 @@ def c_header(path, list_array, dict_defs):
         "#endif //C_EXAMPLE_H\n"
     )
     array_str = (
-        "const {type} {name}[size] = {{\n"
+        "const {type} {name}[{size}] = {{\n"
         "{value}\n"
         "}}\n"
     )
@@ -127,7 +127,7 @@ def c_header(path, list_array, dict_defs):
             name = array["name"]
             shape = array["shape"]
             value = np.array(array["value"]).reshape((shape))
-            value_str = ["\t" + ", ".join(map(str, v)) for v in value]
+            value_str = ("\n").join(["\t" + ", ".join(map(str, v)) for v in value])
             size = "*".join(map(str, shape))
             #breakpoint()
             array = array_str.format(
