@@ -438,9 +438,17 @@ def cmd_sim_file(feature, weight):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", 'w') as f:
         f.write(text)
- 
+
     for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
+
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    init_path = dir_lib / "sim.h"
+    list_array = [
+        {"name": "feat_in", "type": "int", "value": feat_arr.tolist(), "shape": feat_arr.shape},
+        {"name": "weight", "type": "int", "value": wght_arr.tolist(), "shape": wght_arr.shape},
+    ]
+    c_header(init_path, list_array, {})
 
     return text
 
