@@ -252,10 +252,10 @@ def cmd_build_toom_cook1d(points):
     init_path = dir_lib / "build.h"
     if dim == 1:
         list_array = [
-            {"name": "c", "type": "int", "value": np.array(c, dtype=int).tolist(), "shape": np.array(c, dtype=int).shape},
-            {"name": "b", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
-            {"name": "a", "type": "int", "value": np.array(a, dtype=int).tolist(), "shape": np.array(a, dtype=int).shape},
-            {"name": "q", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
+            {"name": "mc", "type": "int", "value": np.array(c, dtype=int).tolist(), "shape": np.array(c, dtype=int).shape},
+            {"name": "mb", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
+            {"name": "ma", "type": "int", "value": np.array(a, dtype=int).tolist(), "shape": np.array(a, dtype=int).shape},
+            {"name": "mq", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
         ]
         c_header(init_path, list_array, {})
 
@@ -615,6 +615,13 @@ def cmd_example_sequential(feature, weight):
         latex.example_1d(
             b, c, a, g, d, q, dir_example / f"example-seq-{now()}"
         )
+        dir_lib.mkdir(parents=True, exist_ok=True)
+        init_path = dir_lib / "example.h"
+        list_array = [
+            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d, dtype=int).shape},
+            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g, dtype=int).shape},
+        ]
+        c_header(init_path, list_array, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists()
