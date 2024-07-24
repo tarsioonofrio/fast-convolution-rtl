@@ -21,8 +21,8 @@ int main() {
     float mdf[C_SIZE] = {0};
 
     convert_int_to_float(mat, matf, C_SIZE * A_SIZE);
-    convert_int_to_float(mb, mbf, C_SIZE*B_SIZE);
     convert_int_to_float(mct, mctf, C_SIZE * C_SIZE);
+    convert_int_to_float(mb, mbf, C_SIZE*B_SIZE);
     convert_int_to_float(mg, mgf, B_SIZE);
     convert_int_to_float(md, mdf, C_SIZE);
 
