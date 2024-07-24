@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "libs/convolution.h"
-#include "test1d/sim.h"
 #include "libs/util.h"
-#include "test1d/config.h"
+#include "test1d/init.h"
+#include "test1d/sim.h"
 
 
 int main() {
@@ -59,7 +59,7 @@ int main() {
 
     to_bg(mgg, mq, mb, mg, b_size, c_size);
 
-    filter1d_slide2d_float(feature_out, feature_in, mc, ma, md, mgg, ms, a_size, c_size);
+    filter1d_slide2d_float(feature_out, feature_in, mc, ma, md, mgg, ms, a_size, c_size, FIN_SIZE, FOUT_SIZE);
     print_array2d_float(feature_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
 
 

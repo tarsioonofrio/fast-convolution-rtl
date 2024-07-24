@@ -3,9 +3,7 @@
 //
 
 #include "convolution.h"
-#include "util.h"
 #include "../test1d/init.h"
-#include "../test1d/sim.h"
 
 
 void naive_convolution(
@@ -64,7 +62,7 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     float mss[C_SIZE] = {0};
     float mdd[C_SIZE] = {0};
     int i = 0;
-    for (i = 0; i < A_SIZE; i++) {
+    for (i = 0; i < a_size; i++) {
         ms[i] = 0;
     };
     // D=ct*d
@@ -89,53 +87,52 @@ to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size,
 
 void
 filter1d_slide1d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
-                       int a_size, int c_size) {
+                       int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, i;
     float md[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
-    for (r = 0; r < FIN_SIZE; r++) {
-        for (c = 0; c <= FIN_SIZE - A_SIZE; c = c + A_SIZE) {
-            for (i = 0; i < C_SIZE; i++) {
-                if (c + i < FIN_SIZE) {
-                    md[i] = feature_in[r * FIN_SIZE + c + i];
+    for (r = 0; r < fin_size; r++) {
+        for (c = 0; c <= fin_size - a_size; c = c + a_size) {
+            for (i = 0; i < c_size; i++) {
+                if (c + i < fin_size) {
+                    md[i] = feature_in[r * fin_size + c + i];
                 } else {
                     md[i] = 0;
                 }
             }
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
-            for (i = 0; i < C_SIZE; i++) {
-                if (c + i < FOUT_SIZE) {
-                    feature_out[r * FOUT_SIZE + c + i] = ms[i];
+            for (i = 0; i < c_size; i++) {
+                if (c + i < fout_size) {
+                    feature_out[r * fout_size + c + i] = ms[i];
                 } else {
-                    feature_out[r * FOUT_SIZE + c + i] = 0;
+                    feature_out[r * fout_size + c + i] = 0;
                 }
             }
         }
     }
 }
 
-void filter1d_slide2d_float(
-        float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
-        float *ms, int a_size, int c_size) {
+void filter1d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md,
+                            const float *mgg, float *ms, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
-    for (r = 0; r < FIN_SIZE; r++) {
-        for (c = 0; c <= FIN_SIZE - A_SIZE; c = c + A_SIZE) {
-            for (rd = 0; rd < C_SIZE; rd++) {
-                for (cd = 0; cd < C_SIZE; cd++) {
-                    if ((r + rd < FIN_SIZE) && (c + cd < FIN_SIZE) ) {
-                        md[rd] = feature_in[r * FIN_SIZE + c + rd];
+    for (r = 0; r < fin_size; r++) {
+        for (c = 0; c <= fin_size - a_size; c = c + a_size) {
+            for (rd = 0; rd < c_size; rd++) {
+                for (cd = 0; cd < c_size; cd++) {
+                    if ((r + rd < fin_size) && (c + cd < fin_size) ) {
+                        md[rd] = feature_in[r * fin_size + c + rd];
                     } else {
                         md[rd] = 0;
                     }
                 }
             }
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
-            for (rd = 0; rd < C_SIZE; rd++) {
-                if (c + rd < FOUT_SIZE) {
-                    feature_out[r * FOUT_SIZE + c + rd] = ms[rd];
+            for (rd = 0; rd < c_size; rd++) {
+                if (c + rd < fout_size) {
+                    feature_out[r * fout_size + c + rd] = ms[rd];
                 } else {
-                    feature_out[r * FOUT_SIZE + c + rd] = 0;
+                    feature_out[r * fout_size + c + rd] = 0;
                 }
             }
         }

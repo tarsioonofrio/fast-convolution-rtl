@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "libs/convolution.h"
 #include "libs/util.h"
-#include "test1d/config.h"
+#include "test1d/init.h"
 #include "test1d/build.h"
 #include "test1d/sim.h"
 
@@ -33,13 +33,13 @@ int main() {
 
     float mgg[C_SIZE] = {0};
 
-    int a_size = A_SIZE;
+//    int a_size = A_SIZE;
     int b_size = B_SIZE;
-    int c_size = C_SIZE;
+//    int c_size = C_SIZE;
 
-    to_bg(mgg, mq, mb, mg, b_size, c_size);
+    to_bg(mgg, mq, mb, mg, b_size, C_SIZE);
 
-    filter1d_slide1d_float(feature_out, feature_in, mc, ma, mgg, a_size, c_size);
+    filter1d_slide1d_float(feature_out, feature_in, mc, ma, mgg, A_SIZE, C_SIZE, FOUT_SIZE, FOUT_SIZE);
     print_array2d_float(feature_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
 
 
