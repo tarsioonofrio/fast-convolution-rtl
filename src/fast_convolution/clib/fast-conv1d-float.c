@@ -5,9 +5,6 @@
 #include "test1d/build.h"
 #include "test1d/example.h"
 
-#define A_SIZE 3
-#define B_SIZE 3
-#define C_SIZE 5
 
 int main() {
     int i;
@@ -26,7 +23,6 @@ int main() {
     convert_int_to_float(mat, matf, C_SIZE * A_SIZE);
     convert_int_to_float(mb, mbf, C_SIZE*B_SIZE);
     convert_int_to_float(mct, mctf, C_SIZE * C_SIZE);
-//    convert_int_to_float(mq, mqf, C_SIZE);
     convert_int_to_float(mg, mgf, B_SIZE);
     convert_int_to_float(md, mdf, C_SIZE);
 
