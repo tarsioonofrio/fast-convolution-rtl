@@ -13,8 +13,8 @@ int main() {
     float ms[A_SIZE] = {0};
 
     float matf[A_SIZE * C_SIZE] = {0};
-    float mbf[C_SIZE*B_SIZE] = {0};
     float mctf[C_SIZE * C_SIZE] = {0};
+    float mbf[C_SIZE*B_SIZE] = {0};
 
     float mqf[C_SIZE] = {0};
     float mgf[B_SIZE] = {0};
