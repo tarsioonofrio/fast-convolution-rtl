@@ -252,9 +252,9 @@ def cmd_build_toom_cook1d(points):
     init_path = dir_lib / "build.h"
     if dim == 1:
         list_array = [
-            {"name": "mc", "type": "int", "value": np.array(c, dtype=int).tolist(), "shape": np.array(c, dtype=int).shape},
+            {"name": "mct", "type": "int", "value": np.array(c, dtype=int).T.tolist(), "shape": np.array(c.T, dtype=int).shape},
             {"name": "mb", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
-            {"name": "ma", "type": "int", "value": np.array(a, dtype=int).tolist(), "shape": np.array(a, dtype=int).shape},
+            {"name": "mat", "type": "int", "value": np.array(a, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
             {"name": "mq", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
         ]
         c_header(init_path, list_array, {})

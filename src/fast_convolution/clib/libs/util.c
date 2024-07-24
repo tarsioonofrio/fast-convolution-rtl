@@ -28,3 +28,17 @@ void print_array2d_float(const float *array, int row, int col, const char *name)
     };
     printf("\n");
 }
+
+void convert_float_to_int(const float *float_array, int *int_array, int length) {
+    int i;
+    for (i = 0; i < length; i++) {
+        int_array[i] = (int)float_array[i];  // Converte o float para int
+    }
+}
+
+void convert_int_to_float(const int *int_array, float *float_array, int length) {
+    int i;
+    for (i = 0; i < length; i++) {
+        float_array[i] = (float)int_array[i];
+    }
+}
