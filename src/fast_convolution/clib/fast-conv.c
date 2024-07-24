@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "libs/convolution.h"
-#include "test1d/config.h"
+#include "test1d/init.h"
 #include "test1d/build.h"
 #include "test1d/example.h"
 

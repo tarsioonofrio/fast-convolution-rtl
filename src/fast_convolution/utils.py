@@ -112,7 +112,7 @@ def c_header(path, list_array, dict_defs):
     array_str = (
         "const {type} {name}[{size}] = {{\n"
         "{value}\n"
-        "}}\n"
+        "}};\n"
     )
     def_str = "#define {key} {value}\n"
     list_def = []
