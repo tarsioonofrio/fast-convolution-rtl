@@ -3,8 +3,9 @@
 //
 
 #include "convolution.h"
-#include "../test1d/config.h"
 #include "util.h"
+#include "../test1d/init.h"
+#include "../test1d/sim.h"
 
 
 void naive_convolution(
