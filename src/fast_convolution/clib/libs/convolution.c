@@ -3,6 +3,7 @@
 //
 
 #include "convolution.h"
+#include "util.h"
 #include "../test1d/init.h"
 
 
@@ -73,21 +74,31 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
 }
 
-void
-to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size, int c_size) {
+void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
+    int i;
     float mbg[C_SIZE] = {0};
+    float mqf[C_SIZE] = {0};
+    float mgf[B_SIZE] = {0};
+    float mbf[C_SIZE*B_SIZE] = {0};
+    convert_int_to_float(mg, mgf, B_SIZE);
+    convert_int_to_float(mb, mbf, C_SIZE*B_SIZE);
+
+    for (i = 0; i < C_SIZE; i++) {
+        mqf[i] = (float)mq[i*2] / (float)mq[i*2 + 1];
+    }
+
     // G=q.(b*g)
     // bg=b*g
-    matrix_mul_float(mbg, mb, mg, c_size, b_size, 1);
+    matrix_mul_float(mbg, mbf, mgf, c_size, b_size, 1);
     //print_array1d_float(mbg, c_size, "bg=b*g: ");
     // G=q.bg
-    hadamart_product_float(mgg, mq, mbg, c_size);
+    hadamart_product_float(mgg, mqf, mbg, c_size);
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
-void
-filter1d_slide1d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
-                       int a_size, int c_size, int fin_size, int fout_size) {
+void filter1d_slide1d_float(
+        float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg, int a_size,
+        int c_size, int fin_size, int fout_size) {
     int r, c, i;
     float md[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
@@ -113,8 +124,9 @@ filter1d_slide1d_float(float *feature_out, const float *feature_in, const float 
     }
 }
 
-void filter1d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md,
-                            const float *mgg, float *ms, int a_size, int c_size, int fin_size, int fout_size) {
+void filter1d_slide2d_float(
+        float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
+        float *ms, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
     for (r = 0; r < fin_size; r++) {
         for (c = 0; c <= fin_size - a_size; c = c + a_size) {
