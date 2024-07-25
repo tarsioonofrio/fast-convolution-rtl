@@ -37,7 +37,7 @@ int main() {
     int b_size = B_SIZE;
 //    int c_size = C_SIZE;
 
-    to_bg(mgg, mq, mb, mg);
+    to_bg(mgg, mq, mb, mg, b_size, C_SIZE);
 
     filter1d_slide1d_float(feature_out, feature_in, mc, ma, mgg, A_SIZE, C_SIZE, FOUT_SIZE, FOUT_SIZE);
     print_array2d_float(feature_out, FOUT_SIZE, FOUT_SIZE, "fout: ");

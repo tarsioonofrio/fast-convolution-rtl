@@ -60,6 +60,7 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
 
 void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size) {
+    // TODO declare array with malloc/calloc
     float mss[C_SIZE] = {0};
     float mdd[C_SIZE] = {0};
     int i = 0;
@@ -74,14 +75,15 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
 }
 
-void to_bg(float *mgg, const int *mq, const int *mb, const int *mg) {
+void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
     int i;
+    // TODO declare array with malloc/calloc
     float mbg[C_SIZE] = {0};
     float mqf[C_SIZE] = {0};
     float mgf[B_SIZE] = {0};
     float mbf[C_SIZE*B_SIZE] = {0};
-    convert_int_to_float(mg, mgf, B_SIZE);
-    convert_int_to_float(mb, mbf, C_SIZE*B_SIZE);
+    convert_int_to_float(mg, mgf, b_size);
+    convert_int_to_float(mb, mbf, c_size*b_size);
 
     for (i = 0; i < C_SIZE; i++) {
         mqf[i] = (float)mq[i*2] / (float)mq[i*2 + 1];
@@ -89,10 +91,10 @@ void to_bg(float *mgg, const int *mq, const int *mb, const int *mg) {
 
     // G=q.(b*g)
     // bg=b*g
-    matrix_mul_float(mbg, mbf, mgf, C_SIZE, B_SIZE, 1);
+    matrix_mul_float(mbg, mbf, mgf, c_size, b_size, 1);
     //print_array1d_float(mbg, c_size, "bg=b*g: ");
     // G=q.bg
-    hadamart_product_float(mgg, mqf, mbg, C_SIZE);
+    hadamart_product_float(mgg, mqf, mbg, c_size);
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
@@ -100,6 +102,7 @@ void filter1d_slide1d_float(
         float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg, int a_size,
         int c_size, int fin_size, int fout_size) {
     int r, c, i;
+    // TODO declare array with malloc/calloc
     float md[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 

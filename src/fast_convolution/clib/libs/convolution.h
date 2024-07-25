@@ -18,7 +18,7 @@ filter1d_slide1d_float(float *feature_out, const float *feature_in, const float 
 void filter1d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md,
                             const float *mgg, float *ms, int a_size, int c_size, int fin_size, int fout_size);
 
-void to_bg(float *mgg, const int *mq, const int *mb, const int *mg);
+void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size);
 
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
