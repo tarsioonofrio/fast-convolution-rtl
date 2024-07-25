@@ -74,7 +74,7 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
 }
 
-void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
+void to_bg(float *mgg, const int *mq, const int *mb, const int *mg) {
     int i;
     float mbg[C_SIZE] = {0};
     float mqf[C_SIZE] = {0};
@@ -89,10 +89,10 @@ void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, 
 
     // G=q.(b*g)
     // bg=b*g
-    matrix_mul_float(mbg, mbf, mgf, c_size, b_size, 1);
+    matrix_mul_float(mbg, mbf, mgf, C_SIZE, B_SIZE, 1);
     //print_array1d_float(mbg, c_size, "bg=b*g: ");
     // G=q.bg
-    hadamart_product_float(mgg, mqf, mbg, c_size);
+    hadamart_product_float(mgg, mqf, mbg, C_SIZE);
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 

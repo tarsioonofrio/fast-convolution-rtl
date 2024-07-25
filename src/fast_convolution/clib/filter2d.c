@@ -53,7 +53,7 @@ int main() {
     float mgg[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
-    to_bg(mgg, mq, mb, mg, B_SIZE, C_SIZE);
+    to_bg(mgg, mq, mb, mg);
 
     filter1d_slide2d_float(feature_out, feature_in, mc, ma, md, mgg, ms, A_SIZE, C_SIZE, FIN_SIZE, FOUT_SIZE);
     print_array2d_float(feature_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
