@@ -107,8 +107,8 @@ void filter1d_slide1d_float(
     float md[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
-    for (r = 0; r < fin_size; r++) {
-        for (c = 0; c <= fin_size - a_size; c = c + a_size) {
+    for (r = 0; r < fout_size; r++) {
+        for (c = 0; c <= fout_size; c = c + a_size) {
             for (i = 0; i < c_size; i++) {
                 if (c + i < fin_size) {
                     md[i] = feature_in[r * fin_size + c + i];
