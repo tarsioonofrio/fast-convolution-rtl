@@ -2,6 +2,7 @@
 // Created by tarsio on 19/06/2024.
 //
 
+#include <stdio.h>
 #include "convolution.h"
 #include "util.h"
 #include "../test1d/init.h"
@@ -128,11 +129,11 @@ void filter1d_slide1d_float(
 }
 
 void
-filter1d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
+filter2d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
-    float md[C_SIZE] = {0};
-    float ms[A_SIZE] = {0};
+    float md[C_SIZE*C_SIZE] = {0};
+    float ms[A_SIZE*A_SIZE] = {0};
 
     for (r = 0; r < fin_size; r++) {
         for (c = 0; c <= fin_size - a_size; c = c + a_size) {
