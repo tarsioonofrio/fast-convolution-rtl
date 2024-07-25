@@ -116,6 +116,7 @@ void filter1d_slide1d_float(
                     md[i] = 0;
                 }
             }
+//            print_array1d_float(md, C_SIZE, "md: ");
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < c_size; i++) {
                 if (c + i < fout_size) {
