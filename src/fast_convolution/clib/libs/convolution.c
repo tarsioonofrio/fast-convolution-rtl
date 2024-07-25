@@ -127,10 +127,13 @@ void filter1d_slide1d_float(
     }
 }
 
-void filter1d_slide2d_float(
-        float *feature_out, const float *feature_in, const float *mc, const float *ma, float *md, const float *mgg,
-        float *ms, int a_size, int c_size, int fin_size, int fout_size) {
+void
+filter1d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
+                       int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
+    float md[C_SIZE] = {0};
+    float ms[A_SIZE] = {0};
+
     for (r = 0; r < fin_size; r++) {
         for (c = 0; c <= fin_size - a_size; c = c + a_size) {
             for (rd = 0; rd < c_size; rd++) {
