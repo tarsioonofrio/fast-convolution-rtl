@@ -121,9 +121,10 @@ void filter1d_slide1d_float(
             for (i = 0; i < c_size; i++) {
                 if (c + i < fout_size) {
                     feature_out[r * fout_size + c + i] = ms[i];
-                } else {
-                    feature_out[r * fout_size + c + i] = 0;
                 }
+//                else {
+//                    feature_out[r * fout_size + c + i] = 0;
+//                }
             }
         }
     }

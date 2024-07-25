@@ -35,8 +35,8 @@ int main() {
     float matf[A_SIZE * C_SIZE] = {0};
     float mctf[C_SIZE * C_SIZE] = {0};
     float feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
-    const float * feat_in_ptr;
     float * feat_out_ptr;
+    const float * feat_in_ptr;
 
     convert_int_to_float(mat, matf, C_SIZE * A_SIZE);
     convert_int_to_float(mct, mctf, C_SIZE * C_SIZE);
@@ -55,7 +55,7 @@ int main() {
 //    feat_out_ptr += FOUT_SIZE;
 //    filter1d_slide1d_float(feat_out_ptr, feat_in, mctf, matf, mgg, A_SIZE, C_SIZE, FIN_SIZE, FOUT_SIZE);
 
-//    print_array2d_float(feat_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
+    print_array2d_float(feat_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
 
 
     return 0;
