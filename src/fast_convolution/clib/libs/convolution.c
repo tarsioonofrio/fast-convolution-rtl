@@ -99,15 +99,14 @@ void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, 
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
-void filter1d_slide1d_float(
-        float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg, int a_size,
-        int c_size, int fin_size, int fout_size) {
+void filter1d_slide1d_float(float *feature_out, const float *feature_in, int index, const float *mc, const float *ma,
+                            const float *mgg, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, i;
     // TODO declare array with malloc/calloc
     float md[C_SIZE] = {0};
     float ms[A_SIZE] = {0};
 
-    for (r = 0; r < fout_size; r++) {
+    for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
             for (i = 0; i < c_size; i++) {
                 if (c + i < fin_size) {
@@ -118,9 +117,11 @@ void filter1d_slide1d_float(
             }
 //            print_array1d_float(md, C_SIZE, "md: ");
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
-            for (i = 0; i < c_size; i++) {
+            for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
-                    feature_out[r * fout_size + c + i] = ms[i];
+//                    printf("%d %d %d\n", r, c, (r - index) * fout_size + c + i);
+//                    printf("%d %0.f %0.f\n", (r - index) * fout_size + c + i, feature_out[(r - index) * fout_size + c + i], ms[i]);
+                    feature_out[(r - index) * fout_size + c + i] += ms[i];
                 }
 //                else {
 //                    feature_out[r * fout_size + c + i] = 0;

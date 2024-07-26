@@ -13,8 +13,8 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
                        int c_size);
 
 void
-filter1d_slide1d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
-                       int a_size, int c_size, int fin_size, int fout_size);
+filter1d_slide1d_float(float *feature_out, const float *feature_in, int index, const float *mc, const float *ma,
+                       const float *mgg, int a_size, int c_size, int fin_size, int fout_size);
 void
 filter2d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size);
