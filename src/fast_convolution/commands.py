@@ -385,6 +385,10 @@ def cmd_sim_file(feature, weight):
             )
             for i in range(b_len)
         ]
+        bg = [
+            fast.g_to_bg(q, b, wght_arr[i])
+            for i in range(b_len)
+        ]
 
         output_fast = np.sum(axis=0, a=[
             fast.filter1d_slide2d(
@@ -445,6 +449,7 @@ def cmd_sim_file(feature, weight):
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "sim.h"
     list_array = [
+        {"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).reshape(b_len, -1).shape},
         {"name": "weight", "type": "int", "value": wght_arr.tolist(), "shape": wght_arr.shape},
         {"name": "feat_in", "type": "int", "value": feat_arr.tolist(), "shape": feat_arr.shape},
         {"name": "gold", "type": "int", "value": output_fast.tolist(), "shape": output_fast.shape},
@@ -631,9 +636,11 @@ def cmd_example_sequential(feature, weight):
         )
         dir_lib.mkdir(parents=True, exist_ok=True)
         init_path = dir_lib / "example.h"
+        bg = fast.g_to_bg(q, b, g)
         list_array = [
-            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d, dtype=int).shape},
-            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g, dtype=int).shape},
+            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
+            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
+            {"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
         ]
         c_header(init_path, list_array, {})
 

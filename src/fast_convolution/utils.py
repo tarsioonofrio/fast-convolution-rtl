@@ -128,9 +128,11 @@ def c_header(path, list_array, dict_defs):
             name = array["name"]
             shape = array["shape"]
             value = np.array(array["value"]).reshape((shape))
-            value_str = (",\n").join(["\t" + ", ".join(map(str, v)) for v in value])
+            if typ == "float":
+                value_str = (",\n").join(["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value])
+            else:
+                value_str = (",\n").join(["\t" + ", ".join(map(str, v)) for v in value])
             size = "*".join(map(str, shape))
-            #breakpoint()
             array = array_str.format(
                 type=typ, name=name, value=value_str, size=size
             )
