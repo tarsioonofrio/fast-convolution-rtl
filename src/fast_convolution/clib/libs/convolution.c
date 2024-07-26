@@ -115,17 +115,11 @@ void filter1d_slide1d_float(float *feature_out, const float *feature_in, int ind
                     md[i] = 0;
                 }
             }
-//            print_array1d_float(md, C_SIZE, "md: ");
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
-//                    printf("%d %d %d\n", r, c, (r - index) * fout_size + c + i);
-//                    printf("%d %0.f %0.f\n", (r - index) * fout_size + c + i, feature_out[(r - index) * fout_size + c + i], ms[i]);
                     feature_out[(r - index) * fout_size + c + i] += ms[i];
                 }
-//                else {
-//                    feature_out[r * fout_size + c + i] = 0;
-//                }
             }
         }
     }
@@ -153,8 +147,6 @@ filter2d_slide2d_float(float *feature_out, const float *feature_in, const float 
             for (rd = 0; rd < c_size; rd++) {
                 if (c + rd < fout_size) {
                     feature_out[r * fout_size + c + rd] = ms[rd];
-                } else {
-                    feature_out[r * fout_size + c + rd] = 0;
                 }
             }
         }
