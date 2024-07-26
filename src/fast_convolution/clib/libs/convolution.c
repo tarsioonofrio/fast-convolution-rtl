@@ -99,7 +99,7 @@ void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, 
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
 }
 
-void filter1d_slide1d_float(float *feature_out, const float *feature_in, int index, const float *mc, const float *ma,
+void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index, const float *mc, const float *ma,
                             const float *mgg, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, i;
     // TODO declare array with malloc/calloc
@@ -110,7 +110,7 @@ void filter1d_slide1d_float(float *feature_out, const float *feature_in, int ind
         for (c = 0; c <= fout_size; c = c + a_size) {
             for (i = 0; i < c_size; i++) {
                 if (c + i < fin_size) {
-                    md[i] = feature_in[r * fin_size + c + i];
+                    md[i] = (float)feature_in[r * fin_size + c + i];
                 } else {
                     md[i] = 0;
                 }
