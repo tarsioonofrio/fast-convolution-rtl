@@ -126,7 +126,7 @@ void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index
 }
 
 void
-filter2d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
+filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
     float md[C_SIZE*C_SIZE] = {0};
@@ -137,14 +137,14 @@ filter2d_slide2d_float(float *feature_out, const float *feature_in, const float 
             for (rd = 0; rd < c_size; rd++) {
                 for (cd = 0; cd < c_size; cd++) {
                     if ((r + rd < fin_size) && (c + cd < fin_size) ) {
-                        md[rd] = feature_in[r * fin_size + c + rd];
+                        md[rd] = (float)feature_in[r * fin_size + c + rd];
                     } else {
                         md[rd] = 0;
                     }
                 }
             }
             fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
-            for (rd = 0; rd < c_size; rd++) {
+            for (rd = 0; rd < a_size; rd++) {
                 if (c + rd < fout_size) {
                     feature_out[r * fout_size + c + rd] = ms[rd];
                 }

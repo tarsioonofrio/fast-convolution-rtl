@@ -30,7 +30,7 @@ dir_build = root_path / "build"
 dir_quant = root_path / "quant"
 dir_example = root_path / "example"
 dir_sim = root_path / "sim"
-dir_lib = root_path / "lib"
+dir_lib = root_path / "clib"
 
 
 def read_init():
@@ -183,7 +183,7 @@ def cmd_init(dimensions, in_len, out_len, w):
     file_init.parent.mkdir(parents=True, exist_ok=True)
     with open(file_init, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-    
+
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "init.h"
     if dimensions == 1:
@@ -191,6 +191,16 @@ def cmd_init(dimensions, in_len, out_len, w):
             "A_SIZE": a,
             "B_SIZE": b,
             "C_SIZE": c,
+        }
+        c_header(init_path, [], dict_defs)
+    elif dimensions == 2:
+        dict_defs = {
+            "A1_SIZE": a[0],
+            "B1_SIZE": b[0],
+            "C1_SIZE": c[0],
+            "A2_SIZE": a[1],
+            "B2_SIZE": b[1],
+            "C2_SIZE": c[1],
         }
         c_header(init_path, [], dict_defs)
 
@@ -250,14 +260,13 @@ def cmd_build_toom_cook1d(points):
 
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "build.h"
-    if dim == 1:
-        list_array = [
-            {"name": "mct", "type": "int", "value": np.array(c, dtype=int).T.tolist(), "shape": np.array(c.T, dtype=int).shape},
-            {"name": "mb", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
-            {"name": "mat", "type": "int", "value": np.array(a, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
-            {"name": "mq", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
-        ]
-        c_header(init_path, list_array, {})
+    list_array = [
+        {"name": "mct", "type": "int", "value": np.array(c, dtype=int).T.tolist(), "shape": np.array(c.T, dtype=int).shape},
+        {"name": "mb", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
+        {"name": "mat", "type": "int", "value": np.array(a, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
+        {"name": "mq", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
+    ]
+    c_header(init_path, list_array, {})
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -314,6 +323,19 @@ def cmd_build_toom_cook2d(points1d, points2d):
     path = dir_build / "convolution-axis"
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
+    list_array = [
+        {"name": "mc1t", "type": "int", "value": np.array(c1, dtype=int).T.tolist(), "shape": np.array(c1.T, dtype=int).shape},
+        {"name": "mb1", "type": "int", "value": np.array(b1, dtype=int).tolist(), "shape": np.array(b1, dtype=int).shape},
+        {"name": "ma1t", "type": "int", "value": np.array(a1, dtype=int).T.tolist(), "shape": np.array(a1.T, dtype=int).shape},
+        {"name": "mq1", "type": "int", "value": qr1, "shape": np.array(qr1, dtype=int).shape},
+        {"name": "mc2t", "type": "int", "value": np.array(c2, dtype=int).T.tolist(), "shape": np.array(c2.T, dtype=int).shape},
+        {"name": "mb2", "type": "int", "value": np.array(b2, dtype=int).tolist(), "shape": np.array(b2, dtype=int).shape},
+        {"name": "ma2t", "type": "int", "value": np.array(a2, dtype=int).T.tolist(), "shape": np.array(a2.T, dtype=int).shape},
+        {"name": "mq2", "type": "int", "value": qr2, "shape": np.array(qr2, dtype=int).shape},
+    ]
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    init_path = dir_lib / "build.h"
+    c_header(init_path, list_array, {})
 
 
 def cmd_build2d_bind_iterate():
@@ -408,6 +430,7 @@ def cmd_sim_file(feature, weight):
         fast_conv = conv_func(
             wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
         )
+        bg = []
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
@@ -449,7 +472,7 @@ def cmd_sim_file(feature, weight):
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "sim.h"
     list_array = [
-        {"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).reshape(b_len, -1).shape},
+        #{"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).reshape(b_len, -1).shape},
         {"name": "weight", "type": "int", "value": wght_arr.tolist(), "shape": wght_arr.shape},
         {"name": "feat_in", "type": "int", "value": feat_arr.tolist(), "shape": feat_arr.shape},
         {"name": "gold", "type": "int", "value": output_fast.tolist(), "shape": output_fast.shape},
@@ -462,7 +485,6 @@ def cmd_sim_file(feature, weight):
     c_header(init_path, list_array, dict_def)
 
     return text
-
 
 
 def cmd_sim_random(feature_random, weight_random, image_side, loop):
@@ -560,7 +582,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", 'w') as f:
         f.write(text)
- 
+
     for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
