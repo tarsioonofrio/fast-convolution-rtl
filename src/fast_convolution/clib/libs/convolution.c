@@ -82,10 +82,6 @@ void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *
 
 void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
     int i;
-//    float mbg[C_SIZE] = {0};
-//    float mqf[C_SIZE] = {0};
-//    float mgf[B_SIZE] = {0};
-//    float mbf[C_SIZE*B_SIZE] = {0};
     float * mbg = (float*)malloc((c_size) * sizeof(float));
     float * mqf = (float*)malloc((c_size) * sizeof(float));
     float * mgf = (float*)malloc((b_size) * sizeof(float));
@@ -118,8 +114,6 @@ void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, 
 void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index, const float *mc, const float *ma,
                             const float *mgg, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, i;
-    //    float md[C_SIZE] = {0};
-//    float ms[A_SIZE] = {0};
     float * ms = (float*)malloc((a_size) * sizeof(float));
     float * md = (float*)malloc((c_size) * sizeof(float));
 
@@ -148,8 +142,6 @@ void
 filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
-//    float md[C_SIZE*C_SIZE] = {0};
-//    float ms[A_SIZE*A_SIZE] = {0};
     float * ms = (float*)malloc((a_size) * sizeof(float));
     float * md = (float*)malloc((c_size) * sizeof(float));
 
