@@ -51,7 +51,7 @@ void matrix_transpose_float(float *out, const float *in, int row, int col) {
     int r, c;
     for (r = 0; r < row; r++) {
         for (c = 0; c < col; c++) {
-            out[c * row + r] = out[r * col + c];
+            out[c * row + r] = in[r * col + c];
         }
     }
 }
@@ -60,7 +60,7 @@ void matrix_transpose(int *out, const int *in, int row, int col) {
     int r, c;
     for (r = 0; r < row; r++) {
         for (c = 0; c < col; c++) {
-            out[c * row + r] = out[r * col + c];
+            out[c * row + r] = in[r * col + c];
         }
     }
 }
