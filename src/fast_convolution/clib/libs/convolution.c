@@ -61,8 +61,8 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
     }
 }
 
-void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
-                       int c_size) {
+void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
+                     int c_size) {
     float * mss = (float*)malloc((c_size) * sizeof(float));
     float * mdd = (float*)malloc((c_size) * sizeof(float));
 
@@ -70,24 +70,6 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     init_array(mdd, c_size);
     init_array(ms, a_size);
 
-    // D=ct*d
-    matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
-    // S=D.G
-    hadamart_product_float(mss, mdd, mgg, c_size);
-    // s=S*a
-    matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
-    free(mss);
-    free(mdd);
-}
-
-void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
-                       int c_size) {
-    float * mss = (float*)malloc((c_size) * sizeof(float));
-    float * mdd = (float*)malloc((c_size) * sizeof(float));
-
-    init_array(mss, c_size);
-    init_array(mdd, c_size);
-    init_array(ms, a_size);
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
     // S=D.G
@@ -150,7 +132,7 @@ void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index
                     md[i] = 0;
                 }
             }
-            fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
+            fast_conv_float(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
                     feature_out[(r - index) * fout_size + c + i] += ms[i];
@@ -182,7 +164,7 @@ filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *m
                     }
                 }
             }
-            fast_conv1d_float(ms, ma, mgg, mc, md, a_size, c_size);
+            fast_conv_float(ms, ma, mgg, mc, md, a_size, c_size);
             for (rd = 0; rd < a_size; rd++) {
                 if (c + rd < fout_size) {
                     feature_out[r * fout_size + c + rd] = ms[rd];

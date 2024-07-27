@@ -9,8 +9,8 @@ void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col
 );
 
-void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
-                       int c_size);
+void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
+                     int c_size);
 
 void
 filter1d_slide1d_float(float *feature_out, const int *feature_in, int index, const float *mc, const float *ma,

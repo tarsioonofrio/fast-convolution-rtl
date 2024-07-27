@@ -21,7 +21,7 @@ int main() {
     convert_int_to_float(mc_nest, mcnf, C1_SIZE * C1_SIZE * C2_SIZE * C2_SIZE);
     convert_int_to_float(md, mdf, C1_SIZE * C2_SIZE);
 
-    fast_conv1d_float(msf, manf, mggf, mcnf, mdf, A1_SIZE * A2_SIZE, C1_SIZE * C2_SIZE);
+    fast_conv_float(msf, manf, mggf, mcnf, mdf, A1_SIZE * A2_SIZE, C1_SIZE * C2_SIZE);
 
     printf("s=S*a: ");
     for (i = 0; i < A1_SIZE * A2_SIZE; i++) {

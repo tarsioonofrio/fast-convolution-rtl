@@ -22,7 +22,7 @@ int main() {
     convert_int_to_float(md, mdf, C_SIZE);
 
     to_bg(mgg2, mq, mb, mg, B_SIZE, C_SIZE);
-    fast_conv1d_float(msf, matf, mgg2, mctf, mdf, A_SIZE, C_SIZE);
+    fast_conv_float(msf, matf, mgg2, mctf, mdf, A_SIZE, C_SIZE);
 
     printf("s=S*a: ");
     for (i = 0; i < A_SIZE; i++) {
