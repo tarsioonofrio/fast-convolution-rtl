@@ -3,7 +3,7 @@
 """Tests for `fast_convolution` package."""
 
 import os
-# import pytest
+import pytest
 import shutil
 import subprocess
 from pathlib import Path
@@ -14,14 +14,12 @@ root = Path(__file__).parent.parent.parent.resolve()
 
 
 tmp_dir1 = root / "test_1d"
-shutil.rmtree(tmp_dir1)
-tmp_dir1.mkdir(parents=True)
 tmp_dir2 = root / "test_2d"
-shutil.rmtree(tmp_dir2)
-tmp_dir2.mkdir(parents=True)
 
 
 def test_init1d():
+    shutil.rmtree(tmp_dir1)
+    tmp_dir1.mkdir(parents=True)
     result = subprocess.run(
         ['fast-conv', 'init', '1d', '-o', '3'],
         capture_output=True,
@@ -31,6 +29,8 @@ def test_init1d():
 
 
 def test_init2d():
+    shutil.rmtree(tmp_dir2)
+    tmp_dir2.mkdir(parents=True)
     result = subprocess.run(
         ['fast-conv', 'init', '2d', '-o', '3', '3'],
         capture_output=True,

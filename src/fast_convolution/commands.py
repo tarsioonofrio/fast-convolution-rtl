@@ -359,6 +359,13 @@ def cmd_build2d_bind_nest():
     a = np.kron(a1, a2)
     c = np.kron(c1, c2)
     fast.write_csa_parcels(a, c, path / "csa")
+    list_array = [
+        {"name": "ma_nest", "type": "int", "value": np.array(a.T, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
+        {"name": "mc_nest", "type": "int", "value": np.array(c.T, dtype=int).tolist(), "shape": np.array(c.T, dtype=int).shape},
+    ]
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    init_path = dir_lib / "bind_nest.h"
+    c_header(init_path, list_array, {})
 
 
 def cmd_quant_none():
@@ -619,19 +626,42 @@ def cmd_example_random(feature, weight):
         latex.example_1d(
             b, c, a, g, d, q, dir_example / f"example-random-{now()}"
         )
+        dir_lib.mkdir(parents=True, exist_ok=True)
+        init_path = dir_lib / "example.h"
+        bg = fast.g_to_bg(q, b, g)
+        list_array = [
+            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
+            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
+        ]
+        c_header(init_path, list_array, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists()
+        init_data = read_init()
+        build_data = read_build_2d()
+
         if data_bind["func"] == "iterate":
             latex.example_2d_bind_iterate(
-                read_init(), read_build_2d(), d, g,
-                dir_example / f"example-random-{now()}"
+                init_data, build_data, d, g,
+                dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(
-                read_init(), read_build_2d(), d, g,
-                dir_example / f"example-random-{now()}"
+                init_data, build_data, d, g,
+                dir_example / f"example-seq-{now()}"
             )
+
+        (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+        bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
+        dir_lib.mkdir(parents=True, exist_ok=True)
+        init_path = dir_lib / "example_nest.h"
+        list_array = [
+            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
+            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
+            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
+            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
+        ]
+        c_header(init_path, list_array, {})
 
 
 def cmd_example_sequential(feature, weight):
@@ -662,19 +692,34 @@ def cmd_example_sequential(feature, weight):
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
             {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
-            {"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
         ]
         c_header(init_path, list_array, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists()
+        init_data = read_init()
+        build_data = read_build_2d()
         if data_bind["func"] == "iterate":
             latex.example_2d_bind_iterate(
-                read_init(), read_build_2d(), d, g,
+                init_data, build_data, d, g,
                 dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(
-                read_init(), read_build_2d(), d, g,
+                init_data, build_data, d, g,
                 dir_example / f"example-seq-{now()}"
             )
+
+        (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+        bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
+        dir_lib.mkdir(parents=True, exist_ok=True)
+        init_path = dir_lib / "example_nest.h"
+        list_array = [
+            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
+            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
+            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
+            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
+        ]
+        c_header(init_path, list_array, {})
+
+
