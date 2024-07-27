@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "libs/convolution.h"
 #include "libs/util.h"
-#include "test2d/init.h"
-#include "test2d/build.h"
-#include "test2d/example.h"
+#include "test1d/init.h"
+#include "test1d/build.h"
+#include "test1d/example.h"
 
 
 int main() {
