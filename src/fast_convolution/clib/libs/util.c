@@ -2,8 +2,11 @@
 // Created by tarsio on 21/07/2024.
 //
 
+#include "convolution.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include "util.h"
+
 
 
 void print_array1d_float(const float *array, int size, const char *name) {
@@ -54,4 +57,11 @@ void convert_int_to_float(const int *int_array, float *float_array, int length) 
     for (i = 0; i < length; i++) {
         float_array[i] = (float)int_array[i];
     }
+}
+
+void init_array(float *array, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        array[i] = 0;
+    };
 }

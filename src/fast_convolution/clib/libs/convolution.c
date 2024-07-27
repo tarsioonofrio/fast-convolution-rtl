@@ -10,8 +10,6 @@
 //#include "../test2d/init.h"
 
 
-void init_array(float *array, int size);
-
 void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
     int fr, fc, wr, wc;
@@ -65,17 +63,12 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
 
 void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size) {
-//    float mss[C_SIZE] = {0};
-//    float mdd[C_SIZE] = {0};
     float * mss = (float*)malloc((c_size) * sizeof(float));
     float * mdd = (float*)malloc((c_size) * sizeof(float));
+
     init_array(mss, c_size);
     init_array(mdd, c_size);
     init_array(ms, a_size);
-//    int i;
-//    for (i = 0; i < a_size; i++) {
-//        ms[i] = 0;
-//    };
 
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
@@ -89,9 +82,11 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
 
 void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size) {
-        float * mss = (float*)malloc((c_size) * sizeof(float));
+    float * mss = (float*)malloc((c_size) * sizeof(float));
     float * mdd = (float*)malloc((c_size) * sizeof(float));
 
+    init_array(mss, c_size);
+    init_array(mdd, c_size);
     init_array(ms, a_size);
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
@@ -101,13 +96,6 @@ void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const 
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
     free(mss);
     free(mdd);
-}
-
-void init_array(float *array, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        array[i] = 0;
-    };
 }
 
 void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
