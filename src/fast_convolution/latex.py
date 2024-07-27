@@ -1,6 +1,7 @@
 import numpy as np
 import sympy as sy
 import pylatex as tex
+from fast_convolution.utils import default_convolve
 from scipy import signal
 from sympy.physics.quantum import TensorProduct
 
@@ -589,9 +590,7 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     )
     doc.generate_pdf(path, clean_tex=False)
 
-    output_default = signal.convolve(
-        d_num1, g_num1[::-1, ::-1], mode='valid'
-    )
+    output_default = default_convolve(d_num1, g_num1)
     compare_naive = np.all(
         output_default.reshape(-1) == np.array(s_num).reshape(-1)
     )

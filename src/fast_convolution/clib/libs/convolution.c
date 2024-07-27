@@ -76,6 +76,23 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
 }
 
+void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
+                       int c_size) {
+    // TODO declare array with malloc/calloc
+    float mss[C_SIZE] = {0};
+    float mdd[C_SIZE] = {0};
+    int i = 0;
+    for (i = 0; i < a_size; i++) {
+        ms[i] = 0;
+    };
+    // D=ct*d
+    matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
+    // S=D.G
+    hadamart_product_float(mss, mdd, mgg, c_size);
+    // s=S*a
+    matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
+}
+
 void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
     int i;
     // TODO declare array with malloc/calloc

@@ -2,6 +2,7 @@ import numpy as np
 import sympy as sy
 from PIL import Image, ImageOps
 from IPython.core.display_functions import display
+from scipy import signal
 
 
 def plot_pdf(page, crop_float=None,  dpi=200,):
@@ -143,3 +144,9 @@ def c_header(path, list_array, dict_defs):
     with open(path, "w") as f:
         f.write(source)
 
+
+def default_convolve(d, g):
+    output_default = signal.convolve(
+        d, g[::-1, ::-1], mode='valid'
+    )
+    return output_default

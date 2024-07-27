@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include "libs/convolution.h"
 #include "libs/util.h"
-#include "test1d/init.h"
-#include "test1d/build.h"
-#include "test1d/sim.h"
+#include "test2d/init.h"
+#include "test2d/build.h"
+#include "test2d/bind_nest.h"
+#include "test2d/example_nest.h"
 
 
 int main() {

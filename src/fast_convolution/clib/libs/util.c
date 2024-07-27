@@ -16,6 +16,17 @@ void print_array1d_float(const float *array, int size, const char *name) {
     printf("\n");
 }
 
+void compare_array1d(const int *array1, const int *array2, int size, const char *name) {
+    int r;
+    printf("%s", name);
+    for (r = 0; r < size; r++) {
+        if (array1[r] != array2[r]){
+            printf("Err i%d %.2d %.0d ", r, array1[r], array2[r]);
+        }
+    };
+    printf("\n");
+}
+
 
 void print_array2d_float(const float *array, int row, int col, const char *name) {
     int r, c;

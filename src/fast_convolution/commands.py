@@ -17,7 +17,7 @@ from . import fast
 from . import quant
 from . import latex
 from .naive import naive_convolve
-from .utils import c_header
+from .utils import c_header, default_convolve
 
 
 root_path = Path(os.getcwd())
@@ -632,6 +632,8 @@ def cmd_example_random(feature, weight):
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
             {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
+            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
+            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
         ]
         c_header(init_path, list_array, {})
 
@@ -673,6 +675,7 @@ def cmd_example_sequential(feature, weight):
         d = sy.Matrix(f)
         w = np.arange(weight, weight + b_len)
         g = sy.Matrix(w)
+        s = default_convolve(d, g)
     elif dim == 2:
         f0 = np.arange(feature, feature + c_len[0]*c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
@@ -680,6 +683,7 @@ def cmd_example_sequential(feature, weight):
         w0 = np.arange(weight, weight + b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
         g = sy.Matrix(w)
+        s = default_convolve(d, g)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
@@ -689,9 +693,13 @@ def cmd_example_sequential(feature, weight):
         dir_lib.mkdir(parents=True, exist_ok=True)
         init_path = dir_lib / "example.h"
         bg = fast.g_to_bg(q, b, g)
+
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
             {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
+            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
+            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
+            {"name": "ms_gold", "type": "int", "value": np.array(s, dtype=int).tolist(), "shape": np.array(s).shape},
         ]
         c_header(init_path, list_array, {})
 
@@ -719,6 +727,7 @@ def cmd_example_sequential(feature, weight):
             {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
             {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
             {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
+            {"name": "ms_gold", "type": "int", "value": np.array(s, dtype=int).tolist(), "shape": np.array(s).shape},
         ]
         c_header(init_path, list_array, {})
 
