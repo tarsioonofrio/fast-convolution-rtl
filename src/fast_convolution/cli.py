@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 
-import os
 from pathlib import Path
 
 import click
+from fast_convolution.utils import getcwd
 
 from .commands import (
     read_init_if_exists, num_points1d, num_points2d,
     default_toom_cook_points1d, default_toom_cook_points2d,
 )
 
-
-root = Path(os.getcwd())
+root = getcwd()
 example_path = Path(__file__).resolve().parent.parent.parent / "images"
 init_data = read_init_if_exists()
 

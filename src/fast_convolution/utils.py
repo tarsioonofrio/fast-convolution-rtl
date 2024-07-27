@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import numpy as np
 import sympy as sy
 from PIL import Image, ImageOps
@@ -150,3 +153,7 @@ def default_convolve(d, g):
         d, g[::-1, ::-1], mode='valid'
     )
     return output_default
+
+
+def getcwd():
+    return Path(os.getcwd())

@@ -2,13 +2,11 @@
 
 """Tests for `fast_convolution` package."""
 
-import os
 import pytest
 import shutil
 import subprocess
 from pathlib import Path
 
-from fast_convolution import cli, commands
 
 root = Path(__file__).parent.parent.parent.resolve()
 
