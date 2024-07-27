@@ -10,6 +10,8 @@
 //#include "../test2d/init.h"
 
 
+void init_array(float *array, int size);
+
 void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
     int fr, fc, wr, wc;
@@ -63,12 +65,18 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
 
 void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size) {
-        float * mss = (float*)malloc((c_size) * sizeof(float));
+//    float mss[C_SIZE] = {0};
+//    float mdd[C_SIZE] = {0};
+    float * mss = (float*)malloc((c_size) * sizeof(float));
     float * mdd = (float*)malloc((c_size) * sizeof(float));
-    int i = 0;
-    for (i = 0; i < a_size; i++) {
-        ms[i] = 0;
-    };
+    init_array(mss, c_size);
+    init_array(mdd, c_size);
+    init_array(ms, a_size);
+//    int i;
+//    for (i = 0; i < a_size; i++) {
+//        ms[i] = 0;
+//    };
+
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
     // S=D.G
@@ -84,10 +92,7 @@ void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const 
         float * mss = (float*)malloc((c_size) * sizeof(float));
     float * mdd = (float*)malloc((c_size) * sizeof(float));
 
-    int i = 0;
-    for (i = 0; i < a_size; i++) {
-        ms[i] = 0;
-    };
+    init_array(ms, a_size);
     // D=ct*d
     matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
     // S=D.G
@@ -98,21 +103,32 @@ void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const 
     free(mdd);
 }
 
+void init_array(float *array, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        array[i] = 0;
+    };
+}
+
 void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
     int i;
-    //    float mbg[C_SIZE] = {0};
+//    float mbg[C_SIZE] = {0};
 //    float mqf[C_SIZE] = {0};
 //    float mgf[B_SIZE] = {0};
 //    float mbf[C_SIZE*B_SIZE] = {0};
     float * mbg = (float*)malloc((c_size) * sizeof(float));
     float * mqf = (float*)malloc((c_size) * sizeof(float));
     float * mgf = (float*)malloc((b_size) * sizeof(float));
-    float * mbf = (float*)malloc((c_size*b_size) * sizeof(float));
+    float * mbf = (float*)malloc((c_size * b_size) * sizeof(float));
+    init_array(mbg, c_size);
+    init_array(mqf, c_size);
+    init_array(mgf, b_size);
+    init_array(mbf, c_size * b_size);
 
     convert_int_to_float(mg, mgf, b_size);
     convert_int_to_float(mb, mbf, c_size*b_size);
 
-    for (i = 0; i < C_SIZE; i++) {
+    for (i = 0; i < c_size; i++) {
         mqf[i] = (float)mq[i*2] / (float)mq[i*2 + 1];
     }
 
@@ -134,8 +150,8 @@ void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index
     int r, c, i;
     //    float md[C_SIZE] = {0};
 //    float ms[A_SIZE] = {0};
-    float * ms = (float*)malloc((A_SIZE) * sizeof(float));
-    float * md = (float*)malloc((C_SIZE) * sizeof(float));
+    float * ms = (float*)malloc((a_size) * sizeof(float));
+    float * md = (float*)malloc((c_size) * sizeof(float));
 
     for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
@@ -164,8 +180,8 @@ filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *m
     int r, c, rd, cd;
 //    float md[C_SIZE*C_SIZE] = {0};
 //    float ms[A_SIZE*A_SIZE] = {0};
-    float * ms = (float*)malloc((A_SIZE) * sizeof(float));
-    float * md = (float*)malloc((C_SIZE) * sizeof(float));
+    float * ms = (float*)malloc((a_size) * sizeof(float));
+    float * md = (float*)malloc((c_size) * sizeof(float));
 
     for (r = 0; r < fin_size; r++) {
         for (c = 0; c <= fin_size - a_size; c = c + a_size) {
