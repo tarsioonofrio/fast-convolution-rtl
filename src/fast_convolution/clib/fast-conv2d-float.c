@@ -8,25 +8,28 @@
 
 
 int main() {
-    float mgg2[C_SIZE] = {0};
-    float ms[A_SIZE] = {0};
+//    float mgg2[C2_SIZE * C2_SIZE] = {0};
+    int i;
+    float ms[A1_SIZE * A2_SIZE] = {0};
 
-    float matf[A_SIZE * C_SIZE] = {0};
-    float mctf[C_SIZE * C_SIZE] = {0};
-    float mdf[C_SIZE] = {0};
+    float manf[A1_SIZE * A2_SIZE * C1_SIZE * C2_SIZE] = {0};
+    float mcnf[C1_SIZE * C1_SIZE * C2_SIZE * C2_SIZE] = {0};
+    float mdf[C1_SIZE * C2_SIZE] = {0};
 
-    convert_int_to_float(mat, matf, C_SIZE * A_SIZE);
-    convert_int_to_float(mct, mctf, C_SIZE * C_SIZE);
-    convert_int_to_float(md, mdf, C_SIZE);
+    convert_int_to_float(ma_nest, manf, A1_SIZE * A2_SIZE * C1_SIZE * C2_SIZE);
+    convert_int_to_float(mc_nest, mcnf, C1_SIZE * C1_SIZE * C2_SIZE * C2_SIZE);
+    convert_int_to_float(md, mdf, C1_SIZE * C2_SIZE);
 
-    to_bg(mgg2, mq, mb, mg, B_SIZE, C_SIZE);
-    fast_conv1d_float(ms, matf, mgg2, mctf, mdf, A_SIZE, C_SIZE);
+//    to_bg(mgg2, mq, mb, mg, B_SIZE, C_SIZE);
+    fast_conv1d_float(ms, manf, mggf, mcnf, mdf, A1_SIZE * A2_SIZE, C1_SIZE * C2_SIZE);
 
     printf("s=S*a: ");
-    for (i = 0; i < A_SIZE; i++) {
+    for (i = 0; i < A1_SIZE * A2_SIZE; i++) {
         printf("%.3f\t", ms[i]);
     };
     printf("\n");
+
+    compare_array1d(ms_gold, ms, A1_SIZE * A2_SIZE, "Errors in S != gold");
 
 
 

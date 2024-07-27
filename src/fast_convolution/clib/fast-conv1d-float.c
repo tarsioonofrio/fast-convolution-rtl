@@ -30,7 +30,7 @@ int main() {
     };
     printf("\n");
     convert_float_to_int(msf, ms, A_SIZE);
-    compare_array1d(ms_gold, ms, A_SIZE, "S != gold");
+    compare_array1d(ms_gold, ms, A_SIZE, "Errors:");
 
     return 0;
 }

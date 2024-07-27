@@ -3,9 +3,11 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "convolution.h"
 #include "util.h"
-#include "../test1d/init.h"
+//#include "../test1d/init.h"
+//#include "../test2d/init.h"
 
 
 void naive_convolution(
@@ -61,9 +63,8 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
 
 void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size) {
-    // TODO declare array with malloc/calloc
-    float mss[C_SIZE] = {0};
-    float mdd[C_SIZE] = {0};
+        float * mss = (float*)malloc((c_size) * sizeof(float));
+    float * mdd = (float*)malloc((c_size) * sizeof(float));
     int i = 0;
     for (i = 0; i < a_size; i++) {
         ms[i] = 0;
@@ -74,13 +75,15 @@ void fast_conv1d_float(float *ms, const float *ma, const float *mgg, const float
     hadamart_product_float(mss, mdd, mgg, c_size);
     // s=S*a
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
+    free(mss);
+    free(mdd);
 }
 
 void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                        int c_size) {
-    // TODO declare array with malloc/calloc
-    float mss[C_SIZE] = {0};
-    float mdd[C_SIZE] = {0};
+        float * mss = (float*)malloc((c_size) * sizeof(float));
+    float * mdd = (float*)malloc((c_size) * sizeof(float));
+
     int i = 0;
     for (i = 0; i < a_size; i++) {
         ms[i] = 0;
@@ -91,15 +94,21 @@ void fast_conv2d_nest_float(float *ms, const float *ma, const float *mgg, const 
     hadamart_product_float(mss, mdd, mgg, c_size);
     // s=S*a
     matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
+    free(mss);
+    free(mdd);
 }
 
 void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size) {
     int i;
-    // TODO declare array with malloc/calloc
-    float mbg[C_SIZE] = {0};
-    float mqf[C_SIZE] = {0};
-    float mgf[B_SIZE] = {0};
-    float mbf[C_SIZE*B_SIZE] = {0};
+    //    float mbg[C_SIZE] = {0};
+//    float mqf[C_SIZE] = {0};
+//    float mgf[B_SIZE] = {0};
+//    float mbf[C_SIZE*B_SIZE] = {0};
+    float * mbg = (float*)malloc((c_size) * sizeof(float));
+    float * mqf = (float*)malloc((c_size) * sizeof(float));
+    float * mgf = (float*)malloc((b_size) * sizeof(float));
+    float * mbf = (float*)malloc((c_size*b_size) * sizeof(float));
+
     convert_int_to_float(mg, mgf, b_size);
     convert_int_to_float(mb, mbf, c_size*b_size);
 
@@ -114,14 +123,19 @@ void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, 
     // G=q.bg
     hadamart_product_float(mgg, mqf, mbg, c_size);
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
+    free(mbg);
+    free(mqf);
+    free(mgf);
+    free(mbf);
 }
 
 void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index, const float *mc, const float *ma,
                             const float *mgg, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, i;
-    // TODO declare array with malloc/calloc
-    float md[C_SIZE] = {0};
-    float ms[A_SIZE] = {0};
+    //    float md[C_SIZE] = {0};
+//    float ms[A_SIZE] = {0};
+    float * ms = (float*)malloc((A_SIZE) * sizeof(float));
+    float * md = (float*)malloc((C_SIZE) * sizeof(float));
 
     for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
@@ -140,14 +154,18 @@ void filter1d_slide1d_float(float *feature_out, const int *feature_in, int index
             }
         }
     }
+    free(ms);
+    free(md);
 }
 
 void
 filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
-    float md[C_SIZE*C_SIZE] = {0};
-    float ms[A_SIZE*A_SIZE] = {0};
+//    float md[C_SIZE*C_SIZE] = {0};
+//    float ms[A_SIZE*A_SIZE] = {0};
+    float * ms = (float*)malloc((A_SIZE) * sizeof(float));
+    float * md = (float*)malloc((C_SIZE) * sizeof(float));
 
     for (r = 0; r < fin_size; r++) {
         for (c = 0; c <= fin_size - a_size; c = c + a_size) {
@@ -168,4 +186,6 @@ filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *m
             }
         }
     }
+    free(ms);
+    free(md);
 }
