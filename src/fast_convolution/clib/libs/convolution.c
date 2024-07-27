@@ -47,6 +47,24 @@ void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, 
     }
 }
 
+void matrix_transpose_float(float *out, const float *in, int row, int col) {
+    int r, c;
+    for (r = 0; r < row; r++) {
+        for (c = 0; c < col; c++) {
+            out[c * row + r] = out[r * col + c];
+        }
+    }
+}
+
+void matrix_transpose(int *out, const int *in, int row, int col) {
+    int r, c;
+    for (r = 0; r < row; r++) {
+        for (c = 0; c < col; c++) {
+            out[c * row + r] = out[r * col + c];
+        }
+    }
+}
+
 void hadamart_product(int *out, const int *in1, const int *in2, int row) {
     int r;
     for (r = 0; r < row; r++) {

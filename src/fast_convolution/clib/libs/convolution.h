@@ -8,7 +8,6 @@
 void naive_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col
 );
-
 void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                      int c_size);
 
@@ -19,16 +18,15 @@ void
 filter2d_slide2d_float(float *feature_out, const int *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size);
 
-void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size);
-
-
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
-
 void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, int col2_row1, int col2);
 
-void hadamart_product(int *out, const int *in1, const int *in2, int row);
+void matrix_transpose_float(float *out, const float *in, int row, int col);
+void matrix_transpose(int *out, const int *in, int row, int col);
 
+void hadamart_product(int *out, const int *in1, const int *in2, int row);
 void hadamart_product_float(float *out, const float *in1, const float *in2, int row);
 
+void to_bg(float *mgg, const int *mq, const int *mb, const int *mg, int b_size, int c_size);
 
 #endif //C_CONVOLUTION_H

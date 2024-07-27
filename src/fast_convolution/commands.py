@@ -656,7 +656,7 @@ def cmd_example_random(feature, weight):
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
         dir_lib.mkdir(parents=True, exist_ok=True)
-        init_path = dir_lib / "example_nest.h"
+        init_path = dir_lib / "example.h"
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
             {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},

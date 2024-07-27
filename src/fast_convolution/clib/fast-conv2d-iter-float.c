@@ -3,24 +3,35 @@
 #include "libs/util.h"
 #include "test2d/init.h"
 #include "test2d/build.h"
-#include "test2d/bind_nest.h"
-#include "test2d/example_nest.h"
+#include "test2d/example.h"
 
 
 int main() {
     int i;
-    float msf[A1_SIZE * A2_SIZE] = {0};
     int ms[A1_SIZE * A2_SIZE] = {0};
+    float msf[A1_SIZE * A2_SIZE] = {0};
+    float mss[C1_SIZE * C2_SIZE] = {0};
+    float mssf2[A1_SIZE * A2_SIZE] = {0};
+    float mdd[C1_SIZE * C2_SIZE] = {0};
 
-    float manf[A1_SIZE * A2_SIZE * C1_SIZE * C2_SIZE] = {0};
-    float mcnf[C1_SIZE * C1_SIZE * C2_SIZE * C2_SIZE] = {0};
+    float ma1tf[A1_SIZE * C1_SIZE] = {0};
+    float ma2tf[A2_SIZE * C2_SIZE] = {0};
+    float mc1tf[C1_SIZE * C1_SIZE] = {0};
+    float mc1f[C2_SIZE * C2_SIZE] = {0};
+    float mc2tf[C2_SIZE * C2_SIZE] = {0};
     float mdf[C1_SIZE * C2_SIZE] = {0};
+    float md2f[C1_SIZE * C2_SIZE] = {0};
 
-    convert_int_to_float(ma_nest, manf, A1_SIZE * A2_SIZE * C1_SIZE * C2_SIZE);
-    convert_int_to_float(mc_nest, mcnf, C1_SIZE * C1_SIZE * C2_SIZE * C2_SIZE);
+    convert_int_to_float(ma1t, ma1tf, C1_SIZE * A1_SIZE);
+    convert_int_to_float(ma2t, ma2tf, C2_SIZE * A2_SIZE);
+    convert_int_to_float(mc1t, mc1tf, C1_SIZE * C1_SIZE);
+    convert_int_to_float(mc2t, mc2tf, C2_SIZE * C2_SIZE);
     convert_int_to_float(md, mdf, C1_SIZE * C2_SIZE);
+    matrix_transpose_float(mc1f, mc1tf, C1_SIZE, C2_SIZE);
 
-    fast_conv_float(msf, manf, mggf, mcnf, mdf, A1_SIZE * A2_SIZE, C1_SIZE * C2_SIZE);
+    matrix_mul_float(md2f, mdf, mc2tf, C1_SIZE, C2_SIZE, C2_SIZE);
+    matrix_mul_float(md2f, mc1f, md2f, C1_SIZE, C2_SIZE, C2_SIZE);
+    hadamart_product_float(mss, md2f, mggf, C1_SIZE * C2_SIZE);
 
     printf("s=S*a: ");
     for (i = 0; i < A1_SIZE * A2_SIZE; i++) {
