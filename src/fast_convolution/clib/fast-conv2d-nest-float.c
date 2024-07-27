@@ -8,7 +8,6 @@
 
 
 int main() {
-//    float mgg2[C2_SIZE * C2_SIZE] = {0};
     int i;
     float msf[A1_SIZE * A2_SIZE] = {0};
     int ms[A1_SIZE * A2_SIZE] = {0};
