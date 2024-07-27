@@ -360,7 +360,7 @@ def cmd_build2d_bind_nest():
     c = np.kron(c1, c2)
     fast.write_csa_parcels(a, c, path / "csa")
     list_array = [
-        {"name": "ma_nest", "type": "int", "value": np.array(a.T, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
+        {"name": "ma_nest", "type": "int", "value": np.array(a, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
         {"name": "mc_nest", "type": "int", "value": np.array(c.T, dtype=int).tolist(), "shape": np.array(c.T, dtype=int).shape},
     ]
     dir_lib.mkdir(parents=True, exist_ok=True)

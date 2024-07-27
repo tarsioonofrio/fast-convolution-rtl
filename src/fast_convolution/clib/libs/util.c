@@ -2,11 +2,9 @@
 // Created by tarsio on 21/07/2024.
 //
 
-#include "convolution.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "util.h"
-
 
 
 void print_array1d_float(const float *array, int size, const char *name) {
@@ -40,7 +38,6 @@ void print_array2d_float(const float *array, int row, int col, const char *name)
             printf("%.0f, ", array[r * row + c]);
         }
         printf("\n");
-
     };
     printf("\n");
 }
