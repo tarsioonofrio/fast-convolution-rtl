@@ -259,6 +259,7 @@ def cmd_build_toom_cook1d(points):
     fast.write_csa_parcels(a, c, path / "csa")
 
     dir_lib.mkdir(parents=True, exist_ok=True)
+    # TODO export build_float.h with data in float
     init_path = dir_lib / "build.h"
     list_array = [
         {"name": "mct", "type": "int", "value": np.array(c, dtype=int).T.tolist(), "shape": np.array(c.T, dtype=int).shape},
@@ -323,6 +324,7 @@ def cmd_build_toom_cook2d(points1d, points2d):
     path = dir_build / "convolution-axis"
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
+    # TODO export build_float.h with data in float
     list_array = [
         {"name": "mc1t", "type": "int", "value": np.array(c1, dtype=int).T.tolist(), "shape": np.array(c1.T, dtype=int).shape},
         {"name": "mb1", "type": "int", "value": np.array(b1, dtype=int).tolist(), "shape": np.array(b1, dtype=int).shape},
@@ -358,6 +360,8 @@ def cmd_build2d_bind_nest():
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     a = np.kron(a1, a2)
     c = np.kron(c1, c2)
+
+    # TODO export bind_nest_float.h with data in float
     fast.write_csa_parcels(a, c, path / "csa")
     list_array = [
         {"name": "ma_nest", "type": "int", "value": np.array(a.T, dtype=int).tolist(), "shape": np.array(a.T, dtype=int).shape},
@@ -477,6 +481,7 @@ def cmd_sim_file(feature, weight):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
     dir_lib.mkdir(parents=True, exist_ok=True)
+    # TODO export sim_float.h with data in float
     init_path = dir_lib / "sim.h"
     list_array = [
         #{"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).reshape(b_len, -1).shape},
@@ -627,6 +632,7 @@ def cmd_example_random(feature, weight):
             b, c, a, g, d, q, dir_example / f"example-random-{now()}"
         )
         dir_lib.mkdir(parents=True, exist_ok=True)
+        # TODO export example_float.h with data in float
         init_path = dir_lib / "example.h"
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -656,6 +662,7 @@ def cmd_example_random(feature, weight):
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
         dir_lib.mkdir(parents=True, exist_ok=True)
+        # TODO export example_float.h with data in float
         init_path = dir_lib / "example.h"
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
@@ -693,6 +700,7 @@ def cmd_example_sequential(feature, weight):
         dir_lib.mkdir(parents=True, exist_ok=True)
         init_path = dir_lib / "example.h"
         bg = fast.g_to_bg(q, b, g)
+        # TODO export example_float.h with data in float
 
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
@@ -721,7 +729,8 @@ def cmd_example_sequential(feature, weight):
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
         dir_lib.mkdir(parents=True, exist_ok=True)
-        init_path = dir_lib / "example_nest.h"
+        # TODO export example_float.h with data in float
+        init_path = dir_lib / "example.h"
         list_array = [
             {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
             {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
