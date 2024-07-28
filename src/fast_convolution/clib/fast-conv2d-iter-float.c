@@ -11,7 +11,7 @@ int main() {
     int ms[A1_SIZE * A2_SIZE] = {0};
     float msf[A1_SIZE * A2_SIZE] = {0};
     float mss[C1_SIZE * C2_SIZE] = {0};
-    float mss2f[A1_SIZE * A2_SIZE] = {0};
+    float mss2f[A1_SIZE * C1_SIZE] = {0};
     float mdd[C1_SIZE * C2_SIZE] = {0};
 
     float ma1tf[A1_SIZE * C1_SIZE] = {0};
@@ -38,19 +38,11 @@ int main() {
 //    print_array2d_float(mdf, C1_SIZE, C2_SIZE,  "D: ");
 //    print_array2d_float(mc2f, C1_SIZE, C2_SIZE,  "C2: ");
     matrix_mul_float(md2f, mdf, mc2f, C1_SIZE, C2_SIZE, C2_SIZE);
-//    print_array2d_float(md2f, C1_SIZE, C2_SIZE,  "d2: ");
-//    print_array2d_float(mc1tf, C1_SIZE, C2_SIZE,  "C1: ");
     matrix_mul_float(mdd, mc1tf, md2f, C1_SIZE, C2_SIZE, C2_SIZE);
-//    print_array2d_float(mdd, C1_SIZE, C2_SIZE,  "D: ");
-//    print_array2d_float(mggf, C1_SIZE, C2_SIZE,  "G: ");
 
     hadamart_product_float(mss, mdd, mggf, C1_SIZE * C2_SIZE);
-//    print_array2d_float(ma2f, C2_SIZE, A2_SIZE,  "A2: ");
-//    print_array2d_float(mss, C1_SIZE, C2_SIZE,  "S: ");
 
     matrix_mul_float(mss2f, mss, ma2f, C1_SIZE, C2_SIZE, A2_SIZE);
-    print_array2d_float(mss2f, C2_SIZE, A2_SIZE,  "S2: ");
-    print_array2d_float(ma1tf, C1_SIZE, A1_SIZE,  "A1: ");
     matrix_mul_float(msf, ma1tf, mss2f, A1_SIZE, C2_SIZE, A2_SIZE);
 
     printf("s=S*a: ");
