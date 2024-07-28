@@ -31,12 +31,6 @@ int main() {
     matrix_transpose_float(mc2f, mc2tf, C1_SIZE, C2_SIZE);
     matrix_transpose_float(ma2f, ma2tf, A2_SIZE, C2_SIZE);
 
-//    print_array2d(ma2t, A2_SIZE, C2_SIZE,  "At2: ");
-//    print_array2d_float(ma2tf, A2_SIZE, C2_SIZE,  "At2: ");
-//    print_array2d_float(ma2f, C2_SIZE, A2_SIZE,  "A2: ");
-
-//    print_array2d_float(mdf, C1_SIZE, C2_SIZE,  "D: ");
-//    print_array2d_float(mc2f, C1_SIZE, C2_SIZE,  "C2: ");
     matrix_mul_float(md2f, mdf, mc2f, C1_SIZE, C2_SIZE, C2_SIZE);
     matrix_mul_float(mdd, mc1tf, md2f, C1_SIZE, C2_SIZE, C2_SIZE);
 
