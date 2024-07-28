@@ -1,29 +1,36 @@
 #include <stdio.h>
 #include "libs/convolution.h"
-#include "test1d/sim.h"
+#include "libs/util.h"
 
 int main() {
-    const int m2[4 * 4] = {
-            -1, 0, 0, 0,
-            0, -1, 1, -1,
-            1, 1, 1, 0,
-            0, 0, 0, 1
+    const int m23[2 * 3] = {
+        0, 1, 2,
+        3, 4, 5
+    };
+    const int m32[3 * 2] = {
+        0, 1,
+        2, 3,
+        4, 5
     };
 
-    int m3[4 * 4] = {0};
+    int m22[2 * 2] = {0};
+    int m22_gold[2 * 2] = {
+        10, 13,
+        28, 40
+    };
+    int m33[3 * 3] = {0};
+    int m33_gold[3 * 3] = {
+        3, 4, 5,
+        9, 14, 19,
+        15, 24, 33
+    };
 
-    int row1 = 4, col1 = 4, row2 = 4, col2 = 4, row3 = 4, col3 = 4;
-    int r;
-    int c;
-    // TODO correct that file: feature_fast_4_4 not exists
-//    matrix_mul(m3, feature_fast_4_4, m2, row1, col1, col2);
+    int row1 = 2, col1 = 3, row2 = 3, col2 = 2;
 
-    for (r = 0; r < row3; r++) {
-        for (c = 0; c < col3; c++) {
-            printf("%d\t", m3[r * col3 + c]);
-        }
-        printf("\n");
-    }
+    matrix_mul(m22, m23, m32, row1, col1, col2);
+    print_array2d(m22, row1, col2, "M22");
+    matrix_mul(m33, m32, m23, row2, col2, col1);
+    print_array2d(m33, row2, col1, "M33");
 
     return 0;
 }

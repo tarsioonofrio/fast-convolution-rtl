@@ -30,7 +30,9 @@ void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row
     for (r = 0; r < row1; r++) {
         for (c = 0; c < col2; c++) {
             for (t = 0; t < col2_row1; t++) {
-                out[r * col2 + c] = out[r * col2 + c] + in1[r * col2_row1 + t] * in2[t * col2 + c];
+                out[r * col2 + c] += in1[r * col2_row1 + t] * in2[t * col2 + c];
+//                printf("V %d = %d + %d + %d\t", out[r * col2 + c],out[r * col2 + c], in1[r * col2_row1 + t], in2[t * col2 + c]);
+//                printf("I %d = %d + %d + %d\n", r * col2 + c, r * col2 + c, r * col2_row1 + t, t * col2 + c);
             }
         }
     }
@@ -41,7 +43,9 @@ void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, 
     for (r = 0; r < row1; r++) {
         for (c = 0; c < col2; c++) {
             for (t = 0; t < col2_row1; t++) {
-                out[r * col2 + c] = out[r * col2 + c] + in1[r * col2_row1 + t] * in2[t * col2 + c];
+                out[r * col2 + c] += in1[r * col2_row1 + t] * in2[t * col2 + c];
+//                printf("V %3.0f = %3.0f + %3.0f + %3.0f\t", out[r * col2 + c],out[r * col2 + c], in1[r * col2_row1 + t], in2[t * col2 + c]);
+//                printf("I %d = %d + %d + %d\n", r * col2 + c, r * col2 + c, r * col2_row1 + t, t * col2 + c);
             }
         }
     }

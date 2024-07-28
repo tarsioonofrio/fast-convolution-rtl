@@ -31,9 +31,9 @@ int main() {
     matrix_transpose_float(mc2f, mc2tf, C1_SIZE, C2_SIZE);
     matrix_transpose_float(ma2f, ma2tf, A2_SIZE, C2_SIZE);
 
-    print_array2d(ma2t, A2_SIZE, C2_SIZE,  "At2: ");
-    print_array2d_float(ma2tf, A2_SIZE, C2_SIZE,  "At2: ");
-    print_array2d_float(ma2f, C2_SIZE, A2_SIZE,  "A2: ");
+//    print_array2d(ma2t, A2_SIZE, C2_SIZE,  "At2: ");
+//    print_array2d_float(ma2tf, A2_SIZE, C2_SIZE,  "At2: ");
+//    print_array2d_float(ma2f, C2_SIZE, A2_SIZE,  "A2: ");
 
 //    print_array2d_float(mdf, C1_SIZE, C2_SIZE,  "D: ");
 //    print_array2d_float(mc2f, C1_SIZE, C2_SIZE,  "C2: ");
@@ -48,8 +48,10 @@ int main() {
 //    print_array2d_float(ma2f, C2_SIZE, A2_SIZE,  "A2: ");
 //    print_array2d_float(mss, C1_SIZE, C2_SIZE,  "S: ");
 
-    matrix_mul_float(mss2f, mss, ma2f, C1_SIZE, C2_SIZE, C2_SIZE);
-    matrix_mul_float(msf, ma1tf, mss2f, C1_SIZE, C2_SIZE, C2_SIZE);
+    matrix_mul_float(mss2f, mss, ma2f, C1_SIZE, C2_SIZE, A2_SIZE);
+    print_array2d_float(mss2f, C2_SIZE, A2_SIZE,  "S2: ");
+    print_array2d_float(ma1tf, C1_SIZE, A1_SIZE,  "A1: ");
+    matrix_mul_float(msf, ma1tf, mss2f, A1_SIZE, C2_SIZE, A2_SIZE);
 
     printf("s=S*a: ");
     for (i = 0; i < A1_SIZE * A2_SIZE; i++) {

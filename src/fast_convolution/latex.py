@@ -575,7 +575,7 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     ss_num1 = ss_num2 * a2
     doc.append(
         tex.Math(data=[
-            syt(ss_sym1), "=", syt(ss_num2),
+            syt(ss_sym1), "=", syt(ss_num1),
             "=", syt(ss_num2), syt(a2),
             "=", syt(ss_sym2), syt(a2)
         ], escape=False)
