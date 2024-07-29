@@ -78,6 +78,17 @@ void compare_array1d_float(const float *array1, const float *array2, int size, c
     printf("\n");
 }
 
+void compare_array1d_float_to_int(const float *array1, const float *array2, int size, const char *name) {
+    int r;
+    printf("%s\n", name);
+    for (r = 0; r < size; r++) {
+        if ((int)array1[r] != (int)array2[r]){
+            printf("Index=%d m1=%d m2=%d\n", r, (int)array1[r], (int)array2[r]);
+        }
+    };
+    printf("\n");
+}
+
 void convert_float_to_int(const float *float_array, int *int_array, int length) {
     int i;
     for (i = 0; i < length; i++) {

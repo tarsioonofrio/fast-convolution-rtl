@@ -15,7 +15,7 @@ int main() {
     fast_conv_float(ms, mat, mgg2, mct, md, A_SIZE, C_SIZE);
 
     print_array1d_float(ms, A_SIZE, "s: ");
-    compare_array1d_float(ms_gold, ms, A_SIZE, "Errors:");
+    compare_array1d_float_to_int(ms_gold, ms, A_SIZE, "Errors:");
 
     return 0;
 }
