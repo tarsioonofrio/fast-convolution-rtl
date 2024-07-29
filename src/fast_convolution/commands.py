@@ -414,7 +414,7 @@ def cmd_sim_file(feature, weight):
         points, c, b, a, q = read_build_1d()
         conv_func = (
             fast.conv1d if len(quant_data) == 0
-            else quant.select_func1d(quant_data)
+            else quant.select_conv1d(quant_data)
         )
         fast_conv = [
             conv_func(
@@ -422,11 +422,6 @@ def cmd_sim_file(feature, weight):
             )
             for i in range(b_len)
         ]
-        bg = [
-            fast.g_to_bg(q, b, wght_arr[i])
-            for i in range(b_len)
-        ]
-
         output_fast = np.sum(axis=0, a=[
             fast.filter1d_slide2d(
                 fast_conv[i], feat_arr, output_default.shape, i, c_len,
@@ -436,22 +431,24 @@ def cmd_sim_file(feature, weight):
          ])
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points) * len(fast_conv)
+        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
+        bg = np.array([fast.g_to_bg(q, b, wght_arr0[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
             fast.conv2d if len(quant_data) == 0
-            else quant.select_func2d(quant_data)
+            else quant.select_conv2d(quant_data)
         )
         fast_conv = conv_func(
             wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
         )
-        bg = []
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
         count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
-
+        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
+        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr0)
     if len(quant_data) != 0:
         r2 = metrics.r2_score(
             output_default.reshape(-1), output_fast.reshape(-1)
@@ -485,9 +482,9 @@ def cmd_sim_file(feature, weight):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
     dir_clib.mkdir(parents=True, exist_ok=True)
-    init_path = dir_clib / "sim.h"
     list_array = [
         {"name": "weight", "value": wght_arr},
+        {"name": "weight_gg", "value": bg},
         {"name": "feat_in", "value": feat_arr},
         {"name": "gold", "value": output_fast},
     ]
@@ -534,7 +531,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         points, c, b, a, q = read_build_1d()
         conv_func = (
             fast.conv1d if len(quant_data) == 0
-            else quant.select_func1d(quant_data)
+            else quant.select_conv1d(quant_data)
         )
         fast_conv = [
             conv_func(
@@ -552,11 +549,13 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
          ])
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points) * len(fast_conv)
+        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
+        bg = np.array([fast.g_to_bg(q, b, wght_arr0[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
             fast.conv2d if len(quant_data) == 0
-            else quant.select_func2d(quant_data)
+            else quant.select_conv2d(quant_data)
         )
         fast_conv = conv_func(
             wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
@@ -568,7 +567,8 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
             output_default.shape, a_len
         )
         count_mult = count_iter * len(points[0]) * len(points[1])
-
+        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
+        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr0)
     if len(quant_data) != 0:
         r2 = metrics.r2_score(
             output_default.reshape(-1), output_fast.reshape(-1)
@@ -603,9 +603,9 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
     dir_clib.mkdir(parents=True, exist_ok=True)
-    init_path = dir_clib / "sim.h"
     list_array = [
         {"name": "weight", "value": wght_arr},
+        {"name": "weight_gg", "value": bg},
         {"name": "feat_in", "value": feat_arr},
         {"name": "gold", "value": output_fast},
     ]
