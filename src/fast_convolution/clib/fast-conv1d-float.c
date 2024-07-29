@@ -11,7 +11,7 @@ int main() {
     float ms[A_SIZE] = {0};
 
     to_bg(mgg2, mq, mb, mg, B_SIZE, C_SIZE);
-    print_array2d_float(mgg2, 5, 5, "G: ");
+    print_array1d_float(mgg2, C_SIZE, "G: ");
     fast_conv_float(ms, mat, mgg2, mct, md, A_SIZE, C_SIZE);
 
     print_array1d_float(ms, A_SIZE, "s: ");

@@ -60,7 +60,7 @@ void compare_array1d(const int *array1, const int *array2, int size, const char 
     printf("%s\n", name);
     for (r = 0; r < size; r++) {
         if (array1[r] != array2[r]){
-            printf("Err i: %d 1: %d 2: %d\n", r, array1[r], array2[r]);
+            printf("Index=%d m1=%d m2=%d\n", r, array1[r], array2[r]);
         }
     };
     printf("\n");
@@ -72,7 +72,7 @@ void compare_array1d_float(const float *array1, const float *array2, int size, c
     printf("%s\n", name);
     for (r = 0; r < size; r++) {
         if (array1[r] != array2[r]){
-            printf("Err i: %d 1: %.2f 2: %.2f\n", r, array1[r], array2[r]);
+            printf("Index=%d m1=%.2f m2=%.2f\n", r, array1[r], array2[r]);
         }
     };
     printf("\n");
