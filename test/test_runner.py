@@ -24,3 +24,12 @@ def test_bind_nest(monkeypatch):
     # monkeypatch.setattr("os.getcwd", mock_getcwd2d)
     result = runner.invoke(cli.nest)
     assert result.exit_code == 0
+
+
+def test_example_sequential(monkeypatch):
+    # mocker.patch('fast_convolution.utils', 'getcwd', mock_getcwd2d)
+    runner = CliRunner()
+    # monkeypatch.chdir(root / "test_2d")
+    # monkeypatch.setattr("os.getcwd", mock_getcwd2d)
+    result = runner.invoke(cli.seq)
+    assert result.exit_code == 0

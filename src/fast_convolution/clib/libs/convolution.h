@@ -21,8 +21,8 @@ filter2d_slide2d_float(float *feature_out, const float *feature_in, const float 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
 void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, int col2_row1, int col2);
 
-void matrix_transpose_float(float *out, const float *in, int row, int col);
 void matrix_transpose(int *out, const int *in, int row, int col);
+void matrix_transpose_float(float *out, const float *in, int row, int col);
 
 void hadamart_product(int *out, const int *in1, const int *in2, int row);
 void hadamart_product_float(float *out, const float *in1, const float *in2, int row);
