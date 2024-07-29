@@ -4,8 +4,6 @@
 #include "test1d/build_float.h"
 #include "test1d/sim_float.h"
 
-
-
 int main() {
     int i;
     const float *mg;
@@ -21,7 +19,6 @@ int main() {
 
     print_array1d_float(feat_out, FOUT_SIZE * FOUT_SIZE, "fout: ");
     compare_array1d_float_to_int(gold, feat_out, FOUT_SIZE * FOUT_SIZE, "Errors in S != gold");
-
 
     return 0;
 }

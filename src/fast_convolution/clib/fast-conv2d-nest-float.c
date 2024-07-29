@@ -4,7 +4,6 @@
 #include "test2d/bind_nest_float.h"
 #include "test2d/example_float.h"
 
-
 int main() {
     float ms[A1_SIZE * A2_SIZE] = {0};
 
