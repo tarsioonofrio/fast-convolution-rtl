@@ -4,7 +4,7 @@
 #include "test2d/init.h"
 #include "test2d/build.h"
 #include "test2d/bind_nest.h"
-#include "test2d/example_nest.h"
+#include "test2d/example.h"
 
 
 int main() {

@@ -22,7 +22,7 @@ int main() {
     for (i=0; i < W_SIZE; i++) {
         mg = weight + W_SIZE*i;
         to_bg(mgg, mq, mb, mg, B_SIZE, C_SIZE);
-        filter1d_slide1d_float(feat_out, feat_in, i, mctf, matf, mgg,
+        filter1d_slide1d_float(feat_out, feat_in, i, mct, mat, mgg,
                                A_SIZE, C_SIZE, FIN_SIZE, FOUT_SIZE);
     }
 
