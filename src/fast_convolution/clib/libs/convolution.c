@@ -26,22 +26,22 @@ void naive_convolution(
 }
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2) {
-    int r, c, t;
+    int r, c, k;
     for (r = 0; r < row1; r++) {
         for (c = 0; c < col2; c++) {
-            for (t = 0; t < col2_row1; t++) {
-                out[r * col2 + c] += in1[r * col2_row1 + t] * in2[t * col2 + c];
+            for (k = 0; k < col2_row1; k++) {
+                out[r * col2 + c] += in1[r * col2_row1 + k] * in2[k * col2 + c];
             }
         }
     }
 }
 
 void matrix_mul_float(float *out, const float *in1, const float *in2, int row1, int col2_row1, int col2) {
-    int r, c, t;
+    int r, c, k;
     for (r = 0; r < row1; r++) {
         for (c = 0; c < col2; c++) {
-            for (t = 0; t < col2_row1; t++) {
-                out[r * col2 + c] += in1[r * col2_row1 + t] * in2[t * col2 + c];
+            for (k = 0; k < col2_row1; k++) {
+                out[r * col2 + c] += in1[r * col2_row1 + k] * in2[k * col2 + c];
             }
         }
     }

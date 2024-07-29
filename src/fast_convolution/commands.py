@@ -262,10 +262,10 @@ def cmd_build_toom_cook1d(points):
     # TODO export build_float.h with data in float
     init_path = dir_lib / "build.h"
     list_array = [
-        {"name": "mct", "type": "int", "value": np.array(c, dtype=int).T.tolist(), "shape": np.array(c.T, dtype=int).shape},
-        {"name": "mb", "type": "int", "value": np.array(b, dtype=int).tolist(), "shape": np.array(b, dtype=int).shape},
-        {"name": "mat", "type": "int", "value": np.array(a, dtype=int).T.tolist(), "shape": np.array(a.T, dtype=int).shape},
-        {"name": "mq", "type": "int", "value": qr, "shape": np.array(qr, dtype=int).shape},
+        {"name": "mct", "type": "int", "value": c.T},
+        {"name": "mb", "type": "int", "value": b},
+        {"name": "mat", "type": "int", "value": a.T},
+        {"name": "mq", "type": "int", "value": qr},
     ]
     c_header(init_path, list_array, {})
 
@@ -326,14 +326,14 @@ def cmd_build_toom_cook2d(points1d, points2d):
         f.write(text)
     # TODO export build_float.h with data in float
     list_array = [
-        {"name": "mc1t", "type": "int", "value": np.array(c1, dtype=int).T.tolist(), "shape": np.array(c1.T, dtype=int).shape},
-        {"name": "mb1", "type": "int", "value": np.array(b1, dtype=int).tolist(), "shape": np.array(b1, dtype=int).shape},
-        {"name": "ma1t", "type": "int", "value": np.array(a1, dtype=int).T.tolist(), "shape": np.array(a1.T, dtype=int).shape},
-        {"name": "mq1", "type": "int", "value": qr1, "shape": np.array(qr1, dtype=int).shape},
-        {"name": "mc2t", "type": "int", "value": np.array(c2, dtype=int).T.tolist(), "shape": np.array(c2.T, dtype=int).shape},
-        {"name": "mb2", "type": "int", "value": np.array(b2, dtype=int).tolist(), "shape": np.array(b2, dtype=int).shape},
-        {"name": "ma2t", "type": "int", "value": np.array(a2, dtype=int).T.tolist(), "shape": np.array(a2.T, dtype=int).shape},
-        {"name": "mq2", "type": "int", "value": qr2, "shape": np.array(qr2, dtype=int).shape},
+        {"name": "mc1t", "type": "int", "value": c1.T},
+        {"name": "mb1", "type": "int", "value": b1},
+        {"name": "ma1t", "type": "int", "value": a1.T},
+        {"name": "mq1", "type": "int", "value": qr1},
+        {"name": "mc2t", "type": "int", "value": c2.T},
+        {"name": "mb2", "type": "int", "value": b2},
+        {"name": "ma2t", "type": "int", "value": a2.T},
+        {"name": "mq2", "type": "int", "value": qr2},
     ]
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "build.h"
@@ -364,8 +364,8 @@ def cmd_build2d_bind_nest():
     # TODO export bind_nest_float.h with data in float
     fast.write_csa_parcels(a, c, path / "csa")
     list_array = [
-        {"name": "ma_nest", "type": "int", "value": np.array(a.T, dtype=int).tolist(), "shape": np.array(a.T, dtype=int).shape},
-        {"name": "mc_nest", "type": "int", "value": np.array(c.T, dtype=int).tolist(), "shape": np.array(c.T, dtype=int).shape},
+        {"name": "ma_nest", "type": "int", "value": a.T},
+        {"name": "mc_nest", "type": "int", "value": c.T},
     ]
     dir_lib.mkdir(parents=True, exist_ok=True)
     init_path = dir_lib / "bind_nest.h"
@@ -484,10 +484,9 @@ def cmd_sim_file(feature, weight):
     # TODO export sim_float.h with data in float
     init_path = dir_lib / "sim.h"
     list_array = [
-        #{"name": "mgg", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).reshape(b_len, -1).shape},
-        {"name": "weight", "type": "int", "value": wght_arr.tolist(), "shape": wght_arr.shape},
-        {"name": "feat_in", "type": "int", "value": feat_arr.tolist(), "shape": feat_arr.shape},
-        {"name": "gold", "type": "int", "value": output_fast.tolist(), "shape": output_fast.shape},
+        {"name": "weight", "type": "int", "value": wght_arr},
+        {"name": "feat_in", "type": "int", "value": feat_arr},
+        {"name": "gold", "type": "int", "value": output_fast},
     ]
     dict_def = {
         "W_SIZE": wght_arr.shape[0],
@@ -636,10 +635,10 @@ def cmd_example_random(feature, weight):
         init_path = dir_lib / "example.h"
         bg = fast.g_to_bg(q, b, g)
         list_array = [
-            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
-            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
-            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
-            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
+            {"name": "md", "type": "int", "value": d},
+            {"name": "mg", "type": "int", "value": g},
+            {"name": "mgg", "type": "int", "value": bg},
+            {"name": "mggf", "type": "float", "value": bg},
         ]
         c_header(init_path, list_array, {})
 
@@ -665,10 +664,10 @@ def cmd_example_random(feature, weight):
         # TODO export example_float.h with data in float
         init_path = dir_lib / "example.h"
         list_array = [
-            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
-            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
-            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
-            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
+            {"name": "md", "type": "int", "value": d},
+            {"name": "mg", "type": "int", "value": g},
+            {"name": "mgg", "type": "int", "value": bg},
+            {"name": "mggf", "type": "float", "value": bg},
         ]
         c_header(init_path, list_array, {})
 
@@ -701,13 +700,12 @@ def cmd_example_sequential(feature, weight):
         init_path = dir_lib / "example.h"
         bg = fast.g_to_bg(q, b, g)
         # TODO export example_float.h with data in float
-
         list_array = [
-            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
-            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
-            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
-            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
-            {"name": "ms_gold", "type": "int", "value": np.array(s, dtype=int).tolist(), "shape": np.array(s).shape},
+            {"name": "md", "type": "int", "value": d},
+            {"name": "mg", "type": "int", "value": g},
+            {"name": "mgg", "type": "int", "value": bg},
+            {"name": "mggf", "type": "float", "value": bg},
+            {"name": "ms_gold", "type": "int", "value": s},
         ]
         c_header(init_path, list_array, {})
 
@@ -732,11 +730,11 @@ def cmd_example_sequential(feature, weight):
         # TODO export example_float.h with data in float
         init_path = dir_lib / "example.h"
         list_array = [
-            {"name": "md", "type": "int", "value": np.array(d, dtype=int).tolist(), "shape": np.array(d).shape},
-            {"name": "mg", "type": "int", "value": np.array(g, dtype=int).tolist(), "shape": np.array(g).shape},
-            {"name": "mgg", "type": "int", "value": np.array(bg, dtype=int).tolist(), "shape": np.array(bg).shape},
-            {"name": "mggf", "type": "float", "value": np.array(bg, dtype=float).tolist(), "shape": np.array(bg).shape},
-            {"name": "ms_gold", "type": "int", "value": np.array(s, dtype=int).tolist(), "shape": np.array(s).shape},
+            {"name": "md", "type": "int", "value": d},
+            {"name": "mg", "type": "int", "value": g},
+            {"name": "mgg", "type": "int", "value": bg},
+            {"name": "mggf", "type": "float", "value": bg},
+            {"name": "ms_gold", "type": "int", "value": s},
         ]
         c_header(init_path, list_array, {})
 

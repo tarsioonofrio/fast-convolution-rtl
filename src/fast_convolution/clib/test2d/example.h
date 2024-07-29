@@ -1,5 +1,5 @@
-#ifndef C_EXAMPLE_NEST_H
-#define C_EXAMPLE_NEST_H
+#ifndef C_EXAMPLE_H
+#define C_EXAMPLE_H
 
 
 const int md[5*5] = {
@@ -34,4 +34,4 @@ const int ms_gold[3*3] = {
 	672, 708, 744
 };
 
-#endif //C_EXAMPLE_NEST_H
+#endif //C_EXAMPLE_H

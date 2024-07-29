@@ -130,8 +130,9 @@ def c_header(path, list_array, dict_defs):
         for array in list_array:
             typ = array["type"]
             name = array["name"]
-            shape = array["shape"]
-            value = np.array(array["value"]).reshape((shape))
+            np_arr = np.array(array["value"]).astype(typ)
+            shape = np_arr.shape
+            value = np_arr.tolist()
             if typ == "float":
                 value_str = (",\n").join(["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value])
             else:
