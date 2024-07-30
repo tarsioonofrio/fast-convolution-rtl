@@ -12,3 +12,9 @@ add_executable(fast-conv2d-iter-float fast-conv2d-iter-float.c libs/convolution.
 
 add_executable(filter1d filter1d-float.c libs/convolution.c libs/convolution.h libs/util.c libs/util.h test1d/init.h test1d/init.h test1d/build.h test1d/example.h test1d/sim.h )
 add_executable(filter2d filter2d-float.c libs/convolution.c libs/convolution.h libs/util.c libs/util.h test2d/init.h test2d/build.h test2d/bind_nest.h test2d/example.h test2d/sim.h)
+
+target_link_libraries(fast-conv1d-float m)
+target_link_libraries(fast-conv2d-nest-float m)
+target_link_libraries(fast-conv2d-iter-float m)
+target_link_libraries(filter1d m)
+target_link_libraries(filter2d m)

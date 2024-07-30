@@ -398,14 +398,13 @@ def cmd_sim_file(feature, weight):
         image = Image.open(feature).convert('L')
         feat_arr = np.array(image)
     with open(weight) as f:
+        w_arr = np.array(json.load(f))
         if dim == 1:
-            wght_arr = (np.array(json.load(f)).reshape(b_len, b_len))
+            wght_arr = w_arr .reshape(b_len, b_len)
         elif dim == 2:
-            wght_arr = (np.array(json.load(f)).reshape(b_len[0], b_len[1]))
+            wght_arr = w_arr .reshape(b_len[0], b_len[1])
 
-    output_default = signal.convolve2d(
-        feat_arr, wght_arr[::-1, ::-1], mode='valid'
-    )
+    output_default = signal.convolve2d(feat_arr, w_arr[::-1, ::-1], mode='valid')
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
@@ -417,18 +416,13 @@ def cmd_sim_file(feature, weight):
             else quant.select_conv1d(quant_data)
         )
         fast_conv = [
-            conv_func(
-                wght_arr[i], c, q, b, a
-            )
+            conv_func(wght_arr[i], c, q, b, a)
             for i in range(b_len)
         ]
         output_fast = np.sum(axis=0, a=[
-            fast.filter1d_slide2d(
-                fast_conv[i], feat_arr, output_default.shape, i, c_len,
-                a_len
-            )
+            fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
             for i in range(0, wght_arr.shape[0])
-         ])
+        ])
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points) * len(fast_conv)
         wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
@@ -439,20 +433,14 @@ def cmd_sim_file(feature, weight):
             fast.conv2d if len(quant_data) == 0
             else quant.select_conv2d(quant_data)
         )
-        fast_conv = conv_func(
-            wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
-        )
-        output_fast = fast.filter2d_slide2d(
-            fast_conv, feat_arr, output_default.shape, c_len, a_len
-        )
+        fast_conv = conv_func(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
+        output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
         count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
         wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr0)
     if len(quant_data) != 0:
-        r2 = metrics.r2_score(
-            output_default.reshape(-1), output_fast.reshape(-1)
-        )
+        r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
         text_metric = (f"R2: {r2}\n")
     else:
         compare_fast = np.all(output_default == output_fast)
@@ -486,43 +474,34 @@ def cmd_sim_file(feature, weight):
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
         {"name": "feat_in", "value": feat_arr},
-        {"name": "gold", "value": output_fast},
+        {"name": "gold", "value": output_default},
+        {"name": "gold_quant", "value": output_fast},
     ]
     dict_def = {
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
-        "FOUT_SIZE": output_fast.shape[0],
+        "FOUT_SIZE": output_default.shape[0],
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib / path, arr, dict_def)
-
     return text
 
 
 def cmd_sim_random(feature_random, weight_random, image_side, loop):
     dim, c_len, b_len, a_len = read_init()
     quant_data = read_quant_if_exists()
-    feat = np.random.randint(
-         feature_random[0], feature_random[1], size=image_side ** 2
-     )
+    feat = np.random.randint(feature_random[0], feature_random[1], size=image_side ** 2)
     feat_arr = feat.reshape(image_side, image_side)
 
     if dim == 1:
-        wght = np.random.randint(
-            weight_random[0], weight_random[1], size=b_len ** 2
-        )
+        wght = np.random.randint(weight_random[0], weight_random[1], size=b_len ** 2)
         wght_arr = wght.reshape(b_len, b_len)
     elif dim == 2:
-        wght = np.random.randint(
-            weight_random[0], weight_random[1],
-            size=b_len[0] * b_len[1]
-        )
+        wght = np.random.randint(weight_random[0], weight_random[1], size=b_len[0] * b_len[1])
         wght_arr = wght.reshape(b_len[0], b_len[1])
 
-    output_default = signal.convolve2d(
-        feat_arr, wght_arr[::-1, ::-1], mode='valid'
-    )
+    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
@@ -534,17 +513,12 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
             else quant.select_conv1d(quant_data)
         )
         fast_conv = [
-            conv_func(
-                wght_arr[i], c, q, b, a
-            )
+            conv_func(wght_arr[i], c, q, b, a)
             for i in range(b_len)
         ]
 
         output_fast = np.sum(axis=0, a=[
-            fast.filter1d_slide2d(
-                fast_conv[i], feat_arr, output_default.shape, i, c_len,
-                a_len
-            )
+            fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
             for i in range(0, wght_arr.shape[0])
          ])
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
@@ -557,22 +531,14 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
             fast.conv2d if len(quant_data) == 0
             else quant.select_conv2d(quant_data)
         )
-        fast_conv = conv_func(
-            wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
-        )
-        output_fast = fast.filter2d_slide2d(
-            fast_conv, feat_arr, output_default.shape, c_len, a_len
-        )
-        count_iter = fast.filter2d_slide2d_count(
-            output_default.shape, a_len
-        )
+        fast_conv = conv_func(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
+        output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
+        count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
         wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr0)
     if len(quant_data) != 0:
-        r2 = metrics.r2_score(
-            output_default.reshape(-1), output_fast.reshape(-1)
-        )
+        r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
         text_metric = (f"R2: {r2}%\n")
     else:
         compare_fast = np.all(output_default == output_fast)
@@ -607,7 +573,8 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
         {"name": "feat_in", "value": feat_arr},
-        {"name": "gold", "value": output_fast},
+        {"name": "gold", "value": output_default},
+        {"name": "gold_quant", "value": output_fast},
     ]
     dict_def = {
         "W_SIZE": wght_arr.shape[0],
@@ -617,7 +584,6 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib / path, arr, dict_def)
-
     return text
 
 
@@ -626,31 +592,21 @@ def cmd_example_random(feature, weight):
     dir_example.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
-        f = np.random.randint(
-            feature[0], feature[1], size=c_len
-        )
+        f = np.random.randint(feature[0], feature[1], size=c_len)
         d = sy.Matrix(f)
-        w = np.random.randint(
-            weight[0], weight[1], size=b_len
-        )
+        w = np.random.randint(weight[0], weight[1], size=b_len)
         g = sy.Matrix(w)
     elif dim == 2:
-        f0 = np.random.randint(
-            feature[0], feature[1], size=c_len[0]*c_len[1]
-        )
+        f0 = np.random.randint(feature[0], feature[1], size=c_len[0]*c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
         d = sy.Matrix(f)
-        w0 = np.random.randint(
-            weight[0], weight[1], size=b_len[0] * b_len[1]
-        )
+        w0 = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
         g = sy.Matrix(w)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        latex.example_1d(
-            b, c, a, g, d, q, dir_example / f"example-random-{now()}"
-        )
+        latex.example_1d(b, c, a, g, d, q, dir_example / f"example-random-{now()}")
         dir_clib.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -712,9 +668,7 @@ def cmd_example_sequential(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        latex.example_1d(
-            b, c, a, g, d, q, dir_example / f"example-seq-{now()}"
-        )
+        latex.example_1d(b, c, a, g, d, q, dir_example / f"example-seq-{now()}")
         dir_clib.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -754,5 +708,3 @@ def cmd_example_sequential(feature, weight):
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
             c_header(dir_clib / path, arr, {})
-
-

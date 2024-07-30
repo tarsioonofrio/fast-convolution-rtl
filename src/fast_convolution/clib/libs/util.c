@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "util.h"
 
 
@@ -79,11 +80,13 @@ void compare_array1d_float(const float *array1, const float *array2, int size, c
 }
 
 void compare_array1d_float_to_int(const float *array1, const float *array2, int size, const char *name) {
-    int r;
+    int r, int1, int2;
     printf("%s\n", name);
     for (r = 0; r < size; r++) {
-        if ((int)array1[r] != (int)array2[r]){
-            printf("Index=%d m1=%d m2=%d\n", r, (int)array1[r], (int)array2[r]);
+        int1 = (int)roundf(array1[r]);
+        int2 = (int)roundf(array2[r]);
+        if (int1 != int2){
+            printf("Index=%d m1=%d m2=%d\n", r, int1, int2);
         }
     };
     printf("\n");

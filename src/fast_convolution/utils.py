@@ -149,9 +149,9 @@ def c_header(path, list_array, dict_defs):
         f.write(source)
 
 
-def default_convolve(d, g):
+def default_convolve(f, w):
     output_default = signal.convolve(
-        d, g[::-1, ::-1], mode='valid'
+        f, w[::-1, ::-1], mode='valid'
     )
     return output_default
 

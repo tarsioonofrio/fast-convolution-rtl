@@ -17,7 +17,7 @@ int main() {
                                C_SIZE, FIN_SIZE, FOUT_SIZE);
     }
 
-    print_array1d_float(feat_out, FOUT_SIZE * FOUT_SIZE, "fout: ");
+    print_array2d_float(feat_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
     compare_array1d_float_to_int(gold, feat_out, FOUT_SIZE * FOUT_SIZE, "Errors in S != gold");
 
     return 0;
