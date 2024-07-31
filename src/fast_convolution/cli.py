@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import click
-from fast_convolution.utils import getcwd
+from .utils import getcwd
 
 from .commands import (
     read_init_if_exists, num_points1d, num_points2d,

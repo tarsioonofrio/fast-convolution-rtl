@@ -157,4 +157,8 @@ def default_convolve(f, w):
 
 
 def getcwd():
-    return Path(os.getcwd())
+    import os
+    if os.environ.get("TEST_PATH") is None:
+        return Path(os.getcwd())
+    else:
+        return Path(os.environ.get("TEST_PATH"))

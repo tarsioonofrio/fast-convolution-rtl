@@ -17,10 +17,10 @@ from . import fast
 from . import quant
 from . import latex
 from .naive import naive_convolve
-from .utils import c_header, default_convolve
+from .utils import c_header, default_convolve, getcwd
 
 
-root_path = Path(os.getcwd())
+root_path = getcwd()
 dir_config = root_path / "config"
 file_init = dir_config / "init.json"
 file_build = dir_config / "build.json"
