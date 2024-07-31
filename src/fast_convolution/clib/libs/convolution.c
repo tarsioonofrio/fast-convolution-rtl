@@ -115,6 +115,7 @@ void to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_
     // G=q.bg
     hadamart_product_float(mgg, mqf, mbg, c_size);
     //print_array1d_float(mgg, c_size, "G=q.bg: ");
+
     free(mbg);
     free(mqf);
 }
@@ -150,25 +151,21 @@ void
 filter2d_slide2d_float(float *feature_out, const float *feature_in, const float *mc, const float *ma, const float *mgg,
                        int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, rd, cd;
-//    float * ms = (float*)malloc((a_size) * sizeof(float));
-//    float * md = (float*)malloc((c_size) * sizeof(float));
-    float ms[9] = {0};
-    float md[25] = {0};
-    float tmp = 0;
+    float * ms = (float*)malloc((a_size * a_size) * sizeof(float));
+    float * md = (float*)malloc((c_size * c_size) * sizeof(float));
 
     for (r = 0; r < fout_size; r = r + a_size) {
         for (c = 0; c <= fout_size; c = c + a_size) {
             for (rd = 0; rd < c_size; rd++) {
                 for (cd = 0; cd < c_size; cd++) {
                     if ((r + rd < fin_size) && (c + cd < fin_size) ) {
-//                        md[rd] = feature_in[r * fin_size + rd*fin_size + c + cd];
-                        tmp = feature_in[r * fin_size + rd * fin_size + c + cd];
-                        md[rd*c_size + cd] = tmp;
+                        md[rd*c_size + cd] = feature_in[r * fin_size + rd * fin_size + c + cd];
                     } else {
                         md[rd*c_size + cd] = 0;
                     }
                 }
             }
+
             fast_conv_float(ms, ma, mgg, mc, md, a_size * a_size, c_size * c_size);
             for (rd = 0; rd < a_size; rd++) {
                 for (cd = 0; cd < a_size; cd++) {
@@ -179,6 +176,6 @@ filter2d_slide2d_float(float *feature_out, const float *feature_in, const float 
             }
         }
     }
-//    free(ms);
-//    free(md);
+    free(ms);
+    free(md);
 }
