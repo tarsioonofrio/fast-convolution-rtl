@@ -425,8 +425,12 @@ def cmd_sim_file(feature, weight):
         ])
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points) * len(fast_conv)
-        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
-        bg = np.array([fast.g_to_bg(q, b, wght_arr0[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+        bg = np.array([fast.g_to_bg(q, b, wght_arr[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+        if len(quant_data) == 0:
+            bg_quant = bg
+        else:
+            wght_quant = quant.select_func(quant_data)(wght_arr)
+            bg_quant = np.array([fast.g_to_bg(q, b, wght_quant[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
@@ -437,8 +441,13 @@ def cmd_sim_file(feature, weight):
         output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
         count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
-        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
-        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr0)
+        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
+        if len(quant_data) == 0:
+            bg_quant = bg
+        else:
+            wght_quant = quant.select_func(quant_data)(wght_arr)
+            bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
+
     if len(quant_data) != 0:
         r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
         text_metric = (f"R2: {r2}\n")
@@ -473,6 +482,7 @@ def cmd_sim_file(feature, weight):
     list_array = [
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
+        {"name": "weight_gg_quant", "value": bg_quant},
         {"name": "feat_in", "value": feat_arr},
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
@@ -523,8 +533,12 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
          ])
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points) * len(fast_conv)
-        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
-        bg = np.array([fast.g_to_bg(q, b, wght_arr0[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+        bg = np.array([fast.g_to_bg(q, b, wght_arr[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+        if len(quant_data) == 0:
+            bg_quant = bg
+        else:
+            wght_quant = quant.select_func(quant_data)(wght_arr)
+            bg_quant = np.array([fast.g_to_bg(q, b, wght_quant[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
@@ -535,8 +549,13 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
         count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
-        wght_arr0 = wght_arr if len(quant_data) == 0 else quant.select_func(quant_data)(wght_arr)
-        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr0)
+        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
+        if len(quant_data) == 0:
+            bg_quant = bg
+        else:
+            wght_quant = quant.select_func(quant_data)(wght_arr)
+            bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
+
     if len(quant_data) != 0:
         r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
         text_metric = (f"R2: {r2}%\n")
@@ -572,6 +591,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     list_array = [
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
+        {"name": "weight_gg_quant", "value": bg_quant},
         {"name": "feat_in", "value": feat_arr},
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
