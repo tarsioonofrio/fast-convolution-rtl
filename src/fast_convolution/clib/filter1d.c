@@ -1,5 +1,5 @@
-#include "libs/convolution.h"
-#include "libs/util.h"
+#include "libs/include/convolution.h"
+#include "libs/include/util.h"
 #include "test1d/init.h"
 #include "test1d/build.h"
 #include "test1d/sim.h"

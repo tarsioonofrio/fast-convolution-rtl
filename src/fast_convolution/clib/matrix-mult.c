@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "libs/convolution.h"
-#include "libs/util.h"
+#include "libs/include/convolution.h"
+#include "libs/include/util.h"
 
 int main() {
     const int m23[2 * 3] = {

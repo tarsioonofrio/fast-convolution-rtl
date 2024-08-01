@@ -1,5 +1,5 @@
-#include "libs/convolution.h"
-#include "libs/util.h"
+#include "libs/include/convolution.h"
+#include "libs/include/util.h"
 #include "test2d/init.h"
 #include "test2d/bind_nest.h"
 #include "test2d/sim.h"
