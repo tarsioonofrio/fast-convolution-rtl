@@ -115,9 +115,24 @@ void convert_int_to_float(const int *int_array, float *float_array, int length) 
     }
 }
 
-void init_array(float *array, int size) {
+void init_array_float(float *array, int size) {
     int i;
     for (i = 0; i < size; i++) {
         array[i] = 0;
+    };
+}
+
+void init_array(int *array, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        array[i] = 0;
+    };
+}
+
+
+void right_shift_array(int *array, int shift, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        array[i] = array[i] >> shift;
     };
 }

@@ -75,7 +75,7 @@ def test_build_2d_bind_nest():
 
 def test_quant_1d_shift():
     result = subprocess.run(
-        ['fast-conv', 'quant', 'shift'],
+        ['fast-conv', 'quant', 'shift', '-b', '4'],
         capture_output=True,
         cwd=tmp_dir1
     )
@@ -84,7 +84,7 @@ def test_quant_1d_shift():
 
 def test_quant_2d_shift():
     result = subprocess.run(
-        ['fast-conv', 'quant', 'shift'],
+        ['fast-conv', 'quant', 'shift', '-b', '4'],
         capture_output=True,
         cwd=tmp_dir2
     )

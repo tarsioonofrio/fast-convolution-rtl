@@ -487,7 +487,13 @@ def cmd_sim_file(feature, weight):
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
     ]
+    quant_dict = {
+        f"QUANT_{k}".upper(): v
+        for k, v in quant_data["params"].items()
+    }
     dict_def = {
+        "QUANT": quant_data["func"].upper(),
+        ** quant_dict,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_default.shape[0],
@@ -596,7 +602,13 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
     ]
+    quant_dict = {
+        f"QUANT_{k}".upper(): v
+        for k, v in quant_data["params"].items()
+    }
     dict_def = {
+        "QUANT": quant_data["func"].upper(),
+        ** quant_dict,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_fast.shape[0],
