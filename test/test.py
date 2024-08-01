@@ -16,7 +16,7 @@ tmp_dir2 = root / "test_2d"
 
 
 def test_init1d():
-    shutil.rmtree(tmp_dir1)
+    shutil.rmtree(tmp_dir1, ignore_errors=True)
     tmp_dir1.mkdir(parents=True)
     result = subprocess.run(
         ['fast-conv', 'init', '1d', '-o', '3'],
@@ -27,7 +27,7 @@ def test_init1d():
 
 
 def test_init2d():
-    shutil.rmtree(tmp_dir2)
+    shutil.rmtree(tmp_dir2, ignore_errors=True)
     tmp_dir2.mkdir(parents=True)
     result = subprocess.run(
         ['fast-conv', 'init', '2d', '-o', '3', '3'],
