@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(c C)
+project(fast_conv C)
 
 set(CMAKE_C_STANDARD 90)
 
