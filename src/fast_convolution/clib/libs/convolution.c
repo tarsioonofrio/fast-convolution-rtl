@@ -69,8 +69,44 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
 }
 
 
-void filter1d_slide1d(int *feature_out, const int *feature_in, int index, const int *mc, const int *ma,
-                      const int *mgg, int a_size, int c_size, int fin_size, int fout_size) {
+void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
+                          const int *ma2t, const int *mc2t, const int *md,
+                          int a1_size, int a2_size, int c1_size, int c2_size) {
+
+    int *mss = (int *) malloc((c1_size * c2_size) * sizeof(int));
+    int *mss2 = (int *) malloc((a1_size * c1_size) * sizeof(int));
+    int *mdd = (int *) malloc((c1_size * c2_size) * sizeof(int));
+    int *ma2 = (int *) malloc((a2_size * c2_size) * sizeof(int));
+    int *mc2 = (int *) malloc((c2_size * c2_size) * sizeof(int));
+    int *md2 = (int *) malloc((c1_size * c2_size) * sizeof(int));
+
+    init_array(mss, c1_size * c2_size);
+    init_array(mss2, a1_size * c1_size);
+    init_array(mdd, c1_size * c2_size);
+    init_array(ma2, a2_size * c2_size);
+    init_array(mc2, c2_size * c2_size);
+    init_array(md2, c1_size * c2_size);
+
+
+    matrix_transpose(mc2, mc2t, c1_size, c2_size);
+    matrix_transpose(ma2, ma2t, a2_size, c2_size);
+    matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
+    matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
+    hadamart_product(mss, mdd, mgg, c1_size * c2_size);
+    matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
+    matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+
+    free(mss);
+    free(mss2);
+    free(mdd);
+    free(ma2);
+    free(mc2);
+    free(md2);
+}
+
+
+void filter1d(int *feature_out, const int *feature_in, int index, const int *mc, const int *ma,
+              const int *mgg, int a_size, int c_size, int fin_size, int fout_size) {
     int r, c, i;
     int * ms = (int*)malloc((a_size) * sizeof(int));
     int * md = (int*)malloc((c_size) * sizeof(int));
@@ -97,29 +133,37 @@ void filter1d_slide1d(int *feature_out, const int *feature_in, int index, const 
 }
 
 
-void filter2d_slide2d(int *feature_out, const int *feature_in, const int *mc, const int *ma, const int *mgg,
-                      int a_size, int c_size, int fin_size, int fout_size) {
+void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_size, int type_conv, type_struct_conv *params) {
     int r, c, rd, cd;
-    int * ms = (int*)malloc((a_size * a_size) * sizeof(int));
-    int * md = (int*)malloc((c_size * c_size) * sizeof(int));
+    int a1_size = params->a1_size;
+    int a2_size = params->a2_size;
+    int c1_size = params->c1_size;
+    int c2_size = params->c2_size;
+    int *ms = (int *) malloc((a1_size * a1_size) * sizeof(int));
+    int *md = (int *) malloc((c1_size * c1_size) * sizeof(int));
 
-    for (r = 0; r < fout_size; r = r + a_size) {
-        for (c = 0; c <= fout_size; c = c + a_size) {
-            for (rd = 0; rd < c_size; rd++) {
-                for (cd = 0; cd < c_size; cd++) {
-                    if ((r + rd < fin_size) && (c + cd < fin_size) ) {
-                        md[rd*c_size + cd] = feature_in[r * fin_size + rd * fin_size + c + cd];
+    for (r = 0; r < fout_size; r = r + a1_size) {
+        for (c = 0; c <= fout_size; c = c + a1_size) {
+            for (rd = 0; rd < c1_size; rd++) {
+                for (cd = 0; cd < c1_size; cd++) {
+                    if ((r + rd < fin_size) && (c + cd < fin_size)) {
+                        md[rd * c1_size + cd] = feature_in[r * fin_size + rd * fin_size + c + cd];
                     } else {
-                        md[rd*c_size + cd] = 0;
+                        md[rd * c1_size + cd] = 0;
                     }
                 }
             }
-
-            fast_conv(ms, ma, mgg, mc, md, a_size * a_size, c_size * c_size);
-            for (rd = 0; rd < a_size; rd++) {
-                for (cd = 0; cd < a_size; cd++) {
+            if (type_conv == NESTED) {
+                fast_conv(ms, params->ma, params->mgg, params->mc, md,
+                                a1_size * a2_size, c1_size * c2_size);
+            } else if (type_conv == ITERATED){
+                fast_conv_iter(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
+                                     a1_size, a2_size, c1_size, c2_size);
+            }
+            for (rd = 0; rd < a1_size; rd++) {
+                for (cd = 0; cd < a1_size; cd++) {
                     if (c + rd < fout_size) {
-                        feature_out[r * fout_size + rd * fout_size + c + cd] = ms[rd * a_size + cd];
+                        feature_out[r * fout_size + rd * fout_size + c + cd] = ms[rd * a1_size + cd];
                     }
                 }
             }

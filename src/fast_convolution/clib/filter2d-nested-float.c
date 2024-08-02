@@ -6,10 +6,10 @@
 
 int main() {
     float feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
+    type_struct_conv struct_conv = {weight_gg, ma_nest, mc_nest, 0, 0, 0, 0,
+                                     A1_SIZE, A2_SIZE, C1_SIZE, C2_SIZE};
 
-    filter2d_slide2d_float(feat_out, feat_in, mc_nest, ma_nest, weight_gg,
-                           A1_SIZE, C1_SIZE, FIN_SIZE, FOUT_SIZE);
-
+    filter2d(feat_out, feat_in, FIN_SIZE, FOUT_SIZE, NESTED, &struct_conv);
     print_array2d_float(feat_out, FOUT_SIZE, FOUT_SIZE, "fout: ");
     compare_array1d_float_to_int(gold, feat_out, FOUT_SIZE * FOUT_SIZE, "Errors in S != gold");
 
