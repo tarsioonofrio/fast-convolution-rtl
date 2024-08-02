@@ -10,7 +10,8 @@ int main() {
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
 
     for (i=0; i < W_SIZE; i++) {
-        mgg = weight_gg_quant + C_SIZE*C_SIZE*i;
+        mgg = weight_gg_quant + C_SIZE*i;
+        print_array1d(mgg, C_SIZE, "G: ");
         filter1d_slide1d(feat_out, feat_in, i, mct, mat, mgg, A_SIZE,
                          C_SIZE, FIN_SIZE, FOUT_SIZE);
     }
