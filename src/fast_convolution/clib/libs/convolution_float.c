@@ -52,6 +52,42 @@ void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *
     free(mdd);
 }
 
+void fast_conv_iter_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg,
+                          const float *ma2t, const float *mc2t, const float *md,
+                          int a1_size, int a2_size, int c1_size, int c2_size) {
+
+    float * mss = (float*)malloc((c1_size * c2_size) * sizeof(float));
+    float * mss2 = (float*)malloc((a1_size * c1_size) * sizeof(float));
+    float * mdd = (float*)malloc((c1_size * c2_size) * sizeof(float));
+    float * ma2 = (float*)malloc((a2_size * c2_size) * sizeof(float));
+    float * mc2 = (float*)malloc((c2_size * c2_size) * sizeof(float));
+    float * md2 = (float*)malloc((c1_size * c2_size) * sizeof(float));
+
+    init_array_float(mss,c1_size * c2_size);
+    init_array_float(mss2,a1_size * c1_size);
+    init_array_float(mdd,c1_size * c2_size);
+    init_array_float(ma2,a2_size * c2_size);
+    init_array_float(mc2,c2_size * c2_size);
+    init_array_float(md2,c1_size * c2_size);
+
+
+    matrix_transpose_float(mc2, mc2t, c1_size, c2_size);
+    matrix_transpose_float(ma2, ma2t, a2_size, c2_size);
+    matrix_mul_float(md2, md, mc2, c1_size, c2_size, c2_size);
+    matrix_mul_float(mdd, mc1t, md2, c1_size, c2_size, c2_size);
+    hadamart_product_float(mss, mdd, mgg, c1_size * c2_size);
+    matrix_mul_float(mss2, mss, ma2, c1_size, c2_size, a2_size);
+    matrix_mul_float(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+
+    free(mss);
+    free(mss2);
+    free(mdd);
+    free(ma2);
+    free(mc2);
+    free(md2);
+}
+
+
 void to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size, int c_size) {
     int i;
     float * mbg = (float*)malloc((c_size) * sizeof(float));

@@ -12,7 +12,7 @@ add_executable(fast-conv2d-iter-float fast-conv2d-iter-float.c libs/convolution_
 
 add_executable(filter1d-float filter1d-float.c libs/convolution_float.c libs/util_float.c)
 add_executable(filter2d-nested-float filter2d-nested-float.c libs/convolution_float.c libs/util_float.c)
-add_executable(filter2d-iter-float filter2d-nested-float.c libs/convolution_float.c libs/util_float.c)
+add_executable(filter2d-iter-float filter2d-iter-float.c libs/convolution_float.c libs/util_float.c)
 
 add_executable(filter1d filter1d.c libs/convolution.c libs/util.c)
 add_executable(filter2d-nested filter2d-nested.c libs/convolution.c libs/util.c)
