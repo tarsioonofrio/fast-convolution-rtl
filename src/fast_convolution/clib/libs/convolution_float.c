@@ -63,6 +63,7 @@ void fast_conv_iter_float(float *ms, const float *ma1t, const float *mc1t, const
     float *mc2 = (float *) malloc((c2_size * c2_size) * sizeof(float));
     float *md2 = (float *) malloc((c1_size * c2_size) * sizeof(float));
 
+    init_array_float(ms, a1_size * a2_size);
     init_array_float(mss, c1_size * c2_size);
     init_array_float(mss2, a1_size * c1_size);
     init_array_float(mdd, c1_size * c2_size);
@@ -143,13 +144,13 @@ void filter2d(float *feature_out, const float *feature_in, int fin_size, int fou
     int a2_size = params->a2_size;
     int c1_size = params->c1_size;
     int c2_size = params->c2_size;
-    float *ms = (float *) malloc((a1_size * a1_size) * sizeof(float));
-    float *md = (float *) malloc((c1_size * c1_size) * sizeof(float));
+    float *ms = (float *) malloc((a1_size * a2_size) * sizeof(float));
+    float *md = (float *) malloc((c1_size * c2_size) * sizeof(float));
 
     for (r = 0; r < fout_size; r = r + a1_size) {
-        for (c = 0; c <= fout_size; c = c + a1_size) {
+        for (c = 0; c <= fout_size; c = c + a2_size) {
             for (rd = 0; rd < c1_size; rd++) {
-                for (cd = 0; cd < c1_size; cd++) {
+                for (cd = 0; cd < c2_size; cd++) {
                     if ((r + rd < fin_size) && (c + cd < fin_size)) {
                         md[rd * c1_size + cd] = feature_in[r * fin_size + rd * fin_size + c + cd];
                     } else {
@@ -157,15 +158,16 @@ void filter2d(float *feature_out, const float *feature_in, int fin_size, int fou
                     }
                 }
             }
+//            print_array2d_float_int(md, c1_size, c2_size, "D: ");
             if (type_conv == NESTED) {
                 fast_conv_float(ms, params->ma, params->mgg, params->mc, md,
                                 a1_size * a2_size, c1_size * c2_size);
             } else if (type_conv == ITERATED){
-                fast_conv_iter_float(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
-                                     a1_size, a2_size, c1_size, c2_size);
+                fast_conv_iter_float(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2,
+                                     md, a1_size, a2_size, c1_size, c2_size);
             }
             for (rd = 0; rd < a1_size; rd++) {
-                for (cd = 0; cd < a1_size; cd++) {
+                for (cd = 0; cd < a2_size; cd++) {
                     if (c + rd < fout_size) {
                         feature_out[r * fout_size + rd * fout_size + c + cd] = ms[rd * a1_size + cd];
                     }
