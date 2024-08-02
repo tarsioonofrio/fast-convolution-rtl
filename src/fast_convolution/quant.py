@@ -41,7 +41,6 @@ def shift_func(bits):
     return func
 
 
-
 # TODO maybe inject quant transform and inverse functions in fast.conv1d{2d}
 # functions
 def shift1d(bits):

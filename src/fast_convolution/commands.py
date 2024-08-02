@@ -375,7 +375,6 @@ def cmd_build2d_bind_nest():
         c_header(dir_clib / path, arr, {})
 
 
-
 def cmd_quant_none():
     file_quant.unlink(missing_ok=True)
 

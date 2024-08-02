@@ -224,10 +224,12 @@ def count_sums(mtx):
 
 
 def wrap_convolution(c, bg, a):
-    filt = to_filter(c, bg, a)
     def convolution(f):
-        out = filt * sy.Matrix(f)
-        return out
+        tr = c.T * sy.Matrix(f)
+        m = sy.HadamardProduct(tr, bg.T, evaluate=True)
+        inv = a.T * m
+        # out = a.T * bg * c.T * sy.Matrix(f)
+        return inv
     return convolution
 
 
@@ -291,7 +293,7 @@ def toom_cook(d_size, g_size, points):
 
 
 def g_to_bg(q, b, g):
-    return sy.diag(*(sy.diag(*q) * b * sy.Matrix(g)).tolist())
+    return sy.diag(*(sy.diag(*q) * b * sy.Matrix(g)).tolist()).diagonal()
 
 
 def g_to_bg2d(q1, b1, q2, b2, g):
