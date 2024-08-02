@@ -1,8 +1,8 @@
-#include "libs/include/convolution_float.h"
-#include "libs/include/util_float.h"
-#include "test2d/init.h"
-#include "test2d/build_float.h"
-#include "test2d/example_float.h"
+#include "lib/include/convolution_float.h"
+#include "lib/include/util_float.h"
+#include "../../test/test2d/init.h"
+#include "../../test/test2d/build_float.h"
+#include "../../test/test2d/example_float.h"
 
 
 main() {

@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "libs/include/convolution.h"
-#include "test1d/sim.h"
+#include "lib/include/convolution.h"
+#include "../../test/test1d/sim.h"
 
 int main() {
     int output[6 * 6] = {0};
