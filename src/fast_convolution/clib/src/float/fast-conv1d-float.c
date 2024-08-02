@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "lib/include/convolution_float.h"
 #include "lib/include/util_float.h"
 #include "../../test/test1d/init.h"

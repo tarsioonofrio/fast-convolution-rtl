@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "lib/include/convolution.h"
 #include "../../test/test1d/sim.h"
 
