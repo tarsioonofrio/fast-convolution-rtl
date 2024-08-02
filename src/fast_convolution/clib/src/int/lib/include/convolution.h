@@ -23,7 +23,7 @@ typedef struct {
 } type_struct_conv;
 
 
-void naive_convolution( const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,
+void simple_convolution(const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,
                         int out_col);
 
 void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int *md, int a_size, int c_size);

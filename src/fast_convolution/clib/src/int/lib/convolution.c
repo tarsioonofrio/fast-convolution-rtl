@@ -8,7 +8,7 @@
 #include "include/util.h"
 
 
-void naive_convolution(
+void simple_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
     int fr, fc, wr, wc;
     for (fr = 0; fr < f_row - w_row + 1; fr++) {

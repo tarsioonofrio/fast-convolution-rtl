@@ -6,7 +6,7 @@ int main() {
     int f_row = 8, f_col = 8, g_row = 6, g_col = 6, w_row = 3, w_col = 3;
     int gi, gj;
 
-    naive_convolution(weight, feat_in, output, f_row, f_col, w_row, w_col, g_col);
+    simple_convolution(weight, feat_in, output, f_row, f_col, w_row, w_col, g_col);
 
     for (gi = 0; gi < g_row; gi++) {
         for (gj = 0; gj < g_col; gj++) {
