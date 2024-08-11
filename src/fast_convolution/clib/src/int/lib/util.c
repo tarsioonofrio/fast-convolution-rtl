@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include "include/util.h"
+#include "convolution.h"
 
 
 void print_array1d(const int *array, int size, const char *name) {
@@ -47,17 +48,4 @@ void convert_int_to_float(const int *int_array, float *float_array, int length) 
     }
 }
 
-void init_array(int *array, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        array[i] = 0;
-    };
-}
 
-
-void right_shift_array(int *array, int shift, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        array[i] = array[i] >> shift;
-    };
-}

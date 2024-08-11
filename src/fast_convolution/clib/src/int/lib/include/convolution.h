@@ -43,5 +43,9 @@ void matrix_transpose(int *out, const int *in, int row, int col);
 
 void hadamart_product(int *out, const int *in1, const int *in2, int row);
 
+void init_array(int *array, int size);
+
+void right_shift_array(int *array, int shift, int size);
+
 
 #endif //C_CONVOLUTION_H

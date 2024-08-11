@@ -174,3 +174,17 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
     free(ms);
     free(md);
 }
+
+void init_array(int *array, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        array[i] = 0;
+    };
+}
+
+void right_shift_array(int *array, int shift, int size) {
+    int i;
+    for (i = 0; i < size; i++) {
+        array[i] = array[i] >> shift;
+    };
+}

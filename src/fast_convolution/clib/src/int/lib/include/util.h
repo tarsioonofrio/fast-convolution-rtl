@@ -12,8 +12,4 @@ void compare_array1d(const int *array1, const int *array2, int size, const char 
 
 void convert_int_to_float(const int *int_array, float *float_array, int length);
 
-void init_array(int *array, int size);
-
-void right_shift_array(int *array, int shift, int size);
-
 #endif //C_UTIL_H
