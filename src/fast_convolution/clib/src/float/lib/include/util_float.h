@@ -15,8 +15,4 @@ void compare_array1d_float(const float *array1, const float *array2, int size, c
 
 void compare_array1d_float_to_int(const float *array1, const float *array2, int size, const char *name);
 
-void convert_float_to_int(const float *float_array, int *int_array, int length);
-
-void init_array_float(float *array, int size);
-
 #endif //C_UTIL_FLOAT_H

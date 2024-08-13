@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include "include/util.h"
-#include "convolution.h"
 
 
 void print_array1d(const int *array, int size, const char *name) {
@@ -39,13 +38,3 @@ void compare_array1d(const int *array1, const int *array2, int size, const char 
     };
     printf("\n");
 }
-
-
-void convert_int_to_float(const int *int_array, float *float_array, int length) {
-    int i;
-    for (i = 0; i < length; i++) {
-        float_array[i] = (float)int_array[i];
-    }
-}
-
-

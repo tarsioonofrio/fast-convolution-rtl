@@ -1,8 +1,8 @@
-#include "lib/include/convolution.h"
-#include "lib/include/util.h"
-#include "../../test/test2d/init.h"
-#include "../../test/test2d/bind_nest.h"
-#include "../../test/test2d/sim.h"
+#include "convolution.h"
+#include "util.h"
+#include "init.h"
+#include "bind_nest.h"
+#include "sim.h"
 
 int main() {
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};

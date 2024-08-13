@@ -1,5 +1,5 @@
-#include "lib/include/convolution_float.h"
-#include "lib/include/util_float.h"
+#include "convolution_float.h"
+#include "util_float.h"
 #include "../../test/test1d/init.h"
 #include "../../test/test1d/build_float.h"
 #include "../../test/test1d/sim_float.h"

@@ -63,16 +63,3 @@ void compare_array1d_float_to_int(const float *array1, const float *array2, int 
     printf("\n");
 }
 
-void convert_float_to_int(const float *float_array, int *int_array, int length) {
-    int i;
-    for (i = 0; i < length; i++) {
-        int_array[i] = (int)float_array[i];  // Converte o float para int
-    }
-}
-
-void init_array_float(float *array, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        array[i] = 0;
-    };
-}

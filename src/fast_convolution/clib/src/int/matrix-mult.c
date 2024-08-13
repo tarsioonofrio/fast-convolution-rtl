@@ -1,5 +1,5 @@
-#include "lib/include/convolution.h"
-#include "lib/include/util.h"
+#include "convolution.h"
+#include "util.h"
 
 int main() {
     const int m23[2 * 3] = {

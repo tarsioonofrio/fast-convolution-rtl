@@ -1,8 +1,8 @@
-#include "lib/include/convolution_float.h"
-#include "lib/include/util_float.h"
-#include "../../test/test2d/init.h"
-#include "../../test/test2d/bind_nest_float.h"
-#include "../../test/test2d/sim_float.h"
+#include "convolution_float.h"
+#include "util_float.h"
+#include "init.h"
+#include "bind_nest_float.h"
+#include "sim_float.h"
 
 int main() {
     float feat_out[FOUT_SIZE * FOUT_SIZE] = {0};

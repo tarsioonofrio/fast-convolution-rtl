@@ -30,7 +30,9 @@ dir_build = root_path / "build"
 dir_quant = root_path / "quant"
 dir_example = root_path / "example"
 dir_sim = root_path / "sim"
-dir_clib = root_path / "clib"
+dir_clib_src = root_path / "clib/src"
+
+clib_data = Path(__file__).resolve().parent / "clib"
 
 
 def read_init():
@@ -184,8 +186,8 @@ def cmd_init(dimensions, in_len, out_len, w):
     with open(file_init, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    dir_clib.mkdir(parents=True, exist_ok=True)
-    init_path = dir_clib / "init.h"
+    dir_clib_src.mkdir(parents=True, exist_ok=True)
+    init_path = dir_clib_src / "init.h"
     if dimensions == 1:
         dict_defs = {
             "A_SIZE": a,
@@ -203,6 +205,13 @@ def cmd_init(dimensions, in_len, out_len, w):
             "C2_SIZE": c[1],
         }
         c_header(init_path, [], dict_defs)
+
+    dir_clib = dir_clib_src.parent
+    dir_clib.mkdir(parents=True, exist_ok=True)
+    shutil.copy(clib_data / "CMakeLists.txt", dir_clib)
+    dir_clib_riscv = dir_clib / "riscv"
+    dir_clib_riscv.mkdir(parents=True, exist_ok=True)
+    shutil.copy(clib_data / "riscv/Makefile", dir_clib_riscv)
 
 
 def cmd_show(init, build, quant):
@@ -258,7 +267,7 @@ def cmd_build_toom_cook1d(points):
         f.write(text)
     fast.write_csa_parcels(a, c, path / "csa")
 
-    dir_clib.mkdir(parents=True, exist_ok=True)
+    dir_clib_src.mkdir(parents=True, exist_ok=True)
     # TODO export build_float.h with data in float
     list_array = [
         {"name": "mct", "value": c.T},
@@ -268,7 +277,7 @@ def cmd_build_toom_cook1d(points):
     ]
     for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(dir_clib / path, arr, {})
+        c_header(dir_clib_src / path, arr, {})
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -336,10 +345,10 @@ def cmd_build_toom_cook2d(points1d, points2d):
         {"name": "ma2t", "value": a2.T},
         {"name": "mq2", "value": qr2},
     ]
-    dir_clib.mkdir(parents=True, exist_ok=True)
+    dir_clib_src.mkdir(parents=True, exist_ok=True)
     for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(dir_clib / path, arr, {})
+        c_header(dir_clib_src / path, arr, {})
 
 
 def cmd_build2d_bind_iterate():
@@ -369,10 +378,10 @@ def cmd_build2d_bind_nest():
         {"name": "ma_nest", "value": a.T},
         {"name": "mc_nest", "value": c.T},
     ]
-    dir_clib.mkdir(parents=True, exist_ok=True)
+    dir_clib_src.mkdir(parents=True, exist_ok=True)
     for path, typ in zip(["bind_nest.h", "bind_nest_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(dir_clib / path, arr, {})
+        c_header(dir_clib_src / path, arr, {})
 
 
 def cmd_quant_none():
@@ -477,7 +486,7 @@ def cmd_sim_file(feature, weight):
     for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
-    dir_clib.mkdir(parents=True, exist_ok=True)
+    dir_clib_src.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
@@ -499,7 +508,7 @@ def cmd_sim_file(feature, weight):
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(dir_clib / path, arr, dict_def)
+        c_header(dir_clib_src / path, arr, dict_def)
     return text
 
 
@@ -592,7 +601,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
-    dir_clib.mkdir(parents=True, exist_ok=True)
+    dir_clib_src.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
@@ -614,7 +623,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(dir_clib / path, arr, dict_def)
+        c_header(dir_clib_src / path, arr, dict_def)
     return text
 
 
@@ -638,7 +647,7 @@ def cmd_example_random(feature, weight):
     if dim == 1:
         points, c, b, a, q = read_build_1d()
         latex.example_1d(b, c, a, g, d, q, dir_example / f"example-random-{now()}")
-        dir_clib.mkdir(parents=True, exist_ok=True)
+        dir_clib_src.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
             {"name": "md", "type": "int", "value": d},
@@ -647,7 +656,7 @@ def cmd_example_random(feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(dir_clib / path, arr, {})
+            c_header(dir_clib_src / path, arr, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists()
@@ -667,7 +676,7 @@ def cmd_example_random(feature, weight):
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
-        dir_clib.mkdir(parents=True, exist_ok=True)
+        dir_clib_src.mkdir(parents=True, exist_ok=True)
         list_array = [
             {"name": "md", "value": d},
             {"name": "mg", "value": g},
@@ -675,7 +684,7 @@ def cmd_example_random(feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(dir_clib / path, arr, {})
+            c_header(dir_clib_src / path, arr, {})
 
 
 def cmd_example_sequential(feature, weight):
@@ -700,7 +709,7 @@ def cmd_example_sequential(feature, weight):
     if dim == 1:
         points, c, b, a, q = read_build_1d()
         latex.example_1d(b, c, a, g, d, q, dir_example / f"example-seq-{now()}")
-        dir_clib.mkdir(parents=True, exist_ok=True)
+        dir_clib_src.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
             {"name": "md", "value": d},
@@ -710,7 +719,7 @@ def cmd_example_sequential(feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(dir_clib / path, arr, {})
+            c_header(dir_clib_src / path, arr, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists()
@@ -729,7 +738,7 @@ def cmd_example_sequential(feature, weight):
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
-        dir_clib.mkdir(parents=True, exist_ok=True)
+        dir_clib_src.mkdir(parents=True, exist_ok=True)
         list_array = [
             {"name": "md", "value": d},
             {"name": "mg", "value": g},
@@ -738,4 +747,4 @@ def cmd_example_sequential(feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(dir_clib / path, arr, {})
+            c_header(dir_clib_src / path, arr, {})

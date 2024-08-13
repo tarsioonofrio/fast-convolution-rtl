@@ -44,4 +44,9 @@ void filter1d_float(float *feature_out, const float *feature_in, int index, cons
 
 void filter2d(float *feature_out, const float *feature_in, int fin_size, int fout_size, int type_conv, type_struct_conv *params);
 
+void convert_float_to_int(const float *float_array, int *int_array, int length);
+
+void init_array_float(float *array, int size);
+
+
 #endif //C_CONVOLUTION_FLOAT_H
