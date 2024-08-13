@@ -23,7 +23,7 @@ def test_init1d():
         capture_output=True,
         cwd=tmp_dir1
     )
-    assert result.returncode == 0
+    assert result.returncode == 0, result.stderr
 
 
 def test_init2d():

@@ -9,6 +9,7 @@ from fast_convolution import cli, utils
 root = Path(__file__).parent.parent.parent.resolve()
 path2d = root / "test_2d"
 
+
 def mock_getcwd1d():
     return root / "test_1d"
 
