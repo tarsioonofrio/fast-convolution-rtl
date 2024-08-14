@@ -2,10 +2,8 @@
 // Created by tarsio on 19/06/2024.
 //
 
-#include <stdio.h>
 #include <stdlib.h>
 #include "include/convolution.h"
-#include "include/util.h"
 
 
 void simple_convolution(

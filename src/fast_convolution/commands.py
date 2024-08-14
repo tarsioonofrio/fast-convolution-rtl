@@ -206,13 +206,9 @@ def cmd_init(dimensions, in_len, out_len, w):
     dir_clib = dir_clib_data.parent.parent
     dir_clib.mkdir(parents=True, exist_ok=True)
     dir_clib_x86 = dir_clib / "x86"
-    dir_clib_x86.mkdir(parents=True, exist_ok=True)
-    shutil.copy(clib_package / "x86/CMakeLists.txt", dir_clib_x86 / "CMakeLists.txt")
+    shutil.copytree(clib_package / "x86", dir_clib_x86)
     dir_clib_riscv = dir_clib / "riscv"
-    dir_clib_riscv.mkdir(parents=True, exist_ok=True)
-    shutil.copy(clib_package / "riscv/Makefile", dir_clib_riscv / "Makefile")
-    dir_clib_common = dir_clib / "common"
-    shutil.copytree(clib_package / "common", dir_clib_common)
+    shutil.copytree(clib_package / "riscv", dir_clib_riscv)
     dir_clib_lib = dir_clib / "src/lib"
     shutil.copytree(clib_package / "src/int/lib", dir_clib_lib)
 
@@ -282,7 +278,8 @@ def cmd_build_toom_cook1d(points):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
 
-    shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent / "main.c")
+    shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent / "fast-conv.c")
+    shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -363,7 +360,8 @@ def cmd_build2d_bind_iterate():
     build_data = read_build_2d()
     write_bind("iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
-    shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "main.c")
+    shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "fast-conv.c")
+    shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
 
 
 def cmd_build2d_bind_nest():
@@ -389,7 +387,8 @@ def cmd_build2d_bind_nest():
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
 
-    shutil.copy(clib_package / "src/int/filter2d-nested.c", dir_clib_data.parent / "main.c")
+    shutil.copy(clib_package / "src/int/filter2d-nested.c", dir_clib_data.parent / "fast-conv.c")
+    shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
 
 
 def cmd_quant_none():
