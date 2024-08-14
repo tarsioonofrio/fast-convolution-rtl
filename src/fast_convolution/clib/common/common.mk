@@ -9,16 +9,14 @@ CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-SRCDIR  = ../src
-LIBDIR  = $(SRCDIR)/lib
-INCDIR  = $(LIBDIR)/include
-DATADIR = $(SRCDIR)/data
-HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h)
+SRCDIR  = src
+INCDIR  = $(SRCDIR)/include
+HEADERS = $(wildcard $(INCDIR)/*.h)
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR)
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR)
 LDFLAGS = --specs=nano.specs -T ../common/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
-CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(LIBDIR)/*.c) $(wildcard ../common/*.c)
+CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard ../common/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
 ASSRC = $(wildcard ../common/*.S)
@@ -49,7 +47,6 @@ $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 clean:
 	@printf "Cleaning up\n"
 	@rm -rf src/*.o
-	@rm -rf src/lib/*.o
 	@rm -rf ../common/*.o
 	@rm -rf *.bin
 	@rm -rf *.map

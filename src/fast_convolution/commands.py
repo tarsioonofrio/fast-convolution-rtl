@@ -27,7 +27,7 @@ dir_build = root_project_path / "build"
 dir_quant = root_project_path / "quant"
 dir_example = root_project_path / "example"
 dir_sim = root_project_path / "sim"
-dir_clib_data = root_project_path / "clib/data"
+dir_clib_data = root_project_path / "clib/src/data"
 
 clib_package = Path(__file__).resolve().parent / "clib"
 
@@ -203,14 +203,16 @@ def cmd_init(dimensions, in_len, out_len, w):
         }
         c_header(init_path, [], dict_defs)
 
-    dir_clib = dir_clib_data.parent
+    dir_clib = dir_clib_data.parent.parent
     dir_clib.mkdir(parents=True, exist_ok=True)
     shutil.copy(clib_package / "CMakeLists.txt", dir_clib)
     dir_clib_riscv = dir_clib / "riscv"
     dir_clib_riscv.mkdir(parents=True, exist_ok=True)
     shutil.copy(clib_package / "riscv/Makefile", dir_clib_riscv / "Makefile")
-    dir_clib_src = dir_clib / "src"
-    shutil.copytree(clib_package / "src/int/lib", dir_clib_src)
+    dir_clib_common = dir_clib / "common"
+    shutil.copytree(clib_package / "common", dir_clib_common)
+    dir_clib_lib = dir_clib / "src/lib"
+    shutil.copytree(clib_package / "src/int/lib", dir_clib_lib)
 
 
 def cmd_show(init, build, quant):
@@ -277,6 +279,8 @@ def cmd_build_toom_cook1d(points):
     for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
+
+    shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent)
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
@@ -357,6 +361,7 @@ def cmd_build2d_bind_iterate():
     build_data = read_build_2d()
     write_bind("iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
+    shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent)
 
 
 def cmd_build2d_bind_nest():
@@ -381,6 +386,8 @@ def cmd_build2d_bind_nest():
     for path, typ in zip(["bind_nest.h", "bind_nest_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
+
+    shutil.copy(clib_package / "src/int/filter2d-nested.c", dir_clib_data.parent)
 
 
 def cmd_quant_none():

@@ -1,8 +1,8 @@
 #include "convolution.h"
 #include "util.h"
-#include "../../test/test1d/init.h"
-#include "../../test/test1d/build.h"
-#include "../../test/test1d/sim.h"
+#include "init.h"
+#include "build.h"
+#include "sim.h"
 
 int main() {
     int i;
