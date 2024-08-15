@@ -162,3 +162,17 @@ def getcwd():
         return Path(os.getcwd())
     else:
         return Path(os.environ.get("TEST_PATH"))
+
+
+root_project_path = getcwd()
+dir_config = root_project_path / "config"
+file_init = dir_config / "init.json"
+file_build = dir_config / "build.json"
+file_bind = dir_config / "bind.json"
+file_quant = dir_config / "quant.json"
+dir_build = root_project_path / "build"
+dir_quant = root_project_path / "quant"
+dir_example = root_project_path / "example"
+dir_sim = root_project_path / "sim"
+dir_clib_data = root_project_path / "clib/src/data"
+clib_package = Path(__file__).resolve().parent / "clib"

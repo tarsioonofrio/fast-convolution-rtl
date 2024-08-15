@@ -1,9 +1,7 @@
 import json
 import shutil
-from pathlib import Path
 from datetime import datetime
 
-import click
 import numpy as np
 import sympy as sy
 from PIL import Image
@@ -14,22 +12,10 @@ from . import fast
 from . import quant
 from . import latex
 from .naive import naive_convolve
-from .utils import c_header, default_convolve, getcwd
-
-
-root_project_path = getcwd()
-dir_config = root_project_path / "config"
-file_init = dir_config / "init.json"
-file_build = dir_config / "build.json"
-file_bind = dir_config / "bind.json"
-file_quant = dir_config / "quant.json"
-dir_build = root_project_path / "build"
-dir_quant = root_project_path / "quant"
-dir_example = root_project_path / "example"
-dir_sim = root_project_path / "sim"
-dir_clib_data = root_project_path / "clib/src/data"
-
-clib_package = Path(__file__).resolve().parent / "clib"
+from .utils import (
+    c_header, default_convolve, file_init, file_build, file_bind, file_quant, dir_build, dir_example, dir_sim,
+    dir_clib_data, clib_package
+)
 
 
 def read_init():
@@ -145,12 +131,7 @@ def read_bind_if_exists():
 
 def cmd_init(dimensions, in_len, out_len, w):
     if file_init.exists():
-        click.echo(
-            message="init.json existis, fconv model already initialized"
-        )
-        click.Abort()
-        click.echo(file_init)
-        exit(1)
+        return "init.json existis, fconv model already initialized"
     in_arr = np.array(in_len)
     w_arr = np.array(w)
     out_arr = np.array(out_len)
@@ -167,11 +148,7 @@ def cmd_init(dimensions, in_len, out_len, w):
         c = in_arr
         b = w_arr
     else:
-        click.echo(
-            message="Just one param is passed, inform another."
-        )
-        click.Abort()
-        exit(1)
+        return "Just one param is passed, inform another."
 
     data = {
         "dim": dimensions,
@@ -217,14 +194,14 @@ def cmd_show(init, build, quant):
     init_data = read_init_if_exists()
     if file_init.exists():
         if init:
-            click.echo(read_init_if_exists())
+            return read_init_if_exists()
         if build and file_build.exists():
             if init_data["dim"] == 1:
-                click.echo(read_build_1d())
+                return read_build_1d()
             elif init_data["dim"] == 2:
-                click.echo(read_build_2d())
+                return read_build_2d()
         if quant and file_quant.exists():
-            click.echo(read_quant_if_exists())
+            return read_quant_if_exists()
 
 
 def cmd_build_toom_cook1d(points):

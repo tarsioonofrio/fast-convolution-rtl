@@ -36,7 +36,9 @@ def init(): pass
 @click.option('-w', default=3, type=int)
 def init1d(in_len, out_len, w):
     from .commands import cmd_init
-    cmd_init(1, in_len, out_len, w)
+    msg = cmd_init(1, in_len, out_len, w)
+    if msg is not None:
+        click.echo(msg)
 
 
 @init.command(name="2d")
@@ -54,8 +56,9 @@ def init2d(in_len, out_len, w):
 @click.option('-q', '--quant', flag_value=True)
 def show(init, build, quant):
     from .commands import cmd_show
-    cmd_show(init, build, quant)
-    click.echo("Init")
+    msg = cmd_show(init, build, quant)
+    if msg is not None:
+        click.echo(msg)
 
 
 @main.group(help="Build fast convolution")

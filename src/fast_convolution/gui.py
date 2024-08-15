@@ -1,18 +1,21 @@
 import tkinter as tk
 from tkinter import ttk
 
+from fast_convolution import commands
+from fast_convolution.utils import file_init
 
-class MainApplication(tk.Tk):
+
+class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
         self.title("Fast Convolution")
         self.geometry("400x400")
 
-        self.choice_var = tk.StringVar()
+        self.dimension = tk.StringVar()
+        self.init_dict = {}
         self.init_dict = {}
         self.build_dict = {}
-
         self.init()
 
     def init(self):
@@ -20,26 +23,30 @@ class MainApplication(tk.Tk):
         for widget in self.winfo_children():
             widget.destroy()
 
-        label = tk.Label(self, text="Escolha entre 1D e 2D:")
-        label.pack(pady=10)
+        if file_init.exists():
+            label = tk.Label(self, text="init.json existis, fconv model already initialized")
+            label.pack(pady=10)
+        else:
+            label = tk.Label(self, text="Escolha entre 1 e 2 dimensões:")
+            label.pack(pady=10)
 
-        self.choice_menu = ttk.Combobox(self, textvariable=self.choice_var)
-        self.choice_menu['values'] = ["1D", "2D"]
-        self.choice_menu.pack(pady=10)
+            choice_menu = ttk.Combobox(self, textvariable=self.dimension)
+            choice_menu['values'] = ["1", "2"]
+            choice_menu.pack(pady=10)
 
-        btn_next = tk.Button(self, text="Próximo", command=self.build)
-        btn_next.pack(pady=10)
+            btn_next = tk.Button(self, text="Próximo", command=self.build)
+            btn_next.pack(pady=10)
 
     def build(self):
-        choice = self.choice_var.get()
+        dimension = self.dimension.get()
 
         for widget in self.winfo_children():
             widget.destroy()
 
-        if choice == "1D":
+        if dimension == '1':
             self.build_dict['in'] = tk.StringVar()
             self.build_dict['out'] = tk.StringVar()
-            self.build_dict['weights'] = tk.StringVar()
+            self.build_dict['weights'] = tk.StringVar(value='3')
 
             tk.Label(self, text="in:").pack(pady=5)
             tk.Entry(self, textvariable=self.build_dict['in']).pack(pady=5)
@@ -48,8 +55,9 @@ class MainApplication(tk.Tk):
             tk.Entry(self, textvariable=self.build_dict['out']).pack(pady=5)
 
             tk.Label(self, text="weights:").pack(pady=5)
-            tk.Entry(self, textvariable=self.init_dict['weights']).pack(pady=5)
-        elif choice == "2D":
+            tk.Entry(self, textvariable=self.build_dict['weights']).pack(pady=5)
+
+        elif dimension == '2':
             self.build_dict['in1'] = tk.StringVar()
             self.build_dict['in2'] = tk.StringVar()
             self.build_dict['out1'] = tk.StringVar()
@@ -79,18 +87,32 @@ class MainApplication(tk.Tk):
         btn_next.pack(pady=10)
 
     def others(self):
-        choice = self.choice_var.get()
-
         for widget in self.winfo_children():
             widget.destroy()
 
+        dimension = self.dimension.get()
+        inn_ = self.build_dict['in'].get()
+        out_ = self.build_dict['out'].get()
+        weights_ = self.build_dict['weights'].get()
+
+        dim = int(dimension) if dimension.isdigit() else None
+        inn = int(inn_) if inn_.isdigit() else None
+        out = int(out_) if out_.isdigit() else None
+        weights = int(weights_) if weights_.isdigit() else None
+
+        commands.cmd_init(
+            dim,
+            inn if inn != 0 else None,
+            out if out != 0 else None,
+            weights if weights != 0 else None,
+        )
         notebook = ttk.Notebook(self)
         notebook.pack(expand=1, fill='both')
 
-        if choice == "1D":
+        if dimension == '1':
             self.add_tab(notebook, "Aba 1")
             self.add_tab(notebook, "Aba 2")
-        elif choice == "2D":
+        elif dimension == '2':
             self.add_tab(notebook, "Aba 1")
             self.add_tab(notebook, "Aba 2")
             self.add_tab(notebook, "Aba 3")
@@ -104,5 +126,5 @@ class MainApplication(tk.Tk):
 
 
 if __name__ == "__main__":
-    app = MainApplication()
+    app = App()
     app.mainloop()
