@@ -20,7 +20,6 @@ tmp_dir = [
 # tmp_dir = root / name_file
 
 
-
 def test_init():
     for d in tmp_dir:
         shutil.rmtree(d, ignore_errors=True)

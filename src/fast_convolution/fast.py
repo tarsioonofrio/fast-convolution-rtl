@@ -240,7 +240,7 @@ def to_filter(c, bg, a):
 def wrap_convolution2d(c1, c2, bg, a1, a2):
     def convolution(f):
         tr = c1.T * sy.Matrix(f) * c2
-        m = sy.HadamardProduct(tr, bg.T, evaluate=True)
+        m = sy.HadamardProduct(tr, bg, evaluate=True)
         inv = a1.T * m * a2
         return inv
     return convolution
@@ -297,7 +297,7 @@ def g_to_bg(q, b, g):
 
 
 def g_to_bg2d(q1, b1, q2, b2, g):
-    bg = (sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T
+    bg = ((sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T).T
     return bg
 
 
