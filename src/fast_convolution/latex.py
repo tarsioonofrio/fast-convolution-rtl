@@ -91,19 +91,19 @@ def build_2d_bind_iterated(init_data, build_data, path):
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
     d_sym1 = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0] * c_len[1])))
     )
     d_sym2 = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"\\delta_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     dd_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     g_sym1 = sy.Matrix(
-        b_len[0], b_len[0],
+        b_len[0], b_len[1],
         sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
     )
     g_sym2 = sy.Matrix(
@@ -111,11 +111,11 @@ def build_2d_bind_iterated(init_data, build_data, path):
         sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
     )
     gg_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     ss_sym2 = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     ss_sym1 = sy.Matrix(
@@ -123,7 +123,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
         sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
     )
     s_sym = sy.Matrix(
-        b_len[0], b_len[0],
+        b_len[0], b_len[1],
         sy.symbols(" ".join(f"s_{{{i}}}"for i in range(b_len[0] * b_len[1])))
     )
 
@@ -206,18 +206,18 @@ def build_2d_bind_nest(init_data, build_data, path):
 
     aa_shape = a1.shape[0] * a2.shape[0], a1.shape[1] * a2.shape[1],
     aa_sym = sy.Matrix(
-        aa_shape[1], aa_shape[0],
+        aa_shape[0], aa_shape[1],
         sy.symbols(" ".join(f"A_{i}" for i in range(aa_shape[0] * aa_shape[1])))
     )
 
     cc_shape = c1.shape[0] * c2.shape[0], c1.shape[1] * c2.shape[1]
     cc_sym = sy.Matrix(
-        cc_shape[1], cc_shape[0],
+        cc_shape[0], cc_shape[1],
         sy.symbols(" ".join(f"C_{i}"for i in range(cc_shape[0] * cc_shape[1])))
     )
 
     g_num1 = sy.Matrix(
-        b_len[0], b_len[0],
+        b_len[0], b_len[1],
         sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
     )
     g_sym2 = sy.Matrix(
@@ -225,23 +225,23 @@ def build_2d_bind_nest(init_data, build_data, path):
         sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
     )
     gg_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     d_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"d_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     dd_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     ss_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     s_sym = sy.Matrix(
-        a_len[0], a_len[0],
+        a_len[0], a_len[1],
         sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[1])))
     )
 
@@ -604,18 +604,18 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
 
     aa_shape = a1.shape[0] * a2.shape[0], a1.shape[1] * a2.shape[1],
     aa_sym = sy.Matrix(
-        aa_shape[1], aa_shape[0],
+        aa_shape[0], aa_shape[1],
         sy.symbols(" ".join(f"A_{i}" for i in range(aa_shape[0] * aa_shape[1])))
     )
 
     cc_shape = c1.shape[0] * c2.shape[0], c1.shape[1] * c2.shape[1]
     cc_sym = sy.Matrix(
-        cc_shape[1], cc_shape[0],
+        cc_shape[0], cc_shape[1],
         sy.symbols(" ".join(f"C_{i}"for i in range(cc_shape[0] * cc_shape[1])))
     )
 
     g_sym1 = sy.Matrix(
-        b_len[0], b_len[0],
+        b_len[0], b_len[1],
         sy.symbols(" ".join(f"g_{{{i}}}"for i in range(b_len[0] * b_len[1])))
     )
     g_sym2 = sy.Matrix(
@@ -623,23 +623,23 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
         sy.symbols(" ".join(f"\\gamma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
     )
     gg_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"G_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     d_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"d_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     dd_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"D_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     ss_sym = sy.Matrix(
-        c_len[0], c_len[0],
+        c_len[0], c_len[1],
         sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     s_sym = sy.Matrix(
-        a_len[0], a_len[0],
+        a_len[0], a_len[1],
         sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[1])))
     )
 

@@ -12,7 +12,7 @@ def test_bind_iterate():
     cmd_build2d_bind_iterate()
 
 
-def test_bind_iterate():
+def test_bind_nest():
     from fast_convolution.commands import cmd_build2d_bind_nest
     cmd_build2d_bind_nest()
 
