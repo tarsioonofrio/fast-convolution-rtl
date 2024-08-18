@@ -467,7 +467,7 @@ def cmd_sim_file(feature, weight):
     with open(path / "sim.txt", 'w') as f:
         f.write(text)
 
-    for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
+    for arr, name in zip([feat_arr, wght_arr, output_default, output_fast], ["d",  "g", "s_default", "s"]):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
@@ -582,8 +582,9 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     with open(path / "sim.txt", 'w') as f:
         f.write(text)
 
-    for arr, name in ((feat_arr, "d"), (wght_arr, "g")):
+    for arr, name in zip([feat_arr, wght_arr, output_default, output_fast], ["d",  "g", "s_default", "s"]):
         np.savetxt(path / f"{name}.txt", arr, fmt='%d')
+
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
