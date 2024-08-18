@@ -482,9 +482,9 @@ def cmd_sim_file(feature, weight):
     quant_dict = {
         f"QUANT_{k}".upper(): v
         for k, v in quant_data["params"].items()
-    }
+    } if len(quant_data) >0 else {}
     dict_def = {
-        "QUANT": quant_data["func"].upper(),
+        "QUANT": quant_data["func"].upper() if len(quant_data) >0 else None,
         ** quant_dict,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
@@ -598,9 +598,9 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     quant_dict = {
         f"QUANT_{k}".upper(): v
         for k, v in quant_data["params"].items()
-    }
+    } if len(quant_data) >0 else {}
     dict_def = {
-        "QUANT": quant_data["func"].upper(),
+        "QUANT": quant_data["func"].upper() if len(quant_data) >0 else None,
         ** quant_dict,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],

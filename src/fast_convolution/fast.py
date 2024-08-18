@@ -240,7 +240,7 @@ def to_filter(c, bg, a):
 def wrap_convolution2d(c1, c2, bg, a1, a2):
     def convolution(f):
         tr = c1.T * sy.Matrix(f) * c2
-        m = sy.HadamardProduct(tr, bg, evaluate=True)
+        m = sy.HadamardProduct(tr, bg.T, evaluate=True)
         inv = a1.T * m * a2
         return inv
     return convolution
