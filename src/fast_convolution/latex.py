@@ -197,6 +197,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
         ], escape=False)
     )
     doc.generate_pdf(path / "bind-iterated", clean_tex=False)
+    # TODO add operations count like in bind_nest function
 
 
 def build_2d_bind_nest(init_data, build_data, path):
@@ -356,7 +357,7 @@ def build_2d_bind_nest(init_data, build_data, path):
         f"C: {c_sum}\n"
         f"Total: {a_sum + c_sum}\n"
     )
-    with open(f"info.txt", "w") as f:
+    with open(path / "info.txt", "w") as f:
         f.write(text)
 
 
