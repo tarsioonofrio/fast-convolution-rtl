@@ -20,3 +20,8 @@ cmake-build-debug/
 
 
 *.o
+
+*.pdf
+
+example/
+sim/

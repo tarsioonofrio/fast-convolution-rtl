@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import sympy as sy
 from PIL import Image, ImageOps
-from IPython.core.display_functions import display
 from scipy import signal
 
 
@@ -13,6 +12,7 @@ def plot_pdf(page, crop_float=None,  dpi=200,):
     (upper, lower)
     crop float value between 0 and 1
     """
+    from IPython.core.display_functions import display
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
@@ -32,11 +32,12 @@ def plot_pdf(page, crop_float=None,  dpi=200,):
         display(image.crop(crop))
 
 
-def plot_pdf2col(page, column, crop_float=None, dpi=200,):
+def plot_pdf2col(page, column, crop_float=None, dpi=200):
     """
     (upper, lower)
     crop float value between 0 and 1
     """
+    from IPython.core.display_functions import display
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
