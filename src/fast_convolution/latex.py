@@ -123,8 +123,8 @@ def build_2d_bind_iterated(init_data, build_data, path):
         sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
     )
     s_sym = sy.Matrix(
-        c_len[0], c_len[1],
-        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(c_len[0] * c_len[1])))
+        a_len[0], a_len[1],
+        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[1])))
     )
 
     doc = tex.Document()
