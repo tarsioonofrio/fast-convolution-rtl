@@ -297,7 +297,9 @@ def g_to_bg(q, b, g):
 
 
 def g_to_bg2d(q1, b1, q2, b2, g):
-    bg = ((sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T).T
+    #  Works with 2d output or input of different sizes 
+    # bg = ((sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T).T
+    bg = ((sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T)
     return bg
 
 
