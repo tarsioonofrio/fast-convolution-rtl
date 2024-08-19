@@ -1,9 +1,11 @@
 import numpy as np
 import sympy as sy
 import pylatex as tex
-from fast_convolution.utils import default_convolve
 from scipy import signal
 from sympy.physics.quantum import TensorProduct
+
+from fast_convolution.utils import default_convolve
+
 
 from . import fast
 
