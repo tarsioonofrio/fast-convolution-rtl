@@ -4,7 +4,16 @@
 #include "build.h"
 #include "sim.h"
 
+#ifdef __riscv
+    #include <riscv-csr.h>
+#endif
+
+
 int main() {
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
+        
     int i;
     const int *mgg;
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};

@@ -4,7 +4,15 @@
 #include "bind_nest.h"
 #include "sim.h"
 
+#ifdef __riscv
+    #include <riscv-csr.h>
+#endif
+
 int main() {
+    #ifdef __riscv
+            csr_write_mcountinhibit(0);
+    #endif
+
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
     type_struct_conv struct_conv = {weight_gg_quant, ma_nest, mc_nest, 0, 0, 0, 0,
                                     A1_SIZE, A2_SIZE, C1_SIZE, C2_SIZE};

@@ -5,10 +5,19 @@
 #include <stdlib.h>
 #include "include/convolution.h"
 
+#ifdef __riscv
+    #include <riscv-csr.h>
+#endif
+
 
 void simple_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
     int fr, fc, wr, wc;
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
+
     for (fr = 0; fr < f_row - w_row + 1; fr++) {
         for (fc = 0; fc < f_col - w_col + 1; fc++) {
             for (wr = 0; wr < w_row; wr++) {
@@ -19,6 +28,9 @@ void simple_convolution(
             }
         }
     }
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
 }
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2) {
@@ -56,12 +68,21 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
     init_array(mdd, c_size);
     init_array(ms, a_size);
 
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
+
     // D=ct*d
     matrix_mul(mdd, mc, md, c_size, c_size, 1);
     // S=D.G
     hadamart_product(mss, mdd, mgg, c_size);
     // s=S*a
     matrix_mul(ms, ma, mss, a_size, c_size, 1);
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
+
     free(mss);
     free(mdd);
 }
@@ -86,6 +107,9 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
     init_array(mc2, c2_size * c2_size);
     init_array(md2, c1_size * c2_size);
 
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
 
     matrix_transpose(mc2, mc2t, c1_size, c2_size);
     matrix_transpose(ma2, ma2t, a2_size, c2_size);
@@ -94,6 +118,11 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
     hadamart_product(mss, mdd, mgg, c1_size * c2_size);
     matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
     matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
 
     free(mss);
     free(mss2);
@@ -109,6 +138,10 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
     int r, c, i;
     int *ms = (int *) malloc((a_size) * sizeof(int));
     int *md = (int *) malloc((c_size) * sizeof(int));
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
 
     for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
@@ -127,6 +160,11 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
             }
         }
     }
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
+
     free(ms);
     free(md);
 }
@@ -141,6 +179,10 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
     int c2_size = params->c2_size;
     int *ms = (int *) malloc((a1_size * a1_size) * sizeof(int));
     int *md = (int *) malloc((c1_size * c1_size) * sizeof(int));
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
 
     for (r = 0; r < fout_size; r = r + a1_size) {
         for (c = 0; c <= fout_size; c = c + a2_size) {
@@ -169,6 +211,11 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
             }
         }
     }
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
+
     free(ms);
     free(md);
 }
@@ -182,7 +229,16 @@ void init_array(int *array, int size) {
 
 void right_shift_array(int *array, int shift, int size) {
     int i;
+
+        #ifdef __riscv
+            csr_write_mcountinhibit(0);
+        #endif
+
     for (i = 0; i < size; i++) {
         array[i] = array[i] >> shift;
     };
+    
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
 }
