@@ -4,7 +4,7 @@ NC   =\033[0m # No Color
 TARGET1  ?= fast-conv
 TARGET2  ?= simple-conv
 MEM_SIZE ?= 65536
-ARCH     ?= rv32im
+ARCH     ?= rv32im_zicsr
 
 CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
@@ -14,9 +14,9 @@ SRCDIR  = ../src
 LIBDIR  = $(SRCDIR)/lib
 INCDIR  = $(LIBDIR)/include
 DATADIR = $(SRCDIR)/data
-HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h)
+HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ../common/include/*.h)
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR)
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I./common/include
 LDFLAGS = --specs=nano.specs -T common/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
 # CCSRC1 = $(wildcard $(SRCDIR)/*.c) $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
@@ -57,7 +57,7 @@ $(TARGET2).elf: $(CCOBJ2) $(ASOBJ)
 
 %.o: %.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH)_zicsr -DMEM_SIZE=$(MEM_SIZE)
+	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DRISCV=1
 
 %.o: %.c $(HEADERS)
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
