@@ -411,6 +411,13 @@ def cmd_sim_file(feature, weight):
             conv_func(wght_arr[i], c, q, b, a)
             for i in range(b_len)
         ]
+        # TODO here is the error in fast 1d conv 
+        # between C and python in quantized data
+        # In python the data is right shifted and after that is summed
+        # In C the data is summed and after that is summed
+        # shift operator not is linear
+        # i believe is better change C to be like the python code
+        # data in right shifted and after that is summed
         output_fast = np.sum(axis=0, a=[
             fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
             for i in range(0, wght_arr.shape[0])
