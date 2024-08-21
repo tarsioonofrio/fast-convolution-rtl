@@ -403,33 +403,44 @@ def cmd_sim_file(feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        conv_func = (
-            fast.conv1d if len(quant_data) == 0
-            else quant.select_conv1d(quant_data)
-        )
-        fast_conv = [
-            conv_func(wght_arr[i], c, q, b, a)
-            for i in range(b_len)
-        ]
-        # TODO here is the error in fast 1d conv 
+        # Corrected error in fast 1d conv
         # between C and python in quantized data
         # In python the data is right shifted and after that is summed
         # In C the data is summed and after that is summed
         # shift operator not is linear
         # i believe is better change C to be like the python code
         # data in right shifted and after that is summed
-        output_fast = np.sum(axis=0, a=[
-            fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
-            for i in range(0, wght_arr.shape[0])
-        ])
-        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_iter * len(points) * len(fast_conv)
+        # TODO
+        # compose inverse quantization in filter like quant.select_conv2d
+
         bg = np.array([fast.g_to_bg(q, b, wght_arr[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
         if len(quant_data) == 0:
+            fast_conv = [
+                fast.conv1d(wght_arr[i], c, q, b, a)
+                for i in range(b_len)
+            ]
+            output_fast = np.sum(axis=0, a=[
+                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
+                for i in range(0, wght_arr.shape[0])
+            ])
             bg_quant = bg
         else:
-            wght_quant = quant.select_func(quant_data)(wght_arr)
-            bg_quant = np.array([fast.g_to_bg(q, b, wght_quant[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+            weight_quant = np.left_shift(wght_arr, quant_data["params"]["bits"])
+            bg_q = [fast.g_to_bg(q, b, weight_quant[i]) for i in range(0, weight_quant.shape[0])]
+            bg_quant_int = [sy.Matrix(np.array(bg_q[i], dtype=int)) for i in range(0, weight_quant.shape[0])]
+            fast_conv = [fast.wrap_convolution(c, bg_quant_int[i], a) for i in range(0, weight_quant.shape[0])]
+
+            output_fast_ = np.sum(axis=0, a=[
+                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
+                for i in range(0, wght_arr.shape[0])
+            ])
+            output_fast = np.right_shift(output_fast_, quant_data["params"]["bits"])
+            # wght_quant = quant.select_func(quant_data)(wght_arr)
+            bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
+
+        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_iter * len(points) * len(fast_conv)
+
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
@@ -523,27 +534,43 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d()
-        conv_func = (
-            fast.conv1d if len(quant_data) == 0
-            else quant.select_conv1d(quant_data)
-        )
-        fast_conv = [
-            conv_func(wght_arr[i], c, q, b, a)
-            for i in range(b_len)
-        ]
+        # Corrected error in fast 1d conv
+        # between C and python in quantized data
+        # In python the data is right shifted and after that is summed
+        # In C the data is summed and after that is summed
+        # shift operator not is linear
+        # i believe is better change C to be like the python code
+        # data in right shifted and after that is summed
+        # TODO
+        # compose inverse quantization in filter like quant.select_conv2d
 
-        output_fast = np.sum(axis=0, a=[
-            fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
-            for i in range(0, wght_arr.shape[0])
-         ])
-        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_iter * len(points) * len(fast_conv)
         bg = np.array([fast.g_to_bg(q, b, wght_arr[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
         if len(quant_data) == 0:
+            fast_conv = [
+                fast.conv1d(wght_arr[i], c, q, b, a)
+                for i in range(b_len)
+            ]
+            output_fast = np.sum(axis=0, a=[
+                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
+                for i in range(0, wght_arr.shape[0])
+            ])
             bg_quant = bg
         else:
-            wght_quant = quant.select_func(quant_data)(wght_arr)
-            bg_quant = np.array([fast.g_to_bg(q, b, wght_quant[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+            weight_quant = np.left_shift(wght_arr, quant_data["params"]["bits"])
+            bg_q = [fast.g_to_bg(q, b, weight_quant[i]) for i in range(0, weight_quant.shape[0])]
+            bg_quant_int = [sy.Matrix(np.array(bg_q[i], dtype=int)) for i in range(0, weight_quant.shape[0])]
+            fast_conv = [fast.wrap_convolution(c, bg_quant_int[i], a) for i in range(0, weight_quant.shape[0])]
+
+            output_fast_ = np.sum(axis=0, a=[
+                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
+                for i in range(0, wght_arr.shape[0])
+            ])
+            output_fast = np.right_shift(output_fast_, quant_data["params"]["bits"])
+            # wght_quant = quant.select_func(quant_data)(wght_arr)
+            bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
+
+        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_iter * len(points) * len(fast_conv)
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (

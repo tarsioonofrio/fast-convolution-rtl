@@ -25,3 +25,5 @@ cmake-build-debug/
 
 example/
 sim/
+
+*.sublime-workspace
