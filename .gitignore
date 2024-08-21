@@ -1,7 +1,7 @@
 
 .idea/
 dist/
-fast_convolution.egg-info/
+*.egg-info/
 
 .ipynb_checkpoints/
 
@@ -27,3 +27,7 @@ example/
 sim/
 
 *.sublime-workspace
+
+.cache/
+
+compile_commands.json

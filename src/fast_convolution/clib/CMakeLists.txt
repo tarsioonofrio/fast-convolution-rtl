@@ -3,6 +3,9 @@ project(fast_conv C)
 
 set(CMAKE_C_STANDARD 90)
 
+# generate file to clangd LSP
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # targets
 add_executable(simple-conv src/int/simple-conv.c src/int/lib/convolution.c src/int/lib/util.c)
 add_executable(matrix-mult src/int/matrix-mult.c src/int/lib/convolution.c src/int/lib/util.c)

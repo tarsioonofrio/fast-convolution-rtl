@@ -5,4 +5,11 @@
 			"path": "/home/tarsio/pucrs/gaph/fast-convolution-rtl",
 		},
 	],
+    "settings": {
+        "LSP": {
+            "clangd": {
+                "command": ["clangd"],
+            }
+        }
+    }
 }
