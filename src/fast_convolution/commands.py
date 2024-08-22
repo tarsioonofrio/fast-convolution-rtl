@@ -241,7 +241,10 @@ def cmd_build_toom_cook1d(points):
     )
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
-    fast.write_csa_parcels(a, c, path / "csa")
+
+    fast.write_csa_config(a, c, path / "csa")
+    csa = fast.csa_parcels(a, c)
+    fast.write_csa_parcels(csa, path / "csa")
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
     # TODO export build_float.h with data in float
@@ -354,7 +357,10 @@ def cmd_build2d_bind_nest():
     c = np.kron(c1, c2)
 
     # TODO export bind_nest_float.h with data in float
-    fast.write_csa_parcels(a, c, path / "csa")
+    fast.write_csa_config(a, c, path / "csa")
+    csa = fast.csa_parcels(a, c)
+    fast.write_csa_parcels(csa, path / "csa")
+
     list_array = [
         {"name": "ma_nest", "value": a.T},
         {"name": "mc_nest", "value": c.T},
