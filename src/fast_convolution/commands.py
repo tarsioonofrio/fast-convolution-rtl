@@ -242,11 +242,24 @@ def cmd_build_toom_cook1d(points):
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
 
-    fast.write_csa_config(a, c, path / "csa")
-    csa = fast.csa_parcels(a, c)
-    fast.write_csa_parcels(csa, path / "csa")
+    csa_config = fast.csa_config(a, c)
+    fast.write_csa_config(csa_config, path / "csa")
+    csa_parcels = fast.csa_parcels(a, c)
+    fast.write_csa_parcels(csa_parcels, path / "csa")
+    header_csa = {
+        f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
+    }
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
+
+    csa_arr = [
+        {"name": f"m{n}{s}",
+         "value": np.array(lst).reshape(-1, len(lst[0][0])),
+         "type": "int"}
+        for (n, s), lst in csa_parcels.items()
+    ]
+    c_header(dir_clib_data / "build_shift.h", csa_arr, header_csa)
+
     # TODO export build_float.h with data in float
     list_array = [
         {"name": "mct", "value": c.T},
@@ -357,9 +370,10 @@ def cmd_build2d_bind_nest():
     c = np.kron(c1, c2)
 
     # TODO export bind_nest_float.h with data in float
-    fast.write_csa_config(a, c, path / "csa")
-    csa = fast.csa_parcels(a, c)
-    fast.write_csa_parcels(csa, path / "csa")
+    csa_config = fast.csa_config(a, c)
+    fast.write_csa_config(csa_config, path / "csa")
+    csa_parcels = fast.csa_parcels(a, c)
+    fast.write_csa_parcels(csa_parcels, path / "csa")
 
     list_array = [
         {"name": "ma_nest", "value": a.T},

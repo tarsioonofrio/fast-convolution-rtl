@@ -404,22 +404,24 @@ def max_power(lst, positive=True):
     signal = 1 if positive else -1
     max_pow = max([0] + [max([0] + [
         max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal
-    ]) for r in lst]
+        ]) for r in lst]
     )
     return max_pow
 
 
-def write_csa_config(a, c, path):
-    max_pow = {
+def csa_config(a, c):
+    config = {
         (n, s): max_power(log2_lst(lst), positive=typ)
         for lst, n in zip([a.T, c.T], ["a", "c"])
         for typ, s in zip([True, False], ["p", "n"])
     }
+    return config
 
+
+def write_csa_config(config, path):
     path.mkdir(parents=True, exist_ok=True)
-
     with open(path / "config.txt", "w") as f:
-        for (n, s), p in max_pow.items():
+        for (n, s), p in config.items():
             f.write(f"{p} {n} {s}\n")
 
 
