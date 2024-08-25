@@ -446,4 +446,3 @@ def write_csa_parcels(csa, path):
                 for line in power:
                     f.write(" ".join(map(str, line)) + "\n")
                 f.write("\n")
-
