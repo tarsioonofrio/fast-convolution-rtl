@@ -6,6 +6,8 @@ import sympy as sy
 from PIL import Image, ImageOps
 from scipy import signal
 
+from fast_convolution import fast
+
 
 def plot_pdf(page, crop_float=None,  dpi=200,):
     """
@@ -148,6 +150,39 @@ def c_header(path, list_array, dict_defs):
     source = source_str.format(code="".join(list_def_data))
     with open(path, "w") as f:
         f.write(source)
+
+
+def c_shift(d, s, z):
+    if z == 0:
+        return d
+    elif s == 1:
+        return f"{d} << {z}"
+    elif s == -1:
+        return f"{d} << {z}"
+
+
+def c_matmul_shift_noloop(mtx, f_name):
+    mtx_log = fast.log2_lst(mtx)
+    var_in = [f"m_in[{i}]" for i in range(len(mtx_log[0]))]
+    var_out = [f"m_out[{i}]" for i in range(len(mtx_log))]
+
+    lst_data = [[
+        [c_shift(d, num["s"], z) for z in num["z"]]
+        for d, num in zip(var_in, row) if "s" in num]
+        for row in mtx_log
+    ]
+    lst_join = [
+        " + ".join([" + ".join(num) for num in row])
+        for row in lst_data
+    ]
+    lst_output = [f"{m} = {d}" for m, d in zip(var_out, lst_join)]
+    lst_str = "\n\t".join(lst_output)
+    f_string = (
+        f"void {f_name}(int *m_out, const int *m_in){{\n"
+        f"{lst_str}\n"
+        "}\n"
+    )
+    return f_string
 
 
 def default_convolve(f, w):
