@@ -357,6 +357,8 @@ def cmd_build_toom_cook2d(points1d, points2d):
         {"name": "mc2t", "value": c2.T},
         {"name": "mb2", "value": b2},
         {"name": "ma2t", "value": a2.T},
+        {"name": "mc2", "value": c2},
+        {"name": "ma2", "value": a2},
         {"name": "mq2", "value": qr2},
     ]
     dir_clib_data.mkdir(parents=True, exist_ok=True)
