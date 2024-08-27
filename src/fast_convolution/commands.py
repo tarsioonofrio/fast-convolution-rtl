@@ -405,7 +405,25 @@ def cmd_build2d_bind_nest():
 
     shutil.copy(clib_package / "src/int/filter2d-nested.c", dir_clib_data.parent / "fast-conv.c")
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
-
+    matmul_a = c_matmul_shift_noloop(a.T, "a")
+    matmul_c = c_matmul_shift_noloop(c.T, "c")
+    hadamart = c_hadamart_product_nollop(a.shape[0])
+    dir_lib = dir_clib_data.parent / "lib"
+    c_fun = (
+        '#include "include/optim.h"\n\n'
+        f"{matmul_a['function']}\n"
+        f"{matmul_c['function']}\n"
+        f"{hadamart['function']}\n"
+    )
+    c_head = (
+        f"{matmul_a['header']}\n"
+        f"{matmul_c['header']}\n"
+        f"{hadamart['header']}\n"
+    )
+    with open(dir_lib / "optim.c", "w") as f:
+        f.write(c_fun)
+    with open(dir_lib / "include/optim.h", "w") as f:
+        f.write(c_head)
 
 def cmd_quant_none():
     file_quant.unlink(missing_ok=True)
