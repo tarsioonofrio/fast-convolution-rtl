@@ -153,18 +153,21 @@ def c_header(path, list_array, dict_defs):
 
 
 def c_shift(d, s, z):
+    if s < 0:
+        signal = "-"
+    else:
+        signal = "+"
+
     if z == 0:
-        return d
-    elif s == 1:
-        return f"{d} << {z}"
-    elif s == -1:
-        return f"{d} << {z}"
+        return f" {signal} {d}"
+    else:
+        return f" {signal} ({d} << {z})"
 
 
-def c_matmul_shift_noloop(mtx, f_name):
+def c_matmul_shift_noloop(mtx, name_suffix):
     mtx_log = fast.log2_lst(mtx)
-    var_in = [f"m_in[{i}]" for i in range(len(mtx_log[0]))]
-    var_out = [f"m_out[{i}]" for i in range(len(mtx_log))]
+    var_in = [f"m_in[{i}]" for i in range(mtx.shape[1])]
+    var_out = [f"m_out[{i}]" for i in range(mtx.shape[0])]
 
     lst_data = [[
         [c_shift(d, num["s"], z) for z in num["z"]]
@@ -172,17 +175,30 @@ def c_matmul_shift_noloop(mtx, f_name):
         for row in mtx_log
     ]
     lst_join = [
-        " + ".join([" + ".join(num) for num in row])
+        "".join(["".join(num) for num in row])
         for row in lst_data
     ]
-    lst_output = [f"{m} = {d}" for m, d in zip(var_out, lst_join)]
-    lst_str = "\n\t".join(lst_output)
-    f_string = (
-        f"void {f_name}(int *m_out, const int *m_in){{\n"
+    lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
+    lst_str = "\n".join(lst_output)
+    header = f"void matrix_mul_shift_noloop_{name_suffix}(int *m_out, const int *m_in)"
+    function = (
+        f"{header}{{\n"
         f"{lst_str}\n"
         "}\n"
     )
-    return f_string
+    return {"header": f"{header};\n", "function": function}
+
+
+def c_hadamart_product_nollop(size):
+    lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(size)]
+    lst_str = "\n".join(lst)
+    header = "void hadamart_product_noloop(int *out, const int *in1, const int *in2)"
+    function = (
+        f"{header}{{\n"
+        f"{lst_str}\n"
+        "}\n"
+    )
+    return {"header": f"{header};\n", "function": function}
 
 
 def default_convolve(f, w):

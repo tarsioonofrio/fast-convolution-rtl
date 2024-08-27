@@ -72,12 +72,18 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
         csr_write_mcountinhibit(0);
     #endif
 
-    // D=ct*d
-    matrix_mul(mdd, mc, md, c_size, c_size, 1);
-    // S=D.G
-    hadamart_product(mss, mdd, mgg, c_size);
-    // s=S*a
-    matrix_mul(ms, ma, mss, a_size, c_size, 1);
+    #ifndef OPTIM
+        // D=ct*d
+        matrix_mul(mdd, mc, md, c_size, c_size, 1);
+        // S=D.G
+        hadamart_product(mss, mdd, mgg, c_size);
+        // s=S*a
+        matrix_mul(ms, ma, mss, a_size, c_size, 1);
+    #else
+        matrix_mul_shift_noloop_c(mdd, md);
+        hadamart_product_noloop(mss, mdd, mgg);
+        matrix_mul_shift_noloop_a(ms, mss);
+    #endif
 
     #ifdef __riscv
         csr_write_mcountinhibit(-1);
@@ -237,7 +243,7 @@ void right_shift_array(int *array, int shift, int size) {
     for (i = 0; i < size; i++) {
         array[i] = array[i] >> shift;
     };
-    
+
     #ifdef __riscv
         csr_write_mcountinhibit(-1);
     #endif

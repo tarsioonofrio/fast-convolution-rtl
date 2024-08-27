@@ -14,7 +14,7 @@ from . import latex
 from .naive import naive_convolve
 from .utils import (
     c_header, default_convolve, file_init, file_build, file_bind, file_quant, dir_build, dir_example, dir_sim,
-    dir_clib_data, clib_package
+    dir_clib_data, clib_package, c_matmul_shift_noloop, c_hadamart_product_nollop
 )
 
 
@@ -273,6 +273,25 @@ def cmd_build_toom_cook1d(points):
 
     shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent / "fast-conv.c")
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
+    matmul_a = c_matmul_shift_noloop(a.T, "a")
+    matmul_c = c_matmul_shift_noloop(c.T, "c")
+    hadamart = c_hadamart_product_nollop(len(list_points))
+    dir_lib = dir_clib_data.parent / "lib"
+    c_fun = (
+        '#include "include/optim.h"\n\n'
+        f"{matmul_a['function']}\n"
+        f"{matmul_c['function']}\n"
+        f"{hadamart['function']}\n"
+    )
+    c_head = (
+        f"{matmul_a['header']}\n"
+        f"{matmul_c['header']}\n"
+        f"{hadamart['header']}\n"
+    )
+    with open(dir_lib / "optim.c", "w") as f:
+        f.write(c_fun)
+    with open(dir_lib / "include/optim.h", "w") as f:
+        f.write(c_head)
 
 
 def cmd_build_toom_cook2d(points1d, points2d):
