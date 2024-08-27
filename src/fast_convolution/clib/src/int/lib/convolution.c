@@ -127,11 +127,11 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
         matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
     #else
-        matrix_mul_shift_noloop_mc2(md2, md);
-        matrix_mul_shift_noloop_mc1t(mdd, md2);
+        matrix_mul_shift_noloop_c2(md2, md);
+        matrix_mul_shift_noloop_c1t(mdd, md2);
         hadamart_product_noloop(mss, mdd, mgg);
-        matrix_mul_shift_noloop_ma2(mss2, ma2);
-        matrix_mul_shift_noloop_ma1t(ms, mss2);
+        matrix_mul_shift_noloop_a2(mss2, ma2);
+        matrix_mul_shift_noloop_a1t(ms, mss2);
     #endif
 
 
