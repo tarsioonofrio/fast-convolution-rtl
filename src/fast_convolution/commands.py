@@ -377,6 +377,33 @@ def cmd_build2d_bind_iterate():
     shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "fast-conv.c")
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
 
+    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+    matmul_c2 = c_matmul_shift_noloop(c2, "c2")
+    matmul_c1t = c_matmul_shift_noloop(c1.T, "c1t")
+    matmul_a2 = c_matmul_shift_noloop(a2, "a2")
+    matmul_a1t = c_matmul_shift_noloop(a1.T, "a1t")
+    hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0])
+    dir_lib = dir_clib_data.parent / "lib"
+    c_fun = (
+        '#include "include/optim.h"\n\n'
+        f"{matmul_c2['function']}\n"
+        f"{matmul_c1t['function']}\n"
+        f"{matmul_a2['function']}\n"
+        f"{matmul_a1t['function']}\n"
+        f"{hadamart['function']}\n"
+    )
+    c_head = (
+        f"{matmul_c2['header']}\n"
+        f"{matmul_c1t['header']}\n"
+        f"{matmul_a2['header']}\n"
+        f"{matmul_a1t['header']}\n"
+        f"{hadamart['header']}\n"
+    )
+    with open(dir_lib / "optim.c", "w") as f:
+        f.write(c_fun)
+    with open(dir_lib / "include/optim.h", "w") as f:
+        f.write(c_head)
+
 
 def cmd_build2d_bind_nest():
     path = dir_build / "bind-nest"
