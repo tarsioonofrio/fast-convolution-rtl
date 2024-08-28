@@ -14,7 +14,8 @@ from . import latex
 from .naive import naive_convolve
 from .utils import (
     c_header, default_convolve, file_init, file_build, file_bind, file_quant, dir_build, dir_example, dir_sim,
-    dir_clib_data, clib_package, c_matmul_shift_noloop, c_hadamart_product_nollop
+    dir_clib_data, clib_package, c_matmul_shift_noloop, c_hadamart_product_nollop,
+    c_matmul_shift_noloop_iter
 )
 
 
@@ -378,10 +379,10 @@ def cmd_build2d_bind_iterate():
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-    matmul_c2 = c_matmul_shift_noloop(c2, "c2")
-    matmul_c1t = c_matmul_shift_noloop(c1.T, "c1t")
-    matmul_a2 = c_matmul_shift_noloop(a2, "a2")
-    matmul_a1t = c_matmul_shift_noloop(a1.T, "a1t")
+    matmul_c2 = c_matmul_shift_noloop_iter(c2, "c2")
+    matmul_c1t = c_matmul_shift_noloop_iter(c1.T, "c1t")
+    matmul_a2 = c_matmul_shift_noloop_iter(a2, "a2")
+    matmul_a1t = c_matmul_shift_noloop_iter(a1.T, "a1t")
     hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0])
     dir_lib = dir_clib_data.parent / "lib"
     c_fun = (
