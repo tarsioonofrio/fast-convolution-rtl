@@ -386,7 +386,7 @@ def cmd_build2d_bind_iterate():
     hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0])
     dir_lib = dir_clib_data.parent / "lib"
     c_fun = (
-        '#include "include/optim.h"\n\n'
+        '#include "include/optim_iter.h"\n\n'
         f"{matmul_c2['function']}\n"
         f"{matmul_c1t['function']}\n"
         f"{matmul_a2['function']}\n"
@@ -400,9 +400,9 @@ def cmd_build2d_bind_iterate():
         f"{matmul_a1t['header']}\n"
         f"{hadamart['header']}\n"
     )
-    with open(dir_lib / "optim.c", "w") as f:
+    with open(dir_lib / "optim_iter.c", "w") as f:
         f.write(c_fun)
-    with open(dir_lib / "include/optim.h", "w") as f:
+    with open(dir_lib / "include/optim_iter.h", "w") as f:
         f.write(c_head)
 
 

@@ -25,7 +25,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/../src/filter2d-iter.c")
     target_include_directories(filter2d-iter PRIVATE ../src/lib/include)
     target_include_directories(filter2d-iter PRIVATE ../src/data)
 
-    add_executable(filter2d-iter-optim ../src/filter2d-iter.c ../src/lib/optim.c ../src/lib/convolution.c ../src/lib/util.c)
+    add_executable(filter2d-iter-optim ../src/filter2d-iter.c ../src/lib/optim_iter.c ../src/lib/convolution.c ../src/lib/util.c)
     target_include_directories(filter2d-iter-optim PRIVATE ../src/lib/include)
     target_include_directories(filter2d-iter-optim PRIVATE ../src/data)
     target_compile_definitions(filter2d-iter-optim PRIVATE OPTIM_ITER)

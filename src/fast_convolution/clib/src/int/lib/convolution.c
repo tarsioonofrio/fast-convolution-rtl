@@ -9,8 +9,12 @@
     #include <riscv-csr.h>
 #endif
 
-#if defined(OPTIM) || defined(OPTIM_ITER)
+#ifdef OPTIM
     #include "include/optim.h"
+#endif
+
+#ifdef OPTIM_ITER
+    #include "include/optim_iter.h"
 #endif
 
 
