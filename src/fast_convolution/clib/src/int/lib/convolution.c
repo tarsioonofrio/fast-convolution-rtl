@@ -9,6 +9,10 @@
     #include <riscv-csr.h>
 #endif
 
+#if defined(OPTIM) || defined(OPTIM_ITER)
+    #include "include/optim.h"
+#endif
+
 
 void simple_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
