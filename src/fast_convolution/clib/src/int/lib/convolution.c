@@ -117,8 +117,7 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         csr_write_mcountinhibit(0);
     #endif
 
-    #ifndef OPTIM
-
+    #ifndef OPTIM_ITER
         // matrix_transpose(mc2, mc2t, c1_size, c2_size);
         // matrix_transpose(ma2, ma2t, a2_size, c2_size);
         matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
@@ -127,15 +126,10 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
         matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
     #else
-        // maybe add a loop for each matrix mul with a shift
-        // shift the pointer of C2_SIZE
         matrix_mul_shift_noloop_c2(md2, md);
-        // shift the pointer of C1_SIZE
         matrix_mul_shift_noloop_c1t(mdd, md2);
         hadamart_product_noloop(mss, mdd, mgg);
-        // shift the pointer of C1_SIZE
         matrix_mul_shift_noloop_a2(mss2, ma2);
-        // shift the pointer of A1_SIZE
         matrix_mul_shift_noloop_a1t(ms, mss2);
     #endif
 
