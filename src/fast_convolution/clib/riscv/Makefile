@@ -8,13 +8,13 @@ TARGETS = simple-conv filter1d filter2d-iter filter2d-nest
 all: $(TARGETS)
 
 $(TARGETS):
-	@if [ -f $(MAKE_SUBDIR)/$@.c ]; then \
-		$(MAKE) common.mk TARGET=$@; \
+	@if [ -f ../src/$@.c ]; then \
+		$(MAKE) -f common.mk TARGET=$@; \
 	else \
-		echo "Arquivo $(MAKE_SUBDIR)/$@.c não encontrado. Pulando..."; \
+		echo "Arquivo ../src/$@.c não encontrado. Pulando..."; \
 	fi
 
 .PHONY: all $(TARGETS)
 
 clean:
-	$(MAKE) common.mk clean;
+	$(MAKE) -f common.mk clean;
