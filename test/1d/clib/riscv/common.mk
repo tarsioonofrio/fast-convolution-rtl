@@ -1,9 +1,10 @@
 RED  =\033[0;31m
 NC   =\033[0m # No Color
 
-TARGET   ?= simple-conv
-MEM_SIZE ?= 65536
-ARCH     ?= rv32im_zicsr
+TARGET      ?= simple-conv
+TARGET_FILE  ?= $(TARGET)
+MEM_SIZE    ?= 65536
+ARCH        ?= rv32im_zicsr
 
 CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
@@ -18,13 +19,28 @@ HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ../com
 CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I./common/include
 LDFLAGS = --specs=nano.specs -T common/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
-CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+
+# Check if OPTIM is defined
+ifdef OPTIM
+    CFLAGS  += -DOPTIM
+    LDFLAGS += -DOPTIM
+endif
+
+# Check if OPTIM is defined
+ifdef OPTIM_ITER
+    CFLAGS  += -DOPTIM_ITER
+    LDFLAGS += -DOPTIM_ITER
+endif
+
+
+
+CCSRC = $(SRCDIR)/$(TARGET_FILE).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
 ASSRC = $(wildcard common/*.S)
 ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
-all: $(TARGET).bin $(TARGET).lst $(TARGET2).bin $(TARGET2).lst
+all: $(TARGET).bin $(TARGET).lst
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"

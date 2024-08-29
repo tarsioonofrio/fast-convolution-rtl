@@ -188,15 +188,15 @@ def c_matmul_shift_noloop(mtx, name_suffix):
     )
     return {"header": f"{header};\n", "function": function}
 
-def c_matmul_shift_noloop_iter(mtx, name_suffix):
+def c_matmul_shift_noloop_iter(mtx, name_suffix, cols):
     mtx_log = fast.log2_lst(mtx)
-    var_in = [f"m_in[{i}]" for i in range(mtx.shape[0] * mtx.shape[1])]
-    var_out = [f"m_out[{i}]" for i in range(mtx.shape[0] * mtx.shape[1])]
+    var_in = [f"m_in[{i}]" for i in range(mtx.shape[0] * cols)]
+    var_out = [f"m_out[{i}]" for i in range(mtx.shape[0] * cols)]
 
     lst_data = [[
         [c_shift(d, num["s"], z) for z in num["z"]]
-        for d, num in zip(var_in[r: r + mtx.shape[0]], row) if "s" in num]
-        for r in range(0, mtx.shape[0] * mtx.shape[1], mtx.shape[0])
+        for d, num in zip(var_in[r: r + cols], row) if "s" in num]
+        for r in range(0, mtx.shape[0] * cols, cols)
         for row in mtx_log
     ]
     lst_join = [
