@@ -383,7 +383,7 @@ def cmd_build2d_bind_iterate():
     matmul_c1t = c_matmul_shift_noloop_iter(c1.T, "c1t")
     matmul_a2 = c_matmul_shift_noloop_iter(a2, "a2")
     matmul_a1t = c_matmul_shift_noloop_iter(a1.T, "a1t")
-    hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0])
+    hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0], "_iter")
     dir_lib = dir_clib_data.parent / "lib"
     c_fun = (
         '#include "include/optim_iter.h"\n\n'
