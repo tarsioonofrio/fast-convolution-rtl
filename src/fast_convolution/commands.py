@@ -272,7 +272,7 @@ def cmd_build_toom_cook1d(points):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
 
-    shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent / "fast-conv.c")
+    shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent / "filter1d.c")
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
@@ -375,7 +375,7 @@ def cmd_build2d_bind_iterate():
     build_data = read_build_2d()
     write_bind("iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
-    shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "fast-conv.c")
+    shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "filter2d-iter.c")
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
@@ -433,7 +433,7 @@ def cmd_build2d_bind_nest():
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
 
-    shutil.copy(clib_package / "src/int/filter2d-nested.c", dir_clib_data.parent / "fast-conv.c")
+    shutil.copy(clib_package / "src/int/filter2d-nest.c", dir_clib_data.parent / "filter2d-nest.c")
     shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
