@@ -76,10 +76,6 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
     init_array(mdd, c_size);
     init_array(ms, a_size);
 
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
-
     #ifndef OPTIM
         // D=ct*d
         matrix_mul(mdd, mc, md, c_size, c_size, 1);
@@ -91,10 +87,6 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
         matrix_mul_shift_noloop_c(mdd, md);
         hadamart_product_noloop(mss, mdd, mgg);
         matrix_mul_shift_noloop_a(ms, mss);
-    #endif
-
-    #ifdef __riscv
-        csr_write_mcountinhibit(-1);
     #endif
 
     free(mss);
@@ -251,9 +243,9 @@ void init_array(int *array, int size) {
 void right_shift_array(int *array, int shift, int size) {
     int i;
 
-        #ifdef __riscv
-            csr_write_mcountinhibit(0);
-        #endif
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
 
     for (i = 0; i < size; i++) {
         array[i] = array[i] >> shift;
