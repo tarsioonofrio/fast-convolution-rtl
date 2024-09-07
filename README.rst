@@ -22,7 +22,7 @@ RS5
 
 * Geração do hex para RS5 (riscv64-elf)
 
-cd RS5/app/(applcation)
+cd RS5/app/(application)
 
     module load riscv64-elf/14.1.0
     make clean
@@ -42,8 +42,7 @@ Importante :  o  testbench.sv   lê o binário na linha 43
     module purge
     module load verilator/5.024-CXX20
     source /opt/rh/gcc-toolset-13/enable
-    make
-    more debug/Report.txt
+    make; more debug/Report.txt
 
 
 Credits
