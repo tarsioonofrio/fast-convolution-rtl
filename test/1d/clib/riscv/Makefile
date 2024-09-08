@@ -1,43 +1,62 @@
-# Lista dos quatro targets
-TARGETS = simple-conv filter1d filter2d-iter filter2d-nest
-TARGETS_OPTIM = filter1d filter2d-iter
-TARGETS_OPTIM_ITER = filter2d-nest
+RED  =\033[0;31m
+NC   =\033[0m # No Color
 
-# Caminho para o make secundário
-# MAKE_SUBDIR = caminho/para/o/diretorio/do/Makefile
+FILE_NAME ?= $(basename $(notdir $(wildcard src/*.c)))
+MEM_SIZE  ?= 65536
+ARCH      ?= rv32im_zicsr
 
-# Regra para cada target
-all: $(TARGETS) filter1d-optim filter2d-nest-optim filter2d-iter-optim
+CC 		= riscv64-elf-gcc
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
 
-$(TARGETS):
-	@if [ -f ../src/$@.c ]; then \
-		$(MAKE) -f common.mk TARGET=$@; \
-	else \
-		echo "Arquivo ../src/$@.c não encontrado. Pulando..."; \
-	fi
+SRCDIR  = ../src
+LIBDIR  = $(SRCDIR)/lib
+INCDIR  = $(LIBDIR)/include
+DATADIR = $(SRCDIR)/data
+HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ../common/include/*.h)
 
-filter1d-optim:
-	@if [ -f ../src/filter1d.c ]; then \
-		$(MAKE) -f common.mk TARGET_FILE=filter1d TARGET=filter2d-nest-optim OPTIM=1; \
-	else \
-		echo "Arquivo ../src/$@.c não encontrado. Pulando..."; \
-	fi
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I./common/include
+LDFLAGS = --specs=nano.specs -T common/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
-filter2d-nest-optim:
-	@if [ -f ../src/filter2d-nest.c ]; then \
-		$(MAKE) -f common.mk TARGET_FILE=filter2d-nest TARGET=filter2d-nest-optim OPTIM=1; \
-	else \
-		echo "Arquivo ../src/$@.c não encontrado. Pulando..."; \
-	fi
+ASSRC = $(wildcard common/*.S)
+ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
-filter2d-iter-optim:
-	@if [ -f ../src/filter2d-iter.c ]; then \
-		$(MAKE) -f common.mk TARGET_FILE=filter2d-iter TARGET=filter2d-iter-optim OPTIM=1 OPTIM_ITER=1; \
-	else \
-		echo "Arquivo ../src/$@.c não encontrado. Pulando..."; \
-	fi
+CCSRC1 = $(SRCDIR)/$(FILE_NAME).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+CCOBJ1 = $(patsubst %.c, %.o, $(CCSRC1))
 
-.PHONY: all $(TARGETS)
+all: clean $(foreach file, $(FILE_NAMES), $(file).bin $(file).lst)
+# all: $(FILE_NAME).bin $(FILE_NAME).lst
+
+$(FILE_NAME).bin: $(FILE_NAME).elf
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@$(OBJCOPY) $< $@ -O binary
+
+$(FILE_NAME).lst: $(FILE_NAME).elf
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@$(OBJDUMP) -S $< > $@
+
+$(FILE_NAME).elf: $(ASOBJ)
+	@printf "${RED}Linking %s...${NC}\n" "$@"
+	CCSRC = $(SRCDIR)/$@.c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+	CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
+	@$(CC) $(CCOBJ) $(ASOBJ) -Wl,-Map=$@.map -N -o $@ $(LDFLAGS)
+
+%.o: %.S
+	@printf "${RED}Assemblying %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DRISCV=1
+
+%.o: %.c $(HEADERS)
+	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS)
 
 clean:
-	$(MAKE) -f common.mk clean;
+	@printf "Cleaning up\n"
+	@rm -rf src/*.o
+	@rm -rf src/lib/*.o
+	@rm -rf common/*.o
+	@rm -rf *.bin
+	@rm -rf *.map
+	@rm -rf *.lst
+	@rm -rf *.elf
+
+.PHONY: clean

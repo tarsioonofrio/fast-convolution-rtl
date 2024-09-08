@@ -9,12 +9,17 @@ from scipy import signal
 from fast_convolution import fast
 
 
-def plot_pdf(page, crop_float=None,  dpi=200,):
+def plot_pdf(
+    page,
+    crop_float=None,
+    dpi=200,
+):
     """
     (upper, lower)
     crop float value between 0 and 1
     """
     from IPython.core.display_functions import display
+
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
@@ -40,6 +45,7 @@ def plot_pdf2col(page, column, crop_float=None, dpi=200):
     crop float value between 0 and 1
     """
     from IPython.core.display_functions import display
+
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
@@ -50,9 +56,9 @@ def plot_pdf2col(page, column, crop_float=None, dpi=200):
         assert 0 <= crop_float[0] <= 1
         assert 0 <= crop_float[1] <= 1
         assert column in [0, 1]
-        left = (pix.width)//2 * column
+        left = (pix.width) // 2 * column
         upper = int(pix.height * crop_float[0])
-        right = (pix.width)//2 * (column + 1)
+        right = (pix.width) // 2 * (column + 1)
         lower = int(pix.height * crop_float[1])
         crop = (left, upper, right, lower)
         display(image.crop(crop))
@@ -66,7 +72,9 @@ def symmetrical_polynomial_factorization(polynomial, di, gi):
         if len(gi) % 2 == 0 and len(di) % 2 == 0:
             args = [i for e, i in enumerate(polynomial.args)]
         else:
-            args = [i for e, i in enumerate(polynomial.args) if sum([quo, rem])-1 != e]
+            args = [
+                i for e, i in enumerate(polynomial.args) if sum([quo, rem]) - 1 != e
+            ]
     pol_idx = [e for e, c in enumerate(di) for d in args if d.coeff(c, 1) != 0]
     prod = np.prod([np.sum([(c[i]) for i in pol_idx]) for c in [di, gi]])
     s = prod - (prod.expand() - polynomial)
@@ -80,19 +88,19 @@ def symmetrical_cyclic_convolution(x, y):
     xx = np.tile(x_arr.reshape(-1), 2)
     yy = np.array(y).reshape(-1)
     out = np.convolve(xx, yy)
-    out_clip = out[size:2 * size]
+    out_clip = out[size : 2 * size]
     out_mtx = sy.Matrix(out_clip)
     return out_mtx
 
 
 def winograd_cyclic_conv2x2(x, y):
-    ax0 = x[0]+x[1]
-    ax1 = x[0]-x[1]
-    bx0 = (y[0]+y[1])/2
-    bx1 = (y[0]-y[1])/2
+    ax0 = x[0] + x[1]
+    ax1 = x[0] - x[1]
+    bx0 = (y[0] + y[1]) / 2
+    bx1 = (y[0] - y[1]) / 2
 
-    m0 = ax0*bx0
-    m1 = ax1*bx1
+    m0 = ax0 * bx0
+    m1 = ax1 * bx1
     s0 = m0 + m1
     s1 = m0 - m1
     return (s0, s1)
@@ -100,12 +108,12 @@ def winograd_cyclic_conv2x2(x, y):
 
 # https://stackoverflow.com/a/38034801
 def conv_circ_fft(signal, kernel):
-    '''
-        signal: real 1D array
-        ker: real 1D array
-        signal and ker must have same shape
-    '''
-    return np.real(np.fft.ifft(np.fft.fft(signal)*np.fft.fft(kern)))
+    """
+    signal: real 1D array
+    ker: real 1D array
+    signal and ker must have same shape
+    """
+    return np.real(np.fft.ifft(np.fft.fft(signal) * np.fft.fft(kernel)))
 
 
 def c_header(path, list_array, dict_defs):
@@ -116,11 +124,7 @@ def c_header(path, list_array, dict_defs):
         "{code}\n"
         f"#endif //C_{name}_H\n"
     )
-    array_str = (
-        "const {type} {name}[{size}] = {{\n"
-        "{value}\n"
-        "}};\n"
-    )
+    array_str = "const {type} {name}[{size}] = {{\n" "{value}\n" "}};\n"
     def_str = "#define {key} {value}\n"
     list_def = []
     if len(dict_defs) > 0:
@@ -137,13 +141,13 @@ def c_header(path, list_array, dict_defs):
             shape = np_arr.shape
             value = np_arr.tolist()
             if typ == "float":
-                value_str = (",\n").join(["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value])
+                value_str = (",\n").join(
+                    ["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value]
+                )
             else:
                 value_str = (",\n").join(["\t" + ", ".join(map(str, v)) for v in value])
             size = "*".join(map(str, shape))
-            array = array_str.format(
-                type=typ, name=name, value=value_str, size=size
-            )
+            array = array_str.format(type=typ, name=name, value=value_str, size=size)
             list_data.append(array)
 
     list_def_data = list_def + ["\n"] + list_data
@@ -169,24 +173,21 @@ def c_matmul_shift_noloop(mtx, name_suffix):
     var_in = [f"m_in[{i}]" for i in range(mtx.shape[1])]
     var_out = [f"m_out[{i}]" for i in range(mtx.shape[0])]
 
-    lst_data = [[
-        [c_shift(d, num["s"], z) for z in num["z"]]
-        for d, num in zip(var_in, row) if "s" in num]
+    lst_data = [
+        [
+            [c_shift(d, num["s"], z) for z in num["z"]]
+            for d, num in zip(var_in, row)
+            if "s" in num
+        ]
         for row in mtx_log
     ]
-    lst_join = [
-        "".join(["".join(num) for num in row])
-        for row in lst_data
-    ]
+    lst_join = ["".join(["".join(num) for num in row]) for row in lst_data]
     lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
     lst_str = "\n".join(lst_output)
     header = f"void matrix_mul_shift_noloop_{name_suffix}(int *m_out, const int *m_in)"
-    function = (
-        f"{header}{{\n"
-        f"{lst_str}\n"
-        "}\n"
-    )
+    function = f"{header}{{\n" f"{lst_str}\n" "}\n"
     return {"header": f"{header};\n", "function": function}
+
 
 def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
     print(name_suffix, in_shp, out_shp)
@@ -194,47 +195,37 @@ def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
     var_in = [f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]
     var_out = [f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])]
 
-    lst_data = [[
-        [c_shift(d, num["s"], z) for z in num["z"]]
-        for d, num in zip(var_in[r: r + out_shp[0]], row) if "s" in num]
+    lst_data = [
+        [
+            [c_shift(d, num["s"], z) for z in num["z"]]
+            for d, num in zip(var_in[r : r + out_shp[0]], row)
+            if "s" in num
+        ]
         for r in range(0, in_shp[0] * out_shp[0], in_shp[1])
         for row in mtx_log
     ]
-    lst_join = [
-        "".join(["".join(num) for num in row])
-        for row in lst_data
-    ]
+    lst_join = ["".join(["".join(num) for num in row]) for row in lst_data]
     lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
     lst_str = "\n".join(lst_output)
     header = f"void matrix_mul_shift_noloop_{name_suffix}(int *m_out, const int *m_in)"
-    function = (
-        f"{header}{{\n"
-        f"{lst_str}\n"
-        "}\n"
-    )
+    function = f"{header}{{\n" f"{lst_str}\n" "}\n"
     return {"header": f"{header};\n", "function": function}
+
 
 def c_hadamart_product_nollop(size, suffix=""):
     lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(size)]
     lst_str = "\n".join(lst)
     header = f"void hadamart_product_noloop{suffix}(int *out, const int *in1, const int *in2)"
-    function = (
-        f"{header}{{\n"
-        f"{lst_str}\n"
-        "}\n"
-    )
+    function = f"{header}{{\n" f"{lst_str}\n" "}\n"
     return {"header": f"{header};\n", "function": function}
 
 
 def default_convolve(f, w):
-    output_default = signal.convolve(
-        f, w[::-1, ::-1], mode='valid'
-    )
+    output_default = signal.convolve(f, w[::-1, ::-1], mode="valid")
     return output_default
 
 
 def getcwd():
-    import os
     if os.environ.get("TEST_PATH") is None:
         return Path(os.getcwd())
     else:

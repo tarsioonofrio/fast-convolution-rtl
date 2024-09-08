@@ -13,9 +13,20 @@ from . import quant
 from . import latex
 from .naive import naive_convolve
 from .utils import (
-    c_header, default_convolve, file_init, file_build, file_bind, file_quant, dir_build, dir_example, dir_sim,
-    dir_clib_data, clib_package, c_matmul_shift_noloop, c_hadamart_product_nollop,
-    c_matmul_shift_noloop_iter
+    c_header,
+    default_convolve,
+    file_init,
+    file_build,
+    file_bind,
+    file_quant,
+    dir_build,
+    dir_example,
+    dir_sim,
+    dir_clib_data,
+    clib_package,
+    c_matmul_shift_noloop,
+    c_hadamart_product_nollop,
+    c_matmul_shift_noloop_iter,
 )
 
 
@@ -36,9 +47,7 @@ def read_build_1d():
     c = sy.Matrix(data["c"])
     b = sy.Matrix(data["b"])
     a = sy.Matrix(data["a"])
-    q = sy.Matrix([
-        sy.Rational(p, q) for p, q in data["q"]
-    ])
+    q = sy.Matrix([sy.Rational(p, q) for p, q in data["q"]])
     return p, c, b, a, q
 
 
@@ -49,10 +58,7 @@ def read_build_2d():
     c = sy.Matrix(data["c"][0]), sy.Matrix(data["c"][1])
     b = sy.Matrix(data["b"][0]), sy.Matrix(data["b"][1])
     a = sy.Matrix(data["a"][0]), sy.Matrix(data["a"][1])
-    q = [
-        sy.Matrix([sy.Rational(p, q) for p, q in d])
-        for d in data["q"]
-    ]
+    q = [sy.Matrix([sy.Rational(p, q) for p, q in d]) for d in data["q"]]
     return p, c, b, a, q
 
 
@@ -87,8 +93,8 @@ def num_points2d(size, axis):
 def default_toom_cook_points1d(size):
     if isinstance(size, int) is False:
         return 1
-    p0 = [p*s for s in range(1, size//2 + size % 2) for p in [1, -1]]
-    p = [0] + p0[:size-1 - size % 2] + ['inf']
+    p0 = [p * s for s in range(1, size // 2 + size % 2) for p in [1, -1]]
+    p = [0] + p0[: size - 1 - size % 2] + ["inf"]
     return p
 
 
@@ -96,8 +102,8 @@ def default_toom_cook_points2d(size0, axis=None):
     if isinstance(size0, list) is False:
         return 1
     size = size0[axis]
-    p0 = [p*s for s in range(1, size//2 + size % 2) for p in [1, -1]]
-    p = [0] + p0[:size-1 - size % 2] + ['inf']
+    p0 = [p * s for s in range(1, size // 2 + size % 2) for p in [1, -1]]
+    p = [0] + p0[: size - 1 - size % 2] + ["inf"]
     return p
 
 
@@ -110,15 +116,12 @@ def read_quant_if_exists():
 
 
 def now():
-    return datetime.now().strftime('%Y%m%d-%H%M')
+    return datetime.now().strftime("%Y%m%d-%H%M")
 
 
 def write_bind(func, params=None):
-    data = {
-        "func": func,
-        "params": params
-    }
-    with open(file_bind, 'w', encoding='utf-8') as f:
+    data = {"func": func, "params": params}
+    with open(file_bind, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
@@ -158,7 +161,7 @@ def cmd_init(dimensions, in_len, out_len, w):
         "b": b.tolist(),
     }
     file_init.parent.mkdir(parents=True, exist_ok=True)
-    with open(file_init, 'w', encoding='utf-8') as f:
+    with open(file_init, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
@@ -208,15 +211,14 @@ def cmd_show(init, build, quant):
 def cmd_build_toom_cook1d(points):
     dim, c_len, b_len, a_len = read_init()
     # at_len = ct_len + b_len - 1
-    list_points = [np.inf if p == 'inf' else int(p) for p in points]
+    list_points = [np.inf if p == "inf" else int(p) for p in points]
 
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
-    d = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len))))
-    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len))))
+    d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
+    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)
     qr = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
-        for i in q
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q
     ]
     data = {
         "p": list_points,
@@ -225,7 +227,7 @@ def cmd_build_toom_cook1d(points):
         "b": np.array(b, dtype=int).tolist(),
         "a": np.array(a, dtype=int).tolist(),
     }
-    with open(file_build, 'w', encoding='utf-8') as f:
+    with open(file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     dir_build.mkdir(parents=True, exist_ok=True)
@@ -247,16 +249,16 @@ def cmd_build_toom_cook1d(points):
     fast.write_csa_config(csa_config, path / "csa")
     csa_parcels = fast.csa_parcels(a, c)
     fast.write_csa_parcels(csa_parcels, path / "csa")
-    header_csa = {
-        f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
-    }
+    header_csa = {f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()}
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
 
     csa_arr = [
-        {"name": f"m{n}{s}",
-         "value": np.array(lst).reshape(-1, len(lst[0][0])),
-         "type": "int"}
+        {
+            "name": f"m{n}{s}",
+            "value": np.array(lst).reshape(-1, len(lst[0][0])),
+            "type": "int",
+        }
         for (n, s), lst in csa_parcels.items()
     ]
     c_header(dir_clib_data / "build_shift.h", csa_arr, header_csa)
@@ -272,8 +274,12 @@ def cmd_build_toom_cook1d(points):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
 
-    shutil.copy(clib_package / "src/int/filter1d.c", dir_clib_data.parent / "filter1d.c")
-    shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
+    shutil.copy(
+        clib_package / "src/int/filter1d.c", dir_clib_data.parent / "filter1d.c"
+    )
+    shutil.copy(
+        clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
+    )
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(len(list_points))
@@ -285,9 +291,12 @@ def cmd_build_toom_cook1d(points):
         f"{hadamart['function']}\n"
     )
     c_head = (
+        '#ifndef C_OPTIM_H\n'
+        '#define C_OPTIM_H\n\n'
         f"{matmul_a['header']}\n"
         f"{matmul_c['header']}\n"
         f"{hadamart['header']}\n"
+        '#endif //C_OPTIM_H'
     )
     with open(dir_lib / "optim.c", "w") as f:
         f.write(c_fun)
@@ -298,25 +307,23 @@ def cmd_build_toom_cook1d(points):
 def cmd_build_toom_cook2d(points1d, points2d):
     dim, c_len, b_len, a_len = read_init()
     # at_len = ct_len + b_len - 1
-    list_points1d = [np.inf if p == 'inf' else int(p) for p in points1d]
-    list_points2d = [np.inf if p == 'inf' else int(p) for p in points2d]
+    list_points1d = [np.inf if p == "inf" else int(p) for p in points1d]
+    list_points2d = [np.inf if p == "inf" else int(p) for p in points2d]
 
     c1, q1, b1, a1 = fast.toom_cook(a_len[0], b_len[0], list_points1d)
-    di1 = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len[0]))))
-    g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len[0]))))
-    bg1 = fast.g_to_bg(q1, b1, g1)
+    di1 = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len[0]))))
+    g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[0]))))
+    # bg1 = fast.g_to_bg(q1, b1, g1)
     qr1 = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
-        for i in q1
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q1
     ]
 
     c2, q2, b2, a2 = fast.toom_cook(a_len[1], b_len[1], list_points2d)
-    di2 = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(c_len[1]))))
-    g2 = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(b_len[1]))))
-    bg2 = fast.g_to_bg(q2, b2, g2)
+    di2 = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len[1]))))
+    g2 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[1]))))
+    # bg2 = fast.g_to_bg(q2, b2, g2)
     qr2 = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
-        for i in q2
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q2
     ]
 
     data = {
@@ -326,7 +333,7 @@ def cmd_build_toom_cook2d(points1d, points2d):
         "b": [np.array(b1, dtype=int).tolist(), np.array(b2, dtype=int).tolist()],
         "a": [np.array(a1, dtype=int).tolist(), np.array(a2, dtype=int).tolist()],
     }
-    with open(file_build, 'w', encoding='utf-8') as f:
+    with open(file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
     dir_build.mkdir(parents=True, exist_ok=True)
@@ -375,14 +382,23 @@ def cmd_build2d_bind_iterate():
     build_data = read_build_2d()
     write_bind("iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
-    shutil.copy(clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "filter2d-iter.c")
-    shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
+    shutil.copy(
+        clib_package / "src/int/filter2d-iter.c",
+        dir_clib_data.parent / "filter2d-iter.c",
+    )
+    shutil.copy(
+        clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
+    )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     matmul_c2 = c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape)
     matmul_c1t = c_matmul_shift_noloop_iter(c1.T, "c1t", c1.T.shape, c1.T.shape)
-    matmul_a2 = c_matmul_shift_noloop_iter(a2, "a2", c1.T.shape, (a2.shape[0], a1.shape[1]))
-    matmul_a1t = c_matmul_shift_noloop_iter(a1.T, "a1t",  a2.shape, (a1.T.shape[0], a1.T.shape[0]))
+    matmul_a2 = c_matmul_shift_noloop_iter(
+        a2, "a2", c1.T.shape, (a2.shape[0], a1.shape[1])
+    )
+    matmul_a1t = c_matmul_shift_noloop_iter(
+        a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
+    )
     hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0], "_iter")
     dir_lib = dir_clib_data.parent / "lib"
     c_fun = (
@@ -394,11 +410,14 @@ def cmd_build2d_bind_iterate():
         f"{hadamart['function']}\n"
     )
     c_head = (
+        '#ifndef C_OPTIM_ITER_H\n'
+        '#define C_OPTIM_ITER_H\n\n'
         f"{matmul_c2['header']}\n"
         f"{matmul_c1t['header']}\n"
         f"{matmul_a2['header']}\n"
         f"{matmul_a1t['header']}\n"
         f"{hadamart['header']}\n"
+        '#endif //C_OPTIM_ITER_H'
     )
     with open(dir_lib / "optim_iter.c", "w") as f:
         f.write(c_fun)
@@ -433,8 +452,13 @@ def cmd_build2d_bind_nest():
         arr = [{**r, "type": typ} for r in list_array]
         c_header(dir_clib_data / path, arr, {})
 
-    shutil.copy(clib_package / "src/int/filter2d-nest.c", dir_clib_data.parent / "filter2d-nest.c")
-    shutil.copy(clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c")
+    shutil.copy(
+        clib_package / "src/int/filter2d-nest.c",
+        dir_clib_data.parent / "filter2d-nest.c",
+    )
+    shutil.copy(
+        clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
+    )
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(a.shape[0])
@@ -446,27 +470,26 @@ def cmd_build2d_bind_nest():
         f"{hadamart['function']}\n"
     )
     c_head = (
+        '#ifndef C_OPTIM_H\n'
+        '#define C_OPTIM_H\n\n'
         f"{matmul_a['header']}\n"
         f"{matmul_c['header']}\n"
         f"{hadamart['header']}\n"
+        '#endif //C_OPTIM_H'
     )
     with open(dir_lib / "optim.c", "w") as f:
         f.write(c_fun)
     with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
 
+
 def cmd_quant_none():
     file_quant.unlink(missing_ok=True)
 
 
 def cmd_quant_shift(bits):
-    data = {
-        "func": "shift",
-        "params": {
-            "bits": bits
-        }
-    }
-    with open(file_quant, 'w', encoding='utf-8') as f:
+    data = {"func": "shift", "params": {"bits": bits}}
+    with open(file_quant, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
@@ -474,16 +497,16 @@ def cmd_sim_file(feature, weight):
     dim, c_len, b_len, a_len = read_init()
     quant_data = read_quant_if_exists()
     with open(feature) as f:
-        image = Image.open(feature).convert('L')
+        image = Image.open(feature).convert("L")
         feat_arr = np.array(image)
     with open(weight) as f:
         w_arr = np.array(json.load(f))
         if dim == 1:
-            wght_arr = w_arr .reshape(b_len, b_len)
+            wght_arr = w_arr.reshape(b_len, b_len)
         elif dim == 2:
-            wght_arr = w_arr .reshape(b_len[0], b_len[1])
+            wght_arr = w_arr.reshape(b_len[0], b_len[1])
 
-    output_default = signal.convolve2d(feat_arr, w_arr[::-1, ::-1], mode='valid')
+    output_default = signal.convolve2d(feat_arr, w_arr[::-1, ::-1], mode="valid")
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
@@ -500,27 +523,47 @@ def cmd_sim_file(feature, weight):
         # TODO
         # compose inverse quantization in filter like quant.select_conv2d
 
-        bg = np.array([fast.g_to_bg(q, b, wght_arr[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+        bg = (
+            np.array([fast.g_to_bg(q, b, wght_arr[i]) for i in range(b_len)])
+            .reshape(b_len, -1)
+            .tolist()
+        )
         if len(quant_data) == 0:
-            fast_conv = [
-                fast.conv1d(wght_arr[i], c, q, b, a)
-                for i in range(b_len)
-            ]
-            output_fast = np.sum(axis=0, a=[
-                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
-                for i in range(0, wght_arr.shape[0])
-            ])
+            fast_conv = [fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)]
+            output_fast = np.sum(
+                axis=0,
+                a=[
+                    fast.filter1d_slide2d(
+                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                    )
+                    for i in range(0, wght_arr.shape[0])
+                ],
+            )
             bg_quant = bg
         else:
             weight_quant = np.left_shift(wght_arr, quant_data["params"]["bits"])
-            bg_q = [fast.g_to_bg(q, b, weight_quant[i]) for i in range(0, weight_quant.shape[0])]
-            bg_quant_int = [sy.Matrix(np.array(bg_q[i], dtype=int)) for i in range(0, weight_quant.shape[0])]
-            fast_conv = [fast.wrap_convolution(c, bg_quant_int[i], a) for i in range(0, weight_quant.shape[0])]
+            bg_q = [
+                fast.g_to_bg(q, b, weight_quant[i])
+                for i in range(0, weight_quant.shape[0])
+            ]
+            bg_quant_int = [
+                sy.Matrix(np.array(bg_q[i], dtype=int))
+                for i in range(0, weight_quant.shape[0])
+            ]
+            fast_conv = [
+                fast.wrap_convolution(c, bg_quant_int[i], a)
+                for i in range(0, weight_quant.shape[0])
+            ]
 
-            output_fast_ = np.sum(axis=0, a=[
-                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
-                for i in range(0, wght_arr.shape[0])
-            ])
+            output_fast_ = np.sum(
+                axis=0,
+                a=[
+                    fast.filter1d_slide2d(
+                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                    )
+                    for i in range(0, wght_arr.shape[0])
+                ],
+            )
             output_fast = np.right_shift(output_fast_, quant_data["params"]["bits"])
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
@@ -531,11 +574,12 @@ def cmd_sim_file(feature, weight):
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
-            fast.conv2d if len(quant_data) == 0
-            else quant.select_conv2d(quant_data)
+            fast.conv2d if len(quant_data) == 0 else quant.select_conv2d(quant_data)
         )
         fast_conv = conv_func(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
-        output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
+        output_fast = fast.filter2d_slide2d(
+            fast_conv, feat_arr, output_default.shape, c_len, a_len
+        )
         count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
@@ -547,7 +591,7 @@ def cmd_sim_file(feature, weight):
 
     if len(quant_data) != 0:
         r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = (f"R2: {r2}\n")
+        text_metric = f"R2: {r2}\n"
     else:
         compare_fast = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {compare_fast}\n"
@@ -569,11 +613,13 @@ def cmd_sim_file(feature, weight):
     )
     path = dir_sim / f"file-{now()}"
     path.mkdir(exist_ok=True, parents=True)
-    with open(path / "sim.txt", 'w') as f:
+    with open(path / "sim.txt", "w") as f:
         f.write(text)
 
-    for arr, name in zip([feat_arr, wght_arr, output_default, output_fast], ["d",  "g", "s_default", "s"]):
-        np.savetxt(path / f"{name}.txt", arr, fmt='%d')
+    for arr, name in zip(
+        [feat_arr, wght_arr, output_default, output_fast], ["d", "g", "s_default", "s"]
+    ):
+        np.savetxt(path / f"{name}.txt", arr, fmt="%d")
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
@@ -584,13 +630,14 @@ def cmd_sim_file(feature, weight):
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
     ]
-    quant_dict = {
-        f"QUANT_{k}".upper(): v
-        for k, v in quant_data["params"].items()
-    } if len(quant_data) >0 else {}
+    quant_dict = (
+        {f"QUANT_{k}".upper(): v for k, v in quant_data["params"].items()}
+        if len(quant_data) > 0
+        else {}
+    )
     dict_def = {
-        "QUANT": quant_data["func"].upper() if len(quant_data) >0 else None,
-        ** quant_dict,
+        "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
+        **quant_dict,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_default.shape[0],
@@ -604,17 +651,19 @@ def cmd_sim_file(feature, weight):
 def cmd_sim_random(feature_random, weight_random, image_side, loop):
     dim, c_len, b_len, a_len = read_init()
     quant_data = read_quant_if_exists()
-    feat = np.random.randint(feature_random[0], feature_random[1], size=image_side ** 2)
+    feat = np.random.randint(feature_random[0], feature_random[1], size=image_side**2)
     feat_arr = feat.reshape(image_side, image_side)
 
     if dim == 1:
-        wght = np.random.randint(weight_random[0], weight_random[1], size=b_len ** 2)
+        wght = np.random.randint(weight_random[0], weight_random[1], size=b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
     elif dim == 2:
-        wght = np.random.randint(weight_random[0], weight_random[1], size=b_len[0] * b_len[1])
+        wght = np.random.randint(
+            weight_random[0], weight_random[1], size=b_len[0] * b_len[1]
+        )
         wght_arr = wght.reshape(b_len[0], b_len[1])
 
-    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode='valid')
+    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode="valid")
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
@@ -631,27 +680,47 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         # TODO
         # compose inverse quantization in filter like quant.select_conv2d
 
-        bg = np.array([fast.g_to_bg(q, b, wght_arr[i])for i in range(b_len)]).reshape(b_len, -1).tolist()
+        bg = (
+            np.array([fast.g_to_bg(q, b, wght_arr[i]) for i in range(b_len)])
+            .reshape(b_len, -1)
+            .tolist()
+        )
         if len(quant_data) == 0:
-            fast_conv = [
-                fast.conv1d(wght_arr[i], c, q, b, a)
-                for i in range(b_len)
-            ]
-            output_fast = np.sum(axis=0, a=[
-                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
-                for i in range(0, wght_arr.shape[0])
-            ])
+            fast_conv = [fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)]
+            output_fast = np.sum(
+                axis=0,
+                a=[
+                    fast.filter1d_slide2d(
+                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                    )
+                    for i in range(0, wght_arr.shape[0])
+                ],
+            )
             bg_quant = bg
         else:
             weight_quant = np.left_shift(wght_arr, quant_data["params"]["bits"])
-            bg_q = [fast.g_to_bg(q, b, weight_quant[i]) for i in range(0, weight_quant.shape[0])]
-            bg_quant_int = [sy.Matrix(np.array(bg_q[i], dtype=int)) for i in range(0, weight_quant.shape[0])]
-            fast_conv = [fast.wrap_convolution(c, bg_quant_int[i], a) for i in range(0, weight_quant.shape[0])]
+            bg_q = [
+                fast.g_to_bg(q, b, weight_quant[i])
+                for i in range(0, weight_quant.shape[0])
+            ]
+            bg_quant_int = [
+                sy.Matrix(np.array(bg_q[i], dtype=int))
+                for i in range(0, weight_quant.shape[0])
+            ]
+            fast_conv = [
+                fast.wrap_convolution(c, bg_quant_int[i], a)
+                for i in range(0, weight_quant.shape[0])
+            ]
 
-            output_fast_ = np.sum(axis=0, a=[
-                fast.filter1d_slide2d(fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len)
-                for i in range(0, wght_arr.shape[0])
-            ])
+            output_fast_ = np.sum(
+                axis=0,
+                a=[
+                    fast.filter1d_slide2d(
+                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                    )
+                    for i in range(0, wght_arr.shape[0])
+                ],
+            )
             output_fast = np.right_shift(output_fast_, quant_data["params"]["bits"])
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
@@ -661,11 +730,12 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     elif dim == 2:
         points, c, b, a, q = read_build_2d()
         conv_func = (
-            fast.conv2d if len(quant_data) == 0
-            else quant.select_conv2d(quant_data)
+            fast.conv2d if len(quant_data) == 0 else quant.select_conv2d(quant_data)
         )
         fast_conv = conv_func(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
-        output_fast = fast.filter2d_slide2d(fast_conv, feat_arr, output_default.shape, c_len, a_len)
+        output_fast = fast.filter2d_slide2d(
+            fast_conv, feat_arr, output_default.shape, c_len, a_len
+        )
         count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
@@ -677,7 +747,7 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
 
     if len(quant_data) != 0:
         r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = (f"R2: {r2}%\n")
+        text_metric = f"R2: {r2}%\n"
     else:
         compare_fast = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {compare_fast}\n"
@@ -700,12 +770,13 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
     )
     path = dir_sim / f"random-{now()}"
     path.mkdir(exist_ok=True, parents=True)
-    with open(path / "sim.txt", 'w') as f:
+    with open(path / "sim.txt", "w") as f:
         f.write(text)
 
-    for arr, name in zip([feat_arr, wght_arr, output_default, output_fast], ["d",  "g", "s_default", "s"]):
-        np.savetxt(path / f"{name}.txt", arr, fmt='%d')
-
+    for arr, name in zip(
+        [feat_arr, wght_arr, output_default, output_fast], ["d", "g", "s_default", "s"]
+    ):
+        np.savetxt(path / f"{name}.txt", arr, fmt="%d")
 
     dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
@@ -716,13 +787,14 @@ def cmd_sim_random(feature_random, weight_random, image_side, loop):
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
     ]
-    quant_dict = {
-        f"QUANT_{k}".upper(): v
-        for k, v in quant_data["params"].items()
-    } if len(quant_data) >0 else {}
+    quant_dict = (
+        {f"QUANT_{k}".upper(): v for k, v in quant_data["params"].items()}
+        if len(quant_data) > 0
+        else {}
+    )
     dict_def = {
-        "QUANT": quant_data["func"].upper() if len(quant_data) >0 else None,
-        ** quant_dict,
+        "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
+        **quant_dict,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_fast.shape[0],
@@ -743,7 +815,7 @@ def cmd_example_random(feature, weight):
         w = np.random.randint(weight[0], weight[1], size=b_len)
         g = sy.Matrix(w)
     elif dim == 2:
-        f0 = np.random.randint(feature[0], feature[1], size=c_len[0]*c_len[1])
+        f0 = np.random.randint(feature[0], feature[1], size=c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
         d = sy.Matrix(f)
         w0 = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
@@ -771,13 +843,11 @@ def cmd_example_random(feature, weight):
 
         if data_bind["func"] == "iterate":
             latex.example_2d_bind_iterate(
-                init_data, build_data, d, g,
-                dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(
-                init_data, build_data, d, g,
-                dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, dir_example / f"example-seq-{now()}"
             )
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
@@ -804,7 +874,7 @@ def cmd_example_sequential(feature, weight):
         g = sy.Matrix(w)
         s = default_convolve(d, g)
     elif dim == 2:
-        f0 = np.arange(feature, feature + c_len[0]*c_len[1])
+        f0 = np.arange(feature, feature + c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
         d = sy.Matrix(f)
         w0 = np.arange(weight, weight + b_len[0] * b_len[1])
@@ -833,13 +903,11 @@ def cmd_example_sequential(feature, weight):
         build_data = read_build_2d()
         if data_bind["func"] == "iterate":
             latex.example_2d_bind_iterate(
-                init_data, build_data, d, g,
-                dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(
-                init_data, build_data, d, g,
-                dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, dir_example / f"example-seq-{now()}"
             )
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
