@@ -1,7 +1,9 @@
 RED  =\033[0;31m
 NC   =\033[0m # No Color
 
-FILE_NAME ?= $(basename $(notdir $(wildcard ../src/*.c)))
+# FILE_NAME ?= $(basename $(notdir $(wildcard ../src/*.c)))
+FILE_NAME ?= filter1d
+
 
 $(info  $(FILE_NAME))
 
@@ -18,7 +20,7 @@ INCDIR  = $(LIBDIR)/include
 DATADIR = $(SRCDIR)/data
 HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ../common/include/*.h)
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I./common/include
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I/common/include
 LDFLAGS = --specs=nano.specs -T common/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
 ASSRC = $(wildcard common/*.S)
@@ -27,20 +29,29 @@ ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 CCSRC = $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
-all: $(foreach file, $(FILE_NAME), $(file).bin $(file).lst)
 # all: $(FILE_NAME).bin $(FILE_NAME).lst
 
-%.bin: %.elf
-	@printf "${RED}Generating %s...${NC}\n" "$@"
+
+define generate_targets
+
+CCSRC_$(1) = $(SRCDIR)/$(1).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+CCOBJ_$(1) = $(patsubst %.c, %.o, $$(CCSRC_$(1)))
+
+$(1).bin: $(1).elf
+	@printf "Generating $@...\n"
 	@$(OBJCOPY) $< $@ -O binary
 
-%.lst: %.elf
-	@printf "${RED}Generating %s...${NC}\n" "$@"
+$(1).lst: $(1).elf
+	@printf "Generating $@...\n"
 	@$(OBJDUMP) -S $< > $@
 
-%.elf: %.o $(CCOBJ) $(ASOBJ)  
-	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(CC) $(CCOBJ) $(SRCDIR)/$(basename $@).o $(CCOBJ) $(ASOBJ) -Wl,-Map=$@.map -N -o $@ $(LDFLAGS)
+$(1).elf: $$(CCOBJ_$(1)) $(ASOBJ)  
+	@printf "Linking $@...\n"
+	@$(CC) $$(CCOBJ_$(1)) $(ASOBJ) -Wl,-Map=$(1).map -N -o $@ $(LDFLAGS)
+
+endef
+
+$(foreach file,$(FILE_NAME),$(eval $(call generate_targets,$(file))))
 
 %.o: %.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
@@ -59,5 +70,8 @@ clean:
 	@rm -rf *.map
 	@rm -rf *.lst
 	@rm -rf *.elf
+
+all: $(foreach file, $(FILE_NAME), $(file).bin $(file).lst)
+
 
 .PHONY: clean
