@@ -38,7 +38,7 @@ all: $(foreach file, $(FILE_NAME), $(file).bin $(file).lst)
 	@printf "${RED}Generating %s...${NC}\n" "$@"
 	@$(OBJDUMP) -S $< > $@
 
-%.elf: %.o $(CCOBJ) $(ASOBJ)
+%.elf: %.o $(CCOBJ) $(ASOBJ)  
 	@printf "${RED}Linking %s...${NC}\n" "$@"
 	@$(CC) $(CCOBJ) $(SRCDIR)/$(basename $@).o $(CCOBJ) $(ASOBJ) -Wl,-Map=$@.map -N -o $@ $(LDFLAGS)
 
