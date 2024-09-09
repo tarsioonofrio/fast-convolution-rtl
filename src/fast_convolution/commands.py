@@ -12,6 +12,7 @@ from . import fast
 from . import quant
 from . import latex
 from .naive import naive_convolve
+from .makefile import makefile
 from .utils import (
     c_header,
     default_convolve,
@@ -302,6 +303,10 @@ def cmd_build_toom_cook1d(points):
         f.write(c_fun)
     with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
+    makefile_str = makefile(["simple-conv", "filter1d"])
+    dir_clib = dir_clib_data.parent.parent
+    with open(dir_clib / "riscv/Makefile", "w") as f:
+        f.write(makefile_str)
 
 
 def cmd_build_toom_cook2d(points1d, points2d):

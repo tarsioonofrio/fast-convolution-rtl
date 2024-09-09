@@ -1,9 +1,7 @@
-RED  =\033[0;31m
-NC   =\033[0m # No Color
-
-FILE_NAME ?= $(basename $(notdir $(wildcard src/*.c)))
-MEM_SIZE  ?= 65536
-ARCH      ?= rv32im_zicsr
+TARGET0 = simple-conv
+TARGET1 = filter1d
+MEM_SIZE ?= 65536
+ARCH     ?= rv32im_zicsr
 
 CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
@@ -21,32 +19,13 @@ LDFLAGS = --specs=nano.specs -T common/link.ld -march=$(ARCH) -mabi=ilp32 -nosta
 ASSRC = $(wildcard common/*.S)
 ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
-CCSRC1 = $(SRCDIR)/$(FILE_NAME).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
-CCOBJ1 = $(patsubst %.c, %.o, $(CCSRC1))
-
-all: clean $(foreach file, $(FILE_NAMES), $(file).bin $(file).lst)
-# all: $(FILE_NAME).bin $(FILE_NAME).lst
-
-$(FILE_NAME).bin: $(FILE_NAME).elf
-	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@$(OBJCOPY) $< $@ -O binary
-
-$(FILE_NAME).lst: $(FILE_NAME).elf
-	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@$(OBJDUMP) -S $< > $@
-
-$(FILE_NAME).elf: $(ASOBJ)
-	@printf "${RED}Linking %s...${NC}\n" "$@"
-	CCSRC = $(SRCDIR)/$@.c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
-	CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
-	@$(CC) $(CCOBJ) $(ASOBJ) -Wl,-Map=$@.map -N -o $@ $(LDFLAGS)
 
 %.o: %.S
-	@printf "${RED}Assemblying %s...${NC}\n" "$<"
+	@printf "$Assemblying %s...$\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DRISCV=1
 
 %.o: %.c $(HEADERS)
-	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@printf "$Compiling %s...$\n" "$<"
 	@$(CC) -c $< -o $@ $(CFLAGS)
 
 clean:
@@ -60,3 +39,36 @@ clean:
 	@rm -rf *.elf
 
 .PHONY: clean
+
+all:$(TARGET0).bin $(TARGET0).lst $(TARGET1).bin $(TARGET1).lst
+CCSRC0 = $(SRCDIR)/$(TARGET0).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+CCOBJ0 = $(patsubst %.c, %.o, $(CCSRC0))
+
+
+$(TARGET0).bin: $(TARGET0).elf
+	@printf "$Generating %s...$\n" "$@"
+	@$(OBJCOPY) $< $@ -O binary
+
+$(TARGET0).lst: $(TARGET0).elf
+	@printf "$Generating %s...$\n" "$@"
+	@$(OBJDUMP) -S $< > $@
+
+$(TARGET0).elf: $(CCOBJ0) $(ASOBJ)
+	@printf "$Linking %s...$\n" "$@"
+	@$(CC) $(CCOBJ0) $(ASOBJ) -Wl,-Map=$(TARGET0).map -N -o $@ $(LDFLAGS)
+
+CCSRC1 = $(SRCDIR)/$(TARGET1).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+CCOBJ1 = $(patsubst %.c, %.o, $(CCSRC1))
+
+
+$(TARGET1).bin: $(TARGET1).elf
+	@printf "$Generating %s...$\n" "$@"
+	@$(OBJCOPY) $< $@ -O binary
+
+$(TARGET1).lst: $(TARGET1).elf
+	@printf "$Generating %s...$\n" "$@"
+	@$(OBJDUMP) -S $< > $@
+
+$(TARGET1).elf: $(CCOBJ1) $(ASOBJ)
+	@printf "$Linking %s...$\n" "$@"
+	@$(CC) $(CCOBJ1) $(ASOBJ) -Wl,-Map=$(TARGET1).map -N -o $@ $(LDFLAGS)

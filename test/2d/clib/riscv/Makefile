@@ -1,7 +1,10 @@
 RED  =\033[0;31m
 NC   =\033[0m # No Color
 
-FILE_NAME ?= $(basename $(notdir $(wildcard src/*.c)))
+FILE_NAME ?= $(basename $(notdir $(wildcard ../src/*.c)))
+
+$(info  $(FILE_NAME))
+
 MEM_SIZE  ?= 65536
 ARCH      ?= rv32im_zicsr
 
@@ -21,24 +24,24 @@ LDFLAGS = --specs=nano.specs -T common/link.ld -march=$(ARCH) -mabi=ilp32 -nosta
 ASSRC = $(wildcard common/*.S)
 ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
-CCSRC1 = $(SRCDIR)/$(FILE_NAME).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
-CCOBJ1 = $(patsubst %.c, %.o, $(CCSRC1))
+FUNC_CCSRC = $(SRCDIR)/$(1).c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+FUNC_CCOBJ = $(patsubst %.c, %.o, $(1))
 
-all: clean $(foreach file, $(FILE_NAMES), $(file).bin $(file).lst)
+all: $(foreach file, $(FILE_NAME), $(file).bin $(file).lst)
 # all: $(FILE_NAME).bin $(FILE_NAME).lst
 
-$(FILE_NAME).bin: $(FILE_NAME).elf
+%.bin: %.elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
 	@$(OBJCOPY) $< $@ -O binary
 
-$(FILE_NAME).lst: $(FILE_NAME).elf
+%.lst: %.elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
 	@$(OBJDUMP) -S $< > $@
 
-$(FILE_NAME).elf: $(ASOBJ)
+%.elf: $(ASOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	CCSRC = $(SRCDIR)/$@.c $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
-	CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
+	CCSRC=$(call FUNC_CCSRC,$(basename $@))
+	CCOBJ=$(call FUNC_CCOBJ,$(CCSRC))
 	@$(CC) $(CCOBJ) $(ASOBJ) -Wl,-Map=$@.map -N -o $@ $(LDFLAGS)
 
 %.o: %.S
