@@ -1,44 +1,65 @@
-#!/bin/bash
+RED  =\033[0;31m
+NC   =\033[0m # No Color
 
-RISCV_DIR=$PWD
-# Diretório de origem
-SRC_DIR=$(realpath ../src)
-SIM_DIR=$(realpath ${RISCV_DIR}/../../../sim/)
+TARGET   ?= simple-conv
+MEM_SIZE ?= 65536
+ARCH     ?= rv32im_zicsr
+
+CC 		= riscv64-elf-gcc
+OBJDUMP = riscv64-elf-objdump
+OBJCOPY = riscv64-elf-objcopy
+
+SRCDIR  = ../../src
+COMMDIR = ../common
+LIBDIR  = $(SRCDIR)/lib
+INCDIR  = $(LIBDIR)/include
+OPT_LIBDIR  = $(SRCDIR)/lib_optim
+OPT_INCDIR  = $(LIBDIR)/include
+DATADIR = $(SRCDIR)/data
+HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(OPT_INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMMDIR}/include/*.h)
+
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(OPT_INCDIR) -I$(DATADIR) -I${COMMDIR}/include
+LDFLAGS = --specs=nano.specs -T ${COMMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
+
+# CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
+CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard $(OPT_LIBDIR)/*.c) $(wildcard ${COMMDIR}/*.c)
+CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
 
-function run_riscv_verilator(){
-    # Linha específica para edição
-    LINE_NUM=47
+ASSRC = $(wildcard ${COMMDIR}/*.S)
+ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
-    for FILE in "$SRC_DIR"/*.c; do
-        cd ${1}
-        # Extrai o nome do arquivo sem o caminho e sem a extensão
-        FILE_NAME=$(basename "$FILE" .c)
-        echo "Nome do arquivo sem extensão: ${FILE_NAME}"
+all: $(TARGET).bin $(TARGET).lst
 
-        module purge
-        module load riscv64-elf/14.1.0
-        make clean
-        make all TARGET=${FILE_NAME}
+$(TARGET).bin: $(TARGET).elf
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@$(OBJCOPY) $< $@ -O binary
+
+$(TARGET).lst: $(TARGET).elf
+	@printf "${RED}Generating %s...${NC}\n" "$@"
+	@$(OBJDUMP) -S $< > $@
+
+$(TARGET).elf: $(CCOBJ) $(ASOBJ)
+	@printf "${RED}Linking %s...${NC}\n" "$@"
+	@$(CC) $(CCOBJ) $(ASOBJ) -Wl,-Map=$(TARGET).map -N -o $@ $(LDFLAGS)
 
 
-        cd ${SIM_DIR}
-        # Novo texto para substituição
-        BIN_FILE="\"${1}/${FILE_NAME}.bin\""
-        # Substituir o conteúdo entre aspas na linha 45
-        sed -i "${LINE_NUM}s|\".*\"|${BIN_FILE}|" testbench.sv
+%.o: %.S
+	@printf "${RED}Assemblying %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DRISCV=1
 
-        module purge
-        module load verilator/5.024-CXX20
-        source /opt/rh/gcc-toolset-13/enable
-        make clean
-        make
-        cp debug/Report.txt ${1}/report_${FILE_NAME}.txt
-    done
-}
+%.o: %.c $(HEADERS)
+	@printf "${RED}Compiling %s...${NC}\n" "$<"
+	@$(CC) -c $< -o $@ $(CFLAGS)
 
-# run_riscv_verilator ${RISCV_DIR}/makefile-normal
+clean:
+	@printf "Cleaning up\n"
+	@rm -rf src/*.o
+	@rm -rf src/lib/*.o
+	@rm -rf common/*.o
+	@rm -rf *.bin
+	@rm -rf *.map
+	@rm -rf *.lst
+	@rm -rf *.elf
 
-run_riscv_verilator ${RISCV_DIR}/makefile-optim
-
-# Loop sobre todos os arquivos .c no diretório ../src
+.PHONY: clean
