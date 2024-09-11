@@ -428,6 +428,10 @@ def cmd_build2d_bind_iterate():
         f.write(c_fun)
     with open(dir_lib / "include/optim_iter.h", "w") as f:
         f.write(c_head)
+    makefile_str = makefile(["simple-conv", "filter2d-iter"])
+    dir_clib = dir_clib_data.parent.parent
+    with open(dir_clib / "riscv/Makefile", "w") as f:
+        f.write(makefile_str)
 
 
 def cmd_build2d_bind_nest():
@@ -486,6 +490,10 @@ def cmd_build2d_bind_nest():
         f.write(c_fun)
     with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
+    makefile_str = makefile(["simple-conv", "filter2d-nest"])
+    dir_clib = dir_clib_data.parent.parent
+    with open(dir_clib / "riscv/Makefile", "w") as f:
+        f.write(makefile_str)
 
 
 def cmd_quant_none():
