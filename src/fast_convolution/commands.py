@@ -284,7 +284,10 @@ def cmd_build_toom_cook1d(points):
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(len(list_points))
-    dir_lib = dir_clib_data.parent / "lib"
+    dir_lib = dir_clib_data.parent / "lib_optim"
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    dir_lib_inc = dir_lib / "include"
+    dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "include/optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -405,7 +408,10 @@ def cmd_build2d_bind_iterate():
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
     hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0], "_iter")
-    dir_lib = dir_clib_data.parent / "lib"
+    dir_lib = dir_clib_data.parent / "lib_optim_iter"
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    dir_lib_inc = dir_lib / "include"
+    dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "include/optim_iter.h"\n\n'
         f"{matmul_c2['function']}\n"
@@ -471,7 +477,10 @@ def cmd_build2d_bind_nest():
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(a.shape[0])
-    dir_lib = dir_clib_data.parent / "lib"
+    dir_lib = dir_clib_data.parent / "lib_optim"
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    dir_lib_inc = dir_lib / "include"
+    dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "include/optim.h"\n\n'
         f"{matmul_a['function']}\n"

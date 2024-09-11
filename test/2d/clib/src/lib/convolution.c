@@ -9,11 +9,11 @@
     #include <riscv-csr.h>
 #endif
 
-#ifdef OPTIM
+#ifdef C_OPTIM_H
     #include "include/optim.h"
 #endif
 
-#ifdef OPTIM_ITER
+#ifdef C_OPTIM_ITER_H
     #include "include/optim_iter.h"
 #endif
 
