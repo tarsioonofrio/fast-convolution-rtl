@@ -76,7 +76,7 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
     init_array(mdd, c_size);
     init_array(ms, a_size);
 
-    #ifndef OPTIM
+    #ifndef C_OPTIM_H
         // D=ct*d
         matrix_mul(mdd, mc, md, c_size, c_size, 1);
         // S=D.G
@@ -117,7 +117,7 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         csr_write_mcountinhibit(0);
     #endif
 
-    #ifndef OPTIM_ITER
+    #ifndef C_OPTIM_ITER_H
         // matrix_transpose(mc2, mc2t, c1_size, c2_size);
         // matrix_transpose(ma2, ma2t, a2_size, c2_size);
         matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
