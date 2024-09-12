@@ -9,12 +9,16 @@ SIM_DIR=$(realpath ${RISCV_DIR}/../../../sim/)
 function run_riscv_verilator(){
     # Linha específica para edição
     LINE_NUM=47
-
+    local EXCLUDE=${2:-"0"}
     for FILE in "$SRC_DIR"/*.c; do
         cd ${1}
         # Extrai o nome do arquivo sem o caminho e sem a extensão
         FILE_NAME=$(basename "$FILE" .c)
-        echo "Nome do arquivo sem extensão: ${FILE_NAME}"
+        if [ "$EXCLUDE" == "1" ] && [ "$FILE_NAME" == "simple-conv" ]; then
+            continue  # Pula para o próximo arquivo
+        fi
+        
+        echo "FILE: ${FILE_NAME}"
 
         module purge
         module load riscv64-elf/14.1.0
@@ -37,9 +41,7 @@ function run_riscv_verilator(){
     done
 }
 
-# run_riscv_verilator ${RISCV_DIR}/makefile-normal
-
-run_riscv_verilator ${RISCV_DIR}/makefile-optim
-
-# run_riscv_verilator ${RISCV_DIR}/makefile-optim-iter
+run_riscv_verilator ${RISCV_DIR}/makefile-normal
+run_riscv_verilator ${RISCV_DIR}/makefile-optim 1
+run_riscv_verilator ${RISCV_DIR}/makefile-optim-iter 1
 

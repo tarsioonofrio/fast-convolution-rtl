@@ -12,7 +12,6 @@
 int main() {
     #ifdef __riscv
         csr_write_mcountinhibit(0);
-        printf("**** oi ****\n");
     #endif
 
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};

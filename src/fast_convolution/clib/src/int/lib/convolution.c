@@ -76,17 +76,17 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
     init_array(mdd, c_size);
     init_array(ms, a_size);
 
-    #if OPTIM == 0
+    #if OPTIM == 1
+        matrix_mul_shift_noloop_c(mdd, md);
+        hadamart_product_noloop(mss, mdd, mgg);
+        matrix_mul_shift_noloop_a(ms, mss);
+    #else
         // D=ct*d
         matrix_mul(mdd, mc, md, c_size, c_size, 1);
         // S=D.G
         hadamart_product(mss, mdd, mgg, c_size);
         // s=S*a
         matrix_mul(ms, ma, mss, a_size, c_size, 1);
-    #else
-        matrix_mul_shift_noloop_c(mdd, md);
-        hadamart_product_noloop(mss, mdd, mgg);
-        matrix_mul_shift_noloop_a(ms, mss);
     #endif
 
     free(mss);
@@ -117,7 +117,13 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         csr_write_mcountinhibit(0);
     #endif
 
-    #if OPTIM_ITER == 0
+    #if OPTIM_ITER == 1
+        matrix_mul_shift_noloop_c2(md2, md);
+        matrix_mul_shift_noloop_c1t(mdd, md2);
+        hadamart_product_noloop_iter(mss, mdd, mgg);
+        matrix_mul_shift_noloop_a2(mss2, ma2);
+        matrix_mul_shift_noloop_a1t(ms, mss2);
+    #else
         // matrix_transpose(mc2, mc2t, c1_size, c2_size);
         // matrix_transpose(ma2, ma2t, a2_size, c2_size);
         matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
@@ -125,12 +131,6 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         hadamart_product(mss, mdd, mgg, c1_size * c2_size);
         matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
         matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
-    #else
-        matrix_mul_shift_noloop_c2(md2, md);
-        matrix_mul_shift_noloop_c1t(mdd, md2);
-        hadamart_product_noloop_iter(mss, mdd, mgg);
-        matrix_mul_shift_noloop_a2(mss2, ma2);
-        matrix_mul_shift_noloop_a1t(ms, mss2);
     #endif
 
     #ifdef __riscv
