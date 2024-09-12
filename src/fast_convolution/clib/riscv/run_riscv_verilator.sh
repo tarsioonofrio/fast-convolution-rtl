@@ -37,9 +37,9 @@ function run_riscv_verilator(){
     done
 }
 
-# run_riscv_verilator ${RISCV_DIR}/makefile-normal
+run_riscv_verilator ${RISCV_DIR}/makefile-normal
 
-run_riscv_verilator ${RISCV_DIR}/makefile-optim
+# run_riscv_verilator ${RISCV_DIR}/makefile-optim
 
-# Loop sobre todos os arquivos .c no diretório ../src
+# run_riscv_verilator ${RISCV_DIR}/makefile-optim-iter
 

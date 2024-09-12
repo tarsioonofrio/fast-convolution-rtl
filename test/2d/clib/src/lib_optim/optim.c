@@ -1,4 +1,4 @@
-#include "include/optim.h"
+#include "optim.h"
 
 void matrix_mul_shift_noloop_a(int *m_out, const int *m_in){
 	m_out[0] =  + m_in[0] + m_in[1] + m_in[2] + m_in[3] + m_in[5] + m_in[6] + m_in[7] + m_in[8] + m_in[10] + m_in[11] + m_in[12] + m_in[13] + m_in[15] + m_in[16] + m_in[17] + m_in[18];
