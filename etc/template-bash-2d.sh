@@ -1,3 +1,7 @@
+FOLDER=$(basename $0 .sh)
+mkdir ${FOLDER}
+cd ${FOLDER}
+
 # init fast-conv repository with 2d convolution and output of size (3,3)
 fast-conv init 2d -o 3 3
 # build a fast conv 2d using toom cook method
