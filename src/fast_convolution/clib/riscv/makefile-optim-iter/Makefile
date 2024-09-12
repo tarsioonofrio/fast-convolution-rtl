@@ -21,7 +21,6 @@ HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(OPT_INCDIR)/*.h) $(wildcard $(D
 CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(OPT_INCDIR) -I$(DATADIR) -I${COMMDIR}/include
 LDFLAGS = --specs=nano.specs -T ${COMMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
-# CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
 CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard $(OPT_LIBDIR)/*.c) $(wildcard ${COMMDIR}/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
@@ -46,11 +45,11 @@ $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 
 %.o: %.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DOPTIM=1
+	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DOPTIM_ITER=1
 
 %.o: %.c $(HEADERS)
 	@printf "${RED}Compiling %s...${NC}\n" "$<"
-	@$(CC) -c $< -o $@ $(CFLAGS) -DOPTIM=1
+	@$(CC) -c $< -o $@ $(CFLAGS) -DOPTIM_ITER=1
 
 clean:
 	@printf "Cleaning up\n"

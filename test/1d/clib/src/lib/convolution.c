@@ -3,18 +3,18 @@
 //
 
 #include <stdlib.h>
-#include "include/convolution.h"
+#include "convolution.h"
 
 #ifdef __riscv
     #include <riscv-csr.h>
 #endif
 
-#ifdef C_OPTIM_H
-    #include "include/optim.h"
+#ifdef OPTIM
+    #include "optim.h"
 #endif
 
-#ifdef C_OPTIM_ITER_H
-    #include "include/optim_iter.h"
+#ifdef OPTIM_ITER
+    #include "optim_iter.h"
 #endif
 
 

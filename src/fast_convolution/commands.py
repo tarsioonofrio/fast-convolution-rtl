@@ -12,7 +12,8 @@ from . import fast
 from . import quant
 from . import latex
 from .naive import naive_convolve
-from .makefile import makefile
+
+# from .makefile import makefile
 from .utils import (
     c_header,
     default_convolve,
@@ -289,7 +290,7 @@ def cmd_build_toom_cook1d(points):
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
-        '#include "include/optim.h"\n\n'
+        '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
         f"{matmul_c['function']}\n"
         f"{hadamart['function']}\n"
@@ -482,7 +483,7 @@ def cmd_build2d_bind_nest():
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
-        '#include "include/optim.h"\n\n'
+        '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
         f"{matmul_c['function']}\n"
         f"{hadamart['function']}\n"

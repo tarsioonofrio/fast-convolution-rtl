@@ -1,49 +1,45 @@
 #!/bin/bash
 
-module load riscv64-elf/14.1.0
-
-make clean
-make all
-
-riscv_path=$PWD
+RISCV_DIR=$PWD
 # Diretório de origem
-src_dir=$(realpath ../src)
+SRC_DIR=$(realpath ../src)
+SIM_DIR=$(realpath ${RISCV_DIR}/../../../sim/)
 
-# Caminho do arquivo
-# test_bench_file="../../../sim/testbench.sv"
 
-# Linha específica para edição
-line_number=47
+function run_riscv_verilator(){
+    # Linha específica para edição
+    LINE_NUM=47
 
-module purge
-module load verilator/5.024-CXX20
-source /opt/rh/gcc-toolset-13/enable
+    for FILE in "$SRC_DIR"/*.c; do
+        cd ${1}
+        # Extrai o nome do arquivo sem o caminho e sem a extensão
+        FILE_NAME=$(basename "$FILE" .c)
+        echo "Nome do arquivo sem extensão: ${FILE_NAME}"
 
-cd ../../../sim/
+        module purge
+        module load riscv64-elf/14.1.0
+        make clean
+        make all TARGET=${FILE_NAME}
+
+
+        cd ${SIM_DIR}
+        # Novo texto para substituição
+        BIN_FILE="\"${1}/${FILE_NAME}.bin\""
+        # Substituir o conteúdo entre aspas na linha 45
+        sed -i "${LINE_NUM}s|\".*\"|${BIN_FILE}|" testbench.sv
+
+        module purge
+        module load verilator/5.024-CXX20
+        source /opt/rh/gcc-toolset-13/enable
+        make clean
+        make
+        cp debug/Report.txt ${1}/report_${FILE_NAME}.txt
+    done
+}
+
+# run_riscv_verilator ${RISCV_DIR}/makefile-normal
+
+run_riscv_verilator ${RISCV_DIR}/makefile-optim
 
 # Loop sobre todos os arquivos .c no diretório ../src
-for file in "$src_dir"/*.c; do
-    # Extrai o nome do arquivo sem o caminho e sem a extensão
-    filename=$(basename "$file" .c)
 
-    # Faz algo com o nome do arquivo
-    echo "Nome do arquivo sem extensão: $filename"
-
-    # Novo texto para substituição
-    bin_file="\"${riscv_path}/${filename}.bin\""
-    # Substituir o conteúdo entre aspas na linha 45
-    sed -i "${line_number}s|\".*\"|${bin_file}|" testbench.sv
-
-    make clean
-    make
-    cp debug/Report.txt ${riscv_path}/report_${filename}.txt
-done
-
-
-
-
-# Ou para substituir tudo depois do caractere '=' na linha 45
-# sed -i "${line_number}s|=.*|= ${new_text}|" "$file"
-
-# Ou para substituir tudo após o caractere 47 na linha 45
-# sed -i "${line_number}s|.\{47\}.*|${new_text}|" "$file"
