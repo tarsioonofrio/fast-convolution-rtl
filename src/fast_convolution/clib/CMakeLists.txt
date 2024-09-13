@@ -18,9 +18,9 @@ add_executable(filter1d-float src/float/filter1d-float.c src/float/lib/convoluti
 add_executable(filter2d-nest-float src/float/filter2d-nest-float.c src/float/lib/convolution_float.c src/float/lib/util_float.c)
 add_executable(filter2d-iter-float src/float/filter2d-iter-float.c src/float/lib/convolution_float.c src/float/lib/util_float.c)
 
-add_executable(filter1d src/int/filter1d.c src/int/lib/convolution.c src/int/lib/util.c)
-add_executable(filter2d-iter src/int/filter2d-iter.c src/int/lib/convolution.c src/int/lib/util.c)
-add_executable(filter2d-nest src/int/filter2d-nest.c src/int/lib/convolution.c src/int/lib/util.c)
+add_executable(filter1d src/int/filter1d.c src/int/lib/convolution.c src/int/lib/util.c src/int/lib/fast_conv.c src/int/lib/include/fast_conv.h)
+add_executable(filter2d-iter src/int/filter2d-iter.c src/int/lib/convolution.c src/int/lib/util.c src/int/lib/fast_conv.c src/int/lib/include/fast_conv.h)
+add_executable(filter2d-nest src/int/filter2d-nest.c src/int/lib/convolution.c src/int/lib/util.c src/int/lib/fast_conv.c src/int/lib/include/fast_conv.h)
 
 
 # include lib
@@ -37,22 +37,22 @@ target_include_directories(filter2d-nest PRIVATE src/int/lib/include)
 target_include_directories(filter2d-iter PRIVATE src/int/lib/include)
 
 target_include_directories(simple-conv PRIVATE src/int/lib/include)
-target_include_directories(simple-conv PRIVATE test/test1d)
+target_include_directories(simple-conv PRIVATE ../../../test/1d/clib/src/data)
 target_include_directories(matrix-mult PRIVATE src/int/lib/include)
 
 
 # include data
-target_include_directories(fast-conv1d-float PRIVATE test/test1d)
-target_include_directories(fast-conv2d-nest-float PRIVATE test/test2d)
-target_include_directories(fast-conv2d-iter-float PRIVATE test/test2d)
+target_include_directories(fast-conv1d-float PRIVATE ../../../test/1d/clib/src/data)
+target_include_directories(fast-conv2d-nest-float PRIVATE ../../../test/2d/clib/src/data)
+target_include_directories(fast-conv2d-iter-float PRIVATE ../../../test/2d/clib/src/data)
 
-target_include_directories(filter1d-float PRIVATE test/test1d)
-target_include_directories(filter2d-nest-float PRIVATE test/test2d)
-target_include_directories(filter2d-iter-float PRIVATE test/test2d)
+target_include_directories(filter1d-float PRIVATE ../../../test/1d/clib/src/data)
+target_include_directories(filter2d-nest-float PRIVATE ../../../test/2d/clib/src/data)
+target_include_directories(filter2d-iter-float PRIVATE ../../../test/2d/clib/src/data)
 
-target_include_directories(filter1d PRIVATE test/test1d)
-target_include_directories(filter2d-nest PRIVATE test/test2d)
-target_include_directories(filter2d-iter PRIVATE test/test2d)
+target_include_directories(filter1d PRIVATE ../../../test/1d/clib/src/data)
+target_include_directories(filter2d-nest PRIVATE ../../../test/2d/clib/src/data)
+target_include_directories(filter2d-iter PRIVATE ../../../test/2d/clib/src/data)
 
 
 # link libs
