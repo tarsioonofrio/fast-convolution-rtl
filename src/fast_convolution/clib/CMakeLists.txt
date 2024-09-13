@@ -6,6 +6,9 @@ set(CMAKE_C_STANDARD 90)
 # generate file to clangd LSP
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(DATA1 ../../../test/1d/clib/src/data)
+set(DATA2 ../../../test/2d/clib/src/data)
+
 # targets
 add_executable(simple-conv src/int/simple-conv.c src/int/lib/convolution.c src/int/lib/util.c)
 add_executable(matrix-mult src/int/matrix-mult.c src/int/lib/convolution.c src/int/lib/util.c)
@@ -37,22 +40,22 @@ target_include_directories(filter2d-nest PRIVATE src/int/lib/include)
 target_include_directories(filter2d-iter PRIVATE src/int/lib/include)
 
 target_include_directories(simple-conv PRIVATE src/int/lib/include)
-target_include_directories(simple-conv PRIVATE ../../../test/1d/clib/src/data)
+target_include_directories(simple-conv PRIVATE ${DATA1})
 target_include_directories(matrix-mult PRIVATE src/int/lib/include)
 
 
 # include data
-target_include_directories(fast-conv1d-float PRIVATE ../../../test/1d/clib/src/data)
-target_include_directories(fast-conv2d-nest-float PRIVATE ../../../test/2d/clib/src/data)
-target_include_directories(fast-conv2d-iter-float PRIVATE ../../../test/2d/clib/src/data)
+target_include_directories(fast-conv1d-float PRIVATE ${DATA1})
+target_include_directories(fast-conv2d-nest-float PRIVATE ${DATA2})
+target_include_directories(fast-conv2d-iter-float PRIVATE ${DATA2})
 
-target_include_directories(filter1d-float PRIVATE ../../../test/1d/clib/src/data)
-target_include_directories(filter2d-nest-float PRIVATE ../../../test/2d/clib/src/data)
-target_include_directories(filter2d-iter-float PRIVATE ../../../test/2d/clib/src/data)
+target_include_directories(filter1d-float PRIVATE ${DATA1})
+target_include_directories(filter2d-nest-float PRIVATE ${DATA2})
+target_include_directories(filter2d-iter-float PRIVATE ${DATA2})
 
-target_include_directories(filter1d PRIVATE ../../../test/1d/clib/src/data)
-target_include_directories(filter2d-nest PRIVATE ../../../test/2d/clib/src/data)
-target_include_directories(filter2d-iter PRIVATE ../../../test/2d/clib/src/data)
+target_include_directories(filter1d PRIVATE ${DATA1})
+target_include_directories(filter2d-nest PRIVATE ${DATA2})
+target_include_directories(filter2d-iter PRIVATE ${DATA2})
 
 
 # link libs
