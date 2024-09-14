@@ -2,13 +2,12 @@
 // Created by tarsio on 13/09/2024.
 //
 
-#include "convolution.h"
 #include <stdlib.h>
+#include "convolution.h"
 #include "fast_conv.h"
-#include "optim.h"
 
 
-void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
+void fast_conv(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
                     const int *ma2, const int *mc2, const int *md,
                     int a1_size, int a2_size, int c1_size, int c2_size) {
 
@@ -31,11 +30,13 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         csr_write_mcountinhibit(0);
     #endif
 
-    matrix_mul_shift_noloop_c2(md2, md);
-    matrix_mul_shift_noloop_c1t(mdd, md2);
-    hadamart_product_noloop_iter(mss, mdd, mgg);
-    matrix_mul_shift_noloop_a2(mss2, ma2);
-    matrix_mul_shift_noloop_a1t(ms, mss2);
+    // matrix_transpose(mc2, mc2t, c1_size, c2_size);
+    // matrix_transpose(ma2, ma2t, a2_size, c2_size);
+    matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
+    matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
+    hadamart_product(mss, mdd, mgg, c1_size * c2_size);
+    matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
+    matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
 
     #ifdef __riscv
         csr_write_mcountinhibit(-1);

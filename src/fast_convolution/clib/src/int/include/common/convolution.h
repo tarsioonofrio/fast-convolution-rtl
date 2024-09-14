@@ -29,7 +29,8 @@ void simple_convolution(const int *weight, const int *feature, int *output, int 
 void filter1d(int *feature_out, const int *feature_in, int index, const int *mc, const int *ma,
               const int *mgg, int a_size, int c_size, int fin_size, int fout_size);
 
-void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_size, int type_conv, type_struct_conv *params);
+void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_size, int type_conv,
+              type_struct_conv *params);
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2);
 

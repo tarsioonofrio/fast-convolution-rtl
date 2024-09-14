@@ -125,10 +125,13 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
                 }
             }
             if (type_conv == NESTED) {
-                fast_conv(ms, params->ma, params->mgg, params->mc, md,
+                int (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+                fast_func(ms, params->ma, params->mgg, params->mc, md,
                           a1_size * a2_size, c1_size * c2_size);
             } else if (type_conv == ITERATED) {
-                fast_conv_iter(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
+                int (*fast_func)(int *, const int *, const int *, const int *, const int *, const int *, const int *,
+                                 int, int, int, int) = fast_conv;
+                fast_func(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
                                a1_size, a2_size, c1_size, c2_size);
             }
             for (rd = 0; rd < a1_size; rd++) {
