@@ -2,10 +2,10 @@ RED  =\033[0;31m
 NC   =\033[0m # No Color
 
 ROOTDIR  = ./
+TARGET  ?= simple-conv
 GCCOPT  ?= s
 OPTIM   ?= 0
 
-TARGET   ?= simple-conv
 MEM_SIZE ?= 65536
 ARCH     ?= rv32im_zicsr
 
@@ -14,7 +14,7 @@ OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
 SRCDIR  = ${ROOTDIR}/src
-COMDIR = ${ROOTDIR}/riscv/common
+COMDIR  = ${ROOTDIR}/riscv/common
 LIBDIR  = $(SRCDIR)/lib
 INCDIR  = $(LIBDIR)/include
 DATADIR = $(SRCDIR)/data
