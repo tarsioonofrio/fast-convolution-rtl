@@ -3,7 +3,7 @@
 RISCV_DIR=$PWD
 # Diretório de origem
 SRC_DIR=$(realpath ../src)
-SIM_DIR=$(realpath ${RISCV_DIR}/../../../sim/)
+SIM_DIR=$1
 
 
 function run_riscv_verilator(){

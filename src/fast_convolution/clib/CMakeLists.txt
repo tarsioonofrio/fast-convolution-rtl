@@ -8,24 +8,25 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(TEST_PATH ../../../test)
 
+# set include paths
 set(INC_INT src/int/include/common src/int/include/fast)
 set(INC_INT_ITER src/int/include/common src/int/include/fast_iter)
-
 set(TEST_DATA1 ${TEST_PATH}/1d/clib/src/data)
 set(TEST_DATA2 ${TEST_PATH}/2d/clib/src/data)
-set(TEST_OPT1 ${TEST_PATH}/1d/clib/src/lib_optim/optim.c)
-set(TEST_OPT2 ${TEST_PATH}/2d/clib/src/lib_optim/optim.c)
-set(TEST_OPT1_INC ${TEST_PATH}/1d/clib/src/lib_optim/include)
-set(TEST_OPT2_INC ${TEST_PATH}/2d/clib/src/lib_optim/include)
+set(TEST_INC_OPT1 ${TEST_PATH}/1d/clib/src/lib/optim/include)
+set(TEST_INC_OPT2_NEST ${TEST_PATH}/2d/clib/src/lib/optim/include)
+set(TEST_INC_OPT2_ITER ${TEST_PATH}/2d/clib/src/lib/optim_iter/include)
 
+# set libs paths
 set(LIB_FLOAT src/float/lib/convolution_float.c src/float/lib/util_float.c)
 set(LIB_INT src/int/lib/common/convolution.c src/int/lib/common/util.c src/int/lib/fast/fast_conv.c )
 set(LIB_INT_ITER src/int/lib/common/convolution.c src/int/lib/common/util.c src/int/lib/fast/fast_conv_iter.c )
 set(LIB_OPT src/int/lib/common/convolution.c src/int/lib/common/util.c src/int/lib/fast_optim/fast_conv.c)
 set(LIB_OPT_ITER src/int/lib/common/convolution.c src/int/lib/common/util.c src/int/lib/fast_optim/fast_conv_iter.c)
+set(TEST_LIB_OPT2_ITER ${TEST_PATH}/1d/clib/src/lib/optim/optim.c)
+set(TEST_LIB_OPT2_NEST ${TEST_PATH}/2d/clib/src/lib/optim/optim.c)
+set(TEST_LIB_OPT2_ITER ${TEST_PATH}/2d/clib/src/lib/optim_iter/optim.c)
 
-set(OPT_NEST src/int/lib_optim/fast_conv.c)
-set(OPT_ITER src/int/lib_optim/fast_conv_iter.c)
 
 
 # targets
@@ -47,9 +48,9 @@ add_executable(filter2d-nest src/int/filter2d-nest.c ${LIB_INT})
 add_executable(filter2d-iter src/int/filter2d-iter.c ${LIB_INT_ITER})
 
 # opt
-add_executable(filter1d-opt src/int/filter1d.c ${LIB_OPT} ${TEST_OPT1})
-add_executable(filter2d-nest-opt src/int/filter2d-nest.c ${LIB_OPT} ${TEST_OPT2})
-add_executable(filter2d-iter-opt src/int/filter2d-iter.c ${LIB_OPT_ITER} ${TEST_OPT2})
+add_executable(filter1d-opt src/int/filter1d.c ${LIB_OPT} ${TEST_LIB_OPT2_ITER})
+add_executable(filter2d-nest-opt src/int/filter2d-nest.c ${LIB_OPT} ${TEST_LIB_OPT2_NEST})
+add_executable(filter2d-iter-opt src/int/filter2d-iter.c ${LIB_OPT_ITER} ${TEST_LIB_OPT2_ITER})
 
 
 
@@ -72,9 +73,9 @@ target_include_directories(filter2d-nest PRIVATE ${INC_INT})
 target_include_directories(filter2d-iter PRIVATE ${INC_INT_ITER})
 
 # opt
-target_include_directories(filter1d-opt PRIVATE ${INC_INT} ${TEST_OPT1_INC})
-target_include_directories(filter2d-nest-opt PRIVATE ${INC_INT} ${TEST_OPT2_INC})
-target_include_directories(filter2d-iter-opt PRIVATE ${INC_INT_ITER} ${TEST_OPT2_INC})
+target_include_directories(filter1d-opt PRIVATE ${INC_INT} ${TEST_INC_OPT1})
+target_include_directories(filter2d-nest-opt PRIVATE ${INC_INT} ${TEST_INC_OPT2_NEST})
+target_include_directories(filter2d-iter-opt PRIVATE ${INC_INT_ITER} ${TEST_INC_OPT2_ITER})
 
 
 

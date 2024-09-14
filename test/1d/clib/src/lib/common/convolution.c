@@ -4,17 +4,10 @@
 
 #include <stdlib.h>
 #include "convolution.h"
+#include "fast_conv.h"
 
 #ifdef __riscv
     #include <riscv-csr.h>
-#endif
-
-#if OPTIM == 1
-    #include "optim.h"
-#endif
-
-#if OPTIM_ITER == 1
-    #include "optim_iter.h"
 #endif
 
 
@@ -68,83 +61,6 @@ void hadamart_product(int *out, const int *in1, const int *in2, int row) {
     }
 }
 
-void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int *md, int a_size, int c_size) {
-    int *mss = (int *) malloc((c_size) * sizeof(int));
-    int *mdd = (int *) malloc((c_size) * sizeof(int));
-
-    init_array(mss, c_size);
-    init_array(mdd, c_size);
-    init_array(ms, a_size);
-
-    #if OPTIM == 1
-        matrix_mul_shift_noloop_c(mdd, md);
-        hadamart_product_noloop(mss, mdd, mgg);
-        matrix_mul_shift_noloop_a(ms, mss);
-    #else
-        // D=ct*d
-        matrix_mul(mdd, mc, md, c_size, c_size, 1);
-        // S=D.G
-        hadamart_product(mss, mdd, mgg, c_size);
-        // s=S*a
-        matrix_mul(ms, ma, mss, a_size, c_size, 1);
-    #endif
-
-    free(mss);
-    free(mdd);
-}
-
-
-void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
-                    const int *ma2, const int *mc2, const int *md,
-                    int a1_size, int a2_size, int c1_size, int c2_size) {
-
-    int *mss = (int *) malloc((c1_size * c2_size) * sizeof(int));
-    int *mss2 = (int *) malloc((a1_size * c1_size) * sizeof(int));
-    int *mdd = (int *) malloc((c1_size * c2_size) * sizeof(int));
-    int *md2 = (int *) malloc((c1_size * c2_size) * sizeof(int));
-    // int *ma2 = (int *) malloc((a2_size * c2_size) * sizeof(int));
-    // int *mc2 = (int *) malloc((c2_size * c2_size) * sizeof(int));
-
-    init_array(ms, a1_size * a2_size);
-    init_array(mss, c1_size * c2_size);
-    init_array(mss2, a1_size * c1_size);
-    init_array(mdd, c1_size * c2_size);
-    init_array(md2, c1_size * c2_size);
-    // init_array(ma2, a2_size * c2_size);
-    // init_array(mc2, c2_size * c2_size);
-
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
-
-    #if OPTIM_ITER == 1
-        matrix_mul_shift_noloop_c2(md2, md);
-        matrix_mul_shift_noloop_c1t(mdd, md2);
-        hadamart_product_noloop_iter(mss, mdd, mgg);
-        matrix_mul_shift_noloop_a2(mss2, ma2);
-        matrix_mul_shift_noloop_a1t(ms, mss2);
-    #else
-        // matrix_transpose(mc2, mc2t, c1_size, c2_size);
-        // matrix_transpose(ma2, ma2t, a2_size, c2_size);
-        matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
-        matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
-        hadamart_product(mss, mdd, mgg, c1_size * c2_size);
-        matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
-        matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
-    #endif
-
-    #ifdef __riscv
-        csr_write_mcountinhibit(-1);
-    #endif
-
-    free(mss);
-    free(mss2);
-    free(mdd);
-    free(md2);
-    // free(ma2);
-    // free(mc2);
-}
-
 
 void filter1d(int *feature_out, const int *feature_in, int index, const int *mc, const int *ma,
               const int *mgg, int a_size, int c_size, int fin_size, int fout_size) {
@@ -152,9 +68,12 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
     int *ms = (int *) malloc((a_size) * sizeof(int));
     int *md = (int *) malloc((c_size) * sizeof(int));
 
+    int (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+
     #ifdef __riscv
         csr_write_mcountinhibit(0);
     #endif
+
 
     for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
@@ -165,7 +84,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
                     md[i] = 0;
                 }
             }
-            fast_conv(ms, ma, mgg, mc, md, a_size, c_size);
+            fast_func(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
                     feature_out[(r - index) * fout_size + c + i] += ms[i];
@@ -209,10 +128,13 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
                 }
             }
             if (type_conv == NESTED) {
-                fast_conv(ms, params->ma, params->mgg, params->mc, md,
+                int (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+                fast_func(ms, params->ma, params->mgg, params->mc, md,
                           a1_size * a2_size, c1_size * c2_size);
             } else if (type_conv == ITERATED) {
-                fast_conv_iter(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
+                int (*fast_func)(int *, const int *, const int *, const int *, const int *, const int *, const int *,
+                                 int, int, int, int) = fast_conv;
+                fast_func(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
                                a1_size, a2_size, c1_size, c2_size);
             }
             for (rd = 0; rd < a1_size; rd++) {

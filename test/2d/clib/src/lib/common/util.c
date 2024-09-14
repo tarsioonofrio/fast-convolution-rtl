@@ -3,7 +3,7 @@
 //
 
 #include <stdio.h>
-#include "include/util.h"
+#include "util.h"
 
 
 void print_array1d(const int *array, int size, const char *name) {

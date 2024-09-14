@@ -68,9 +68,12 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
     int *ms = (int *) malloc((a_size) * sizeof(int));
     int *md = (int *) malloc((c_size) * sizeof(int));
 
+    int (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+
     #ifdef __riscv
         csr_write_mcountinhibit(0);
     #endif
+
 
     for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
@@ -81,7 +84,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
                     md[i] = 0;
                 }
             }
-            fast_conv(ms, ma, mgg, mc, md, a_size, c_size);
+            fast_func(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
                     feature_out[(r - index) * fout_size + c + i] += ms[i];

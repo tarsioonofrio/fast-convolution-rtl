@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include "convolution.h"
 #include "fast_conv.h"
-#include "optim.h"
 
 
 void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int *md, int a_size, int c_size) {
@@ -16,9 +15,12 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
     init_array(mdd, c_size);
     init_array(ms, a_size);
 
-    matrix_mul_shift_noloop_c(mdd, md);
-    hadamart_product_noloop(mss, mdd, mgg);
-    matrix_mul_shift_noloop_a(ms, mss);
+    // D=ct*d
+    matrix_mul(mdd, mc, md, c_size, c_size, 1);
+    // S=D.G
+    hadamart_product(mss, mdd, mgg, c_size);
+    // s=S*a
+    matrix_mul(ms, ma, mss, a_size, c_size, 1);
 
     free(mss);
     free(mdd);

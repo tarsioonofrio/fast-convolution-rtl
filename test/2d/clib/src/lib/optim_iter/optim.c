@@ -1,4 +1,4 @@
-#include "include/optim_iter.h"
+#include "optim.h"
 
 void matrix_mul_shift_noloop_c2(int *m_out, const int *m_in){
 	m_out[0] =  + (m_in[0] << 1);
