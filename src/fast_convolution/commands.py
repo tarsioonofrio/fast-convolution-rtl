@@ -431,9 +431,9 @@ def cmd_build2d_bind_iterate():
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_ITER_H'
     )
-    with open(dir_lib / "optim_iter.c", "w") as f:
+    with open(dir_lib / "optim.c", "w") as f:
         f.write(c_fun)
-    with open(dir_lib / "include/optim_iter.h", "w") as f:
+    with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
     # makefile_str = makefile(["simple-conv", "filter2d-iter"])
     # dir_clib = dir_clib_data.parent.parent
