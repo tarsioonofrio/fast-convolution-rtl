@@ -22,7 +22,7 @@ set(CMAKE_OBJDUMP riscv64-elf-objdump)
 
 # Defina os arquivos fonte
 # set(SRC_FILES
-#     ../src/simple-conv.c
+#     ../src/simple-base.c
 #     ${CMAKE_SOURCE_DIR}/../src/lib/*.c
 #     ${CMAKE_SOURCE_DIR}/common/*.c
 # )
@@ -33,8 +33,8 @@ set(CMAKE_OBJDUMP riscv64-elf-objdump)
 
 # Adicione os targets
 add_executable(simple-conv ${CMAKE_SOURCE_DIR}/../src/simple-conv.c ${CMAKE_SOURCE_DIR}/../src/lib/convolution.c ${CMAKE_SOURCE_DIR}/../src/lib/util.c ${CMAKE_SOURCE_DIR}/common/crt0.S ${CMAKE_SOURCE_DIR}/common/newlib.c)
-# add_executable(simple-conv ${SRC_FILES} ${ASM_FILES})
-# target_link_libraries(simple-conv -specs=nano.specs -T common/link.ld)
+# add_executable(simple-base ${SRC_FILES} ${ASM_FILES})
+# target_link_libraries(simple-base -specs=nano.specs -T common/link.ld)
 
 # Adicione mais targets conforme necessário
 # add_executable(outro-target ${OUTRO_SRC_FILES})

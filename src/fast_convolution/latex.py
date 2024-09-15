@@ -1,3 +1,4 @@
+import click
 import numpy as np
 import sympy as sy
 import pylatex as tex
@@ -11,7 +12,7 @@ from . import fast
 
 
 def syt(expr):
-    return tex.NoEscape(sy.latex(expr)) 
+    return tex.NoEscape(sy.latex(expr))
 
 
 def build_1d(b, c, a, g_sym, d_sym, q, path):
@@ -84,8 +85,10 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
     doc.append(
         tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
     )
-
-    doc.generate_pdf(path, clean_tex=False)
+    try:
+        doc.generate_pdf(path, clean_tex=False)
+    except Exception as e:
+        click.echo(e)
 
 
 def build_2d_bind_iterated(init_data, build_data, path):
@@ -198,7 +201,11 @@ def build_2d_bind_iterated(init_data, build_data, path):
             syt(ss_sym1)
         ], escape=False)
     )
-    doc.generate_pdf(path / "bind-iterated", clean_tex=False)
+    try:
+        doc.generate_pdf(path / "bind-iterated", clean_tex=False)
+    except Exception as e:
+        click.echo(e)
+
     # TODO add operations count like in bind_nest function
 
 
@@ -347,8 +354,10 @@ def build_2d_bind_nest(init_data, build_data, path):
     doc.append(
         tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num))], escape=False)
     )
-
-    doc.generate_pdf(path / "bind-nest", clean_tex=False)
+    try:
+        doc.generate_pdf(path / "bind-nest", clean_tex=False)
+    except Exception as e:
+        click.echo(e)
 
     a_sum = fast.count_sums(aa_num)
     c_sum = fast.count_sums(cc_num)
@@ -443,7 +452,11 @@ def example_1d(b, c, a, g_num, d_num, q, path):
     doc.append(
         tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
     )
-    doc.generate_pdf(path, clean_tex=False)
+    try:
+        doc.generate_pdf(path, clean_tex=False)
+    except Exception as e:
+        click.echo(e)
+
     output_default = signal.convolve(
         d_num, g_num[::-1, ::-1], mode='valid'
     )
@@ -591,7 +604,10 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
             "=", syt(a1.T), syt(ss_sym1)
         ], escape=False)
     )
-    doc.generate_pdf(path, clean_tex=False)
+    try:
+        doc.generate_pdf(path, clean_tex=False)
+    except Exception as e:
+        click.echo(e)
 
     output_default = default_convolve(d_num1, g_num1)
     compare_naive = np.all(
@@ -763,7 +779,10 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
         tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num.T))], escape=False)
     )
 
-    doc.generate_pdf(path, clean_tex=False)
+    try:
+        doc.generate_pdf(path, clean_tex=False)
+    except Exception as e:
+        click.echo(e)
 
     output_default = signal.convolve(
         d_num1, g_num1[::-1, ::-1], mode='valid'
@@ -772,5 +791,3 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
         output_default.reshape(-1) == np.array(s_num).reshape(-1)
     )
     print("Result:", compare_naive)
-
-
