@@ -68,7 +68,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
     int *ms = (int *) malloc((a_size) * sizeof(int));
     int *md = (int *) malloc((c_size) * sizeof(int));
 
-    int (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+//    void (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
 
     #ifdef __riscv
         csr_write_mcountinhibit(0);
@@ -84,7 +84,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
                     md[i] = 0;
                 }
             }
-            fast_func(ms, ma, mgg, mc, md, a_size, c_size);
+            fast_conv(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
                     feature_out[(r - index) * fout_size + c + i] += ms[i];
@@ -128,13 +128,13 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
                 }
             }
             if (type_conv == NESTED) {
-                int (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
-                fast_func(ms, params->ma, params->mgg, params->mc, md,
+//                void (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+                fast_conv(ms, params->ma, params->mgg, params->mc, md,
                           a1_size * a2_size, c1_size * c2_size);
             } else if (type_conv == ITERATED) {
-                int (*fast_func)(int *, const int *, const int *, const int *, const int *, const int *, const int *,
-                                 int, int, int, int) = fast_conv;
-                fast_func(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
+//                void (*fast_func)(int *, const int *, const int *, const int *, const int *, const int *, const int *,
+//                                 int, int, int, int) = fast_conv;
+                fast_conv_iter(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2, md,
                                a1_size, a2_size, c1_size, c2_size);
             }
             for (rd = 0; rd < a1_size; rd++) {

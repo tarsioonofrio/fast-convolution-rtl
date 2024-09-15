@@ -187,15 +187,15 @@ def cmd_init(dimensions, in_len, out_len, w):
         c_header(init_path, [], dict_defs)
 
     dir_clib = dir_clib_data.parent.parent
+    # shutil.copytree(clib_package, dir_clib, dirs_exist_ok=True)
+    shutil.copy(clib_package / "Makefile", dir_clib / "Makefile")
     dir_clib.mkdir(parents=True, exist_ok=True)
     dir_clib_x86 = dir_clib / "x86"
-    shutil.copytree(clib_package / "x86", dir_clib_x86)
+    shutil.copytree(clib_package / "x86", dir_clib_x86, dirs_exist_ok=True)
     dir_clib_riscv = dir_clib / "riscv"
-    shutil.copytree(clib_package / "riscv", dir_clib_riscv)
-    dir_clib_lib = dir_clib / "src/lib"
-    shutil.copytree(clib_package / "src/int/lib", dir_clib_lib)
-    dir_clib_inc = dir_clib / "src/include"
-    shutil.copytree(clib_package / "src/int/include", dir_clib_inc)
+    shutil.copytree(clib_package / "riscv", dir_clib_riscv, dirs_exist_ok=True)
+    dir_clib_lib = dir_clib / "src"
+    shutil.copytree(clib_package / "src/int", dir_clib_lib, dirs_exist_ok=True)
 
 
 def cmd_show(init, build, quant):
