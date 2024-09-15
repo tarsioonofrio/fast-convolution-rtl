@@ -31,7 +31,6 @@ INCDIR_FAST  = $(SRCDIR)/include/fast
 DATADIR = $(SRCDIR)/data
 HEADERS = $(wildcard $(COMMDIR)/include/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard $(INCDIR_CONV)/*.h) $(INCDIR_FAST)/fast_conv.h
 
-
 CFLAGS  = -march=$(ARCH) -mabi=ilp32 -O$(GCCOPT) -Wall -std=c23 -I$(COMMDIR)/include -I$(DATADIR) -I$(INCDIR_CONV) -I$(INCDIR_FAST) 
 LDFLAGS = --specs=nano.specs -T $(COMMDIR)/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 

@@ -1,8 +1,7 @@
+#include <stdio.h>
 #include "convolution.h"
 #include "util.h"
 #include "sim.h"
-// #include "conf.h"
-#include <stdio.h>
 
 
 #ifdef __riscv

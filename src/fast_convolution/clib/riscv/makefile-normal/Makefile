@@ -19,7 +19,6 @@ HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMM
 CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I${COMMDIR}/include
 LDFLAGS = --specs=nano.specs -T ${COMMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
-# CCSRC = $(wildcard $(SRCDIR)/*.c) $(wildcard $(LIBDIR)/*.c) $(wildcard common/*.c)
 CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard ${COMMDIR}/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
