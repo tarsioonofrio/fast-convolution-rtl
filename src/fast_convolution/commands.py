@@ -194,6 +194,8 @@ def cmd_init(dimensions, in_len, out_len, w):
     shutil.copytree(clib_package / "riscv", dir_clib_riscv)
     dir_clib_lib = dir_clib / "src/lib"
     shutil.copytree(clib_package / "src/int/lib", dir_clib_lib)
+    dir_clib_inc = dir_clib / "src/include"
+    shutil.copytree(clib_package / "src/int/include", dir_clib_inc)
 
 
 def cmd_show(init, build, quant):

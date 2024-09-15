@@ -1,7 +1,7 @@
 RED  =\033[0;31m
 NC   =\033[0m # No Color
 
-ROOTDIR  = ./
+ROOTDIR ?= $(shell pwd)
 TARGET  ?= simple-conv
 GCCOPT  ?= s
 OPTIM   ?= 0
@@ -13,36 +13,42 @@ CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-SRCDIR  = ${ROOTDIR}/src
-COMDIR  = ${ROOTDIR}/riscv/common
+
+
+COMDIR  = ${ROOTDIR}/common
+SRCDIR  = $(realpath ${ROOTDIR}/../src) 
 LIBDIR  = $(SRCDIR)/lib
 INCDIR  = $(LIBDIR)/include
 DATADIR = $(SRCDIR)/data
-HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMDIR}/include/*.h)
+HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMMDIR}/include/*.h)
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -O${GCCOPT} -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I${COMDIR}/include
-LDFLAGS = --specs=nano.specs -T ${COMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
+$(info SRCDIR: $(SRCDIR))
 
-CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard ${COMDIR}/*.c)
+
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -O${GCCOPT} -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I${COMMDIR}/include
+LDFLAGS = --specs=nano.specs -T ${COMMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
+
+CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard ${COMMDIR}/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
 
-ASSRC = $(wildcard ${COMDIR}/*.S)
+ASSRC = $(wildcard ${COMMDIR}/*.S)
 ASOBJ = $(patsubst %.S,%.o, $(ASSRC))
 
 all: $(TARGET).bin $(TARGET).lst
 
 $(TARGET).bin: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@$(OBJCOPY) $<  ${ROOTDIR}/$@ -O binary
+	@$(OBJCOPY) $< $@ -O binary
 
 $(TARGET).lst: $(TARGET).elf
 	@printf "${RED}Generating %s...${NC}\n" "$@"
-	@$(OBJDUMP) -S $< >  ${ROOTDIR}/$@
+	@$(OBJDUMP) -S $< > $@
 
 $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 	@printf "${RED}Linking %s...${NC}\n" "$@"
-	@$(CC) $(CCOBJ) $(ASOBJ) -Wl,-Map=$(TARGET).map -N -o  ${ROOTDIR}/$@ $(LDFLAGS)
+	@$(CC) $(CCOBJ) $(ASOBJ) -Wl,-Map=$(TARGET).map -N -o $@ $(LDFLAGS)
+
 
 %.o: %.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
@@ -54,9 +60,9 @@ $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 
 clean:
 	@printf "Cleaning up\n"
-	@rm -rf src/*.o
-	@rm -rf src/lib/*.o
-	@rm -rf common/*.o
+	@rm -rf ${ROOTDIR}/../src/*.o
+	@rm -rf ${ROOTDIR}/../src/lib/*.o
+	@rm -rf ${ROOTDIR}/common/*.o
 	@rm -rf *.bin
 	@rm -rf *.map
 	@rm -rf *.lst
