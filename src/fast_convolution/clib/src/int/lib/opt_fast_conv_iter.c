@@ -4,11 +4,11 @@
 
 #include <stdlib.h>
 #include "convolution.h"
-#include "fast_conv.h"
+#include "fast_conv_iter.h"
 #include "optim.h"
 
 
-void fast_conv(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
+void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
                     const int *ma2, const int *mc2, const int *md,
                     int a1_size, int a2_size, int c1_size, int c2_size) {
 
