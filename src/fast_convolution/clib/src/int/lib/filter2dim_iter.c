@@ -3,8 +3,13 @@
 //
 
 #include <stdlib.h>
+#include "convolution.h"
 #include "fast_conv_iter.h"
 #include "filter2dim.h"
+
+#ifdef __riscv
+    #include <riscv-csr.h>
+#endif
 
 
 void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_size, int type_conv,

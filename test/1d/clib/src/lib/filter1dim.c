@@ -3,9 +3,13 @@
 //
 
 #include <stdlib.h>
+#include "convolution.h"
 #include "fast_conv.h"
 #include "filter1dim.h"
 
+#ifdef __riscv
+    #include <riscv-csr.h>
+#endif
 
 void filter1d(int *feature_out, const int *feature_in, int index, const int *mc, const int *ma,
               const int *mgg, int a_size, int c_size, int fin_size, int fout_size) {
