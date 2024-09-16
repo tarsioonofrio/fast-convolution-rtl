@@ -3,6 +3,8 @@
 #include "init.h"
 #include "build.h"
 #include "sim.h"
+#include "filter2dim.h"
+
 
 #ifdef __riscv
     #include <riscv-csr.h>

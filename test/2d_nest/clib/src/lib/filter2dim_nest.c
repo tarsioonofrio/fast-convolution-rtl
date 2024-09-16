@@ -22,9 +22,9 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
     int *ms = (int *) malloc((a1_size * a1_size) * sizeof(int));
     int *md = (int *) malloc((c1_size * c1_size) * sizeof(int));
 
-#ifdef __riscv
-    csr_write_mcountinhibit(0);
-#endif
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
 
     for (r = 0; r < fout_size; r = r + a1_size) {
         for (c = 0; c <= fout_size; c = c + a2_size) {
@@ -49,9 +49,9 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
         }
     }
 
-#ifdef __riscv
-    csr_write_mcountinhibit(-1);
-#endif
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
 
     free(ms);
     free(md);

@@ -188,7 +188,7 @@ def cmd_init(dimensions, in_len, out_len, w):
 
     dir_clib = dir_clib_data.parent.parent
     # # shutil.copytree(clib_package, dir_clib, dirs_exist_ok=True)
-    shutil.copy(clib_package / "Makefile", dir_clib / "Makefile")
+    # shutil.copy(clib_package / "Makefile", dir_clib / "Makefile")
     dir_clib.mkdir(parents=True, exist_ok=True)
     dir_clib_x86 = dir_clib / "x86"
     shutil.copytree(clib_package / "x86", dir_clib_x86, dirs_exist_ok=True)
@@ -279,11 +279,17 @@ def cmd_build_toom_cook1d(points):
         c_header(dir_clib_data / path, arr, {})
 
     shutil.copy(
-        clib_package / "src/int/filter1d.c", dir_clib_data.parent / "filter1d.c"
-    )
-    shutil.copy(
         clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
     )
+    shutil.copy(
+        clib_package / "src/int/filter1d.c", dir_clib_data.parent / "filter1d.c"
+    )
+
+    dir_lib = dir_clib_data.parent / "lib"
+    dir_lib.mkdir(parents=True, exist_ok=True)
+    libs = ["convolution.c", "util.c", "filter1dim.c"]
+    for f in libs:
+        shutil.copy(clib_package / "src/int/lib" / f, dir_lib)
 
     dir_lib_fast = dir_clib_data.parent / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
@@ -291,18 +297,10 @@ def cmd_build_toom_cook1d(points):
     for f in libs:
         shutil.copy(clib_package / "src/int/lib" / f, dir_lib_fast)
 
-    dir_lib = dir_clib_data.parent / "lib"
-    dir_lib.mkdir(parents=True, exist_ok=True)
-
-    libs = ["convolution.c", "util.c", "filter1dim.c"]
-    for f in libs:
-        shutil.copy(clib_package / "src/int/lib" / f, dir_lib)
-
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(len(list_points))
-    # dir_lib = dir_clib_data.parent / "lib_optim"
-    # dir_lib.mkdir(parents=True, exist_ok=True)
+
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
@@ -407,19 +405,31 @@ def cmd_build2d_bind_iterate():
     build_data = read_build_2d()
     write_bind("iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
-    shutil.copy(
-        clib_package / "src/int/filter2d-iter.c",
-        dir_clib_data.parent / "filter2d-iter.c",
-    )
+
     shutil.copy(
         clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
     )
-    libs = ["convolution.c", "util.c", "fast_conv_iter.c", "filter2dim_iter.c"]
+    shutil.copy(
+        clib_package / "src/int/filter2d-iter.c", dir_clib_data.parent / "filter2d-iter.c",
+    )
+
     dir_lib = dir_clib_data.parent / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
-
+    libs = ["convolution.c", "util.c", "filter2dim_iter.c"]
     for f in libs:
         shutil.copy(clib_package / "src/int/lib" / f, dir_lib)
+
+    dir_lib_fast = dir_clib_data.parent / "lib_fast"
+    dir_lib_fast.mkdir(parents=True, exist_ok=True)
+    libs = ["fast_conv_iter.c", "opt_fast_conv_iter.c"]
+    # for f in libs:
+    #     shutil.copy(clib_package / "src/int/lib" / f, dir_lib_fast)
+    shutil.copy(
+        clib_package / "src/int/lib/fast_conv_iter.c", dir_lib_fast / "fast_conv.c"
+    )
+    shutil.copy(
+        clib_package / "src/int/lib/opt_fast_conv_iter.c", dir_lib_fast / "opt_fast_conv.c",
+    )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     matmul_c2 = c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape)
@@ -431,7 +441,7 @@ def cmd_build2d_bind_iterate():
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
     hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0], "_iter")
-    dir_lib = dir_clib_data.parent / "lib_optim_iter"
+
     dir_lib.mkdir(parents=True, exist_ok=True)
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
@@ -491,24 +501,28 @@ def cmd_build2d_bind_nest():
         c_header(dir_clib_data / path, arr, {})
 
     shutil.copy(
-        clib_package / "src/int/filter2d-nest.c",
-        dir_clib_data.parent / "filter2d-nest.c",
-    )
-    shutil.copy(
         clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
     )
+    shutil.copy(
+        clib_package / "src/int/filter2d-nest.c", dir_clib_data.parent / "filter2d-nest.c",
+    )
 
-    libs = ["convolution.c", "util.c", "fast_conv.c", "filter2dim_nest.c"]
     dir_lib = dir_clib_data.parent / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
-
+    libs = ["convolution.c", "util.c", "filter2dim_nest.c"]
     for f in libs:
         shutil.copy(clib_package / "src/int/lib" / f, dir_lib)
+
+    dir_lib_fast = dir_clib_data.parent / "lib_fast"
+    dir_lib_fast.mkdir(parents=True, exist_ok=True)
+    libs = ["fast_conv.c", "opt_fast_conv.c"]
+    for f in libs:
+        shutil.copy(clib_package / "src/int/lib" / f, dir_lib_fast)
 
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(a.shape[0])
-    dir_lib = dir_clib_data.parent / "lib_optim"
+
     dir_lib.mkdir(parents=True, exist_ok=True)
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
