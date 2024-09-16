@@ -12,7 +12,7 @@ for F in ${FILES}; do
     NAME=$(basename ${F})
     CUT_NAME=$(dirname ${F})/cut-${NAME}
     cut -c 26- ${F} > ${CUT_NAME}
-    sed -i "1i${NAME}" ${CUT_NAME}
+    sed -i "1i${G}" ${CUT_NAME}
 done
 
 FILES_CUT=$(find . -type f -name "cut-report*.txt")

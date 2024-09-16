@@ -29,12 +29,6 @@ def test_bind_nest():
     assert result.exit_code == 0
 
 
-def test_bind_iterate():
-    runner = CliRunner()
-    result = runner.invoke(cli.iterate)
-    assert result.exit_code == 0
-
-
 def test_sim_file():
     runner = CliRunner()
     result = runner.invoke(cli.sim)

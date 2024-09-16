@@ -46,6 +46,6 @@ function run_riscv_verilator(){
     done
 }
 
-# run_riscv_verilator ${RISCV_DIR} 1
+run_riscv_verilator ${RISCV_DIR} 1
 run_riscv_verilator ${RISCV_DIR} 1 1
 
