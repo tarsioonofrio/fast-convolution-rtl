@@ -284,18 +284,25 @@ def cmd_build_toom_cook1d(points):
     shutil.copy(
         clib_package / "src/int/simple-conv.c", dir_clib_data.parent / "simple-conv.c"
     )
-    libs = ["convolution.c", "util.c", "fast_conv.c", "filter1dim.c"]
+
+    dir_lib_fast = dir_clib_data.parent / "lib_fast"
+    dir_lib_fast.mkdir(parents=True, exist_ok=True)
+    libs = ["fast_conv.c", "opt_fast_conv.c"]
+    for f in libs:
+        shutil.copy(clib_package / "src/int/lib" / f, dir_lib_fast)
+
     dir_lib = dir_clib_data.parent / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
 
+    libs = ["convolution.c", "util.c", "filter1dim.c"]
     for f in libs:
         shutil.copy(clib_package / "src/int/lib" / f, dir_lib)
 
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
     hadamart = c_hadamart_product_nollop(len(list_points))
-    dir_lib = dir_clib_data.parent / "lib_optim"
-    dir_lib.mkdir(parents=True, exist_ok=True)
+    # dir_lib = dir_clib_data.parent / "lib_optim"
+    # dir_lib.mkdir(parents=True, exist_ok=True)
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (

@@ -9,12 +9,11 @@ SIM_DIR=$1
 function run_riscv_verilator(){
     # Linha específica para edição
     LINE_NUM=47
-    local EXCLUDE=${2:-"0"}
     for FILE in "$SRC_DIR"/*.c; do
         cd ${1}
         # Extrai o nome do arquivo sem o caminho e sem a extensão
         FILE_NAME=$(basename "$FILE" .c)
-        if [ "$EXCLUDE" == "1" ] && [ "$FILE_NAME" == "simple-conv" ]; then
+        if [ -n "$2" ] && [ "$FILE_NAME" == "simple-conv" ]; then
             continue  # Pula para o próximo arquivo
         fi
         
@@ -23,8 +22,14 @@ function run_riscv_verilator(){
         module purge
         module load riscv64-elf/14.1.0
         make clean
-        make all TARGET=${FILE_NAME}
 
+        if [ -z "${3}" ]; then
+            make all TARGET=${FILE_NAME}
+            REPORT=report_${FILE_NAME}
+        else
+            make all TARGET=${FILE_NAME} OPT=opt
+            REPORT=report_opt_${FILE_NAME}
+        fi
 
         cd ${SIM_DIR}
         # Novo texto para substituição
@@ -37,11 +42,10 @@ function run_riscv_verilator(){
         source /opt/rh/gcc-toolset-13/enable
         make clean
         make
-        cp debug/Report.txt ${1}/report_${FILE_NAME}.txt
+        cp debug/Report.txt ${1}/${REPORT}.txt
     done
 }
 
-run_riscv_verilator ${RISCV_DIR}/makefile-normal
-run_riscv_verilator ${RISCV_DIR}/makefile-optim 1
-run_riscv_verilator ${RISCV_DIR}/makefile-optim-iter 1
+# run_riscv_verilator ${RISCV_DIR} 1
+run_riscv_verilator ${RISCV_DIR} 1 1
 
