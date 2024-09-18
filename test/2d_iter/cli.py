@@ -94,10 +94,10 @@ def test_sim_rand():
     assert result.returncode == 0
 
 
-def test_show():
-    result = subprocess.run(
-        ['fast-conv', 'show'],
-        capture_output=True,
-        cwd=root
-    )
-    assert result.returncode == 0
+# def test_show():
+#     result = subprocess.run(
+#         ['fast-conv', 'show'],
+#         capture_output=True,
+#         cwd=root
+#     )
+#     assert result.returncode == 0

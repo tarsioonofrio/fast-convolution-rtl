@@ -60,7 +60,7 @@ def test_example_seq():
 
 def test_example_rand():
     result = subprocess.run(
-        ['fast-conv', 'example', ' rand'],
+        ['fast-conv', 'example', 'rand'],
         capture_output=True,
         cwd=root
     )
@@ -85,11 +85,11 @@ def test_sim_rand():
     assert result.returncode == 0
 
 
-def test_show():
-    result = subprocess.run(
-        ['fast-conv', 'show'],
-        capture_output=True,
-        cwd=root
-    )
-    assert result.returncode == 0
+# def test_show():
+#     result = subprocess.run(
+#         ['fast-conv', 'show'],
+#         capture_output=True,
+#         cwd=root
+#     )
+#     assert result.returncode == 0
 

@@ -1,6 +1,7 @@
 import json
 import shutil
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import sympy as sy
@@ -17,23 +18,18 @@ from .naive import naive_convolve
 from .utils import (
     c_header,
     default_convolve,
-    # file_init,
-    # file_build,
-    # file_bind,
-    # file_quant,
-    # ctx.dir_build,
-    # ctx.dir_example,
-    # ctx.dir_sim,
-    # ctx.dir_clib_data,
-    # ctx.clib_package,
     c_matmul_shift_noloop,
     c_hadamart_product_nollop,
     c_matmul_shift_noloop_iter,
 )
 
 
-def read_init(ctx):
-    with open(ctx.file_init) as f:
+def package_clib():
+    return Path(__file__).resolve().parent / "clib"
+
+
+def read_init(repo):
+    with open(repo.file_init) as f:
         data = json.load(f)
     c = data["c"]
     a = data["a"]
@@ -42,8 +38,8 @@ def read_init(ctx):
     return dim, c, b, a
 
 
-def read_build_1d(ctx):
-    with open(ctx.file_build) as f:
+def read_build_1d(repo):
+    with open(repo.file_build) as f:
         data = json.load(f)
     p = data["p"]
     c = sy.Matrix(data["c"])
@@ -53,8 +49,8 @@ def read_build_1d(ctx):
     return p, c, b, a, q
 
 
-def read_build_2d(ctx):
-    with open(ctx.file_build) as f:
+def read_build_2d(repo):
+    with open(repo.file_build) as f:
         data = json.load(f)
     p = sy.Matrix(data["p"][0]), sy.Matrix(data["p"][1])
     c = sy.Matrix(data["c"][0]), sy.Matrix(data["c"][1])
@@ -64,18 +60,18 @@ def read_build_2d(ctx):
     return p, c, b, a, q
 
 
-def read_init_if_exists(ctx):
-    if ctx.file_init.exists() is False:
+def read_init_if_exists(repo):
+    if repo.file_init.exists() is False:
         return {}
-    with open(ctx.file_init) as f:
+    with open(repo.file_init) as f:
         data = json.load(f)
     return data
 
 
-def read_num_points(ctx):
-    if ctx.file_init.exists() is False:
+def read_num_points(repo):
+    if repo.file_init.exists() is False:
         return 1
-    dim, c, b, a = read_init(ctx)
+    dim, c, b, a = read_init(repo)
     return c
 
 
@@ -109,10 +105,10 @@ def default_toom_cook_points2d(size0, axis=None):
     return p
 
 
-def read_quant_if_exists(ctx):
-    if ctx.file_quant.exists() is False:
+def read_quant_if_exists(repo):
+    if repo.file_quant.exists() is False:
         return {}
-    with open(ctx.file_quant) as f:
+    with open(repo.file_quant) as f:
         data = json.load(f)
     return data
 
@@ -121,22 +117,22 @@ def now():
     return datetime.now().strftime("%Y%m%d-%H%M")
 
 
-def write_bind(ctx, func, params=None):
+def write_bind(repo, func, params=None):
     data = {"func": func, "params": params}
-    with open(ctx.file_bind, "w", encoding="utf-8") as f:
+    with open(repo.file_bind, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def read_bind_if_exists(ctx):
-    if ctx.file_bind.exists() is False:
+def read_bind_if_exists(repo):
+    if repo.file_bind.exists() is False:
         return {}
-    with open(ctx.file_bind) as f:
+    with open(repo.file_bind) as f:
         data = json.load(f)
     return data
 
 
-def cmd_init(ctx, dimensions, in_len, out_len, w):
-    if ctx.file_init.exists():
+def cmd_init(repo, dimensions, in_len, out_len, w):
+    if repo.file_init.exists():
         return "init.json existis, fconv model already initialized"
     in_arr = np.array(in_len)
     w_arr = np.array(w)
@@ -162,12 +158,12 @@ def cmd_init(ctx, dimensions, in_len, out_len, w):
         "a": a.tolist(),
         "b": b.tolist(),
     }
-    ctx.file_init.parent.mkdir(parents=True, exist_ok=True)
-    with open(ctx.file_init, "w", encoding="utf-8") as f:
+    repo.file_init.parent.mkdir(parents=True, exist_ok=True)
+    with open(repo.file_init, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    init_path = ctx.dir_clib_data / "init.h"
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    init_path = repo.dir_clib_data / "init.h"
     if dimensions == 1:
         dict_defs = {
             "A_SIZE": a,
@@ -186,34 +182,34 @@ def cmd_init(ctx, dimensions, in_len, out_len, w):
         }
         c_header(init_path, [], dict_defs)
 
-    dir_clib = ctx.dir_clib_data.parent.parent
-    # # shutil.copytree(ctx.clib_package, dir_clib, dirs_exist_ok=True)
-    # shutil.copy(ctx.clib_package / "Makefile", dir_clib / "Makefile")
+    dir_clib = repo.dir_clib_data.parent.parent
+    # # shutil.copytree(package_clib(), dir_clib, dirs_exist_ok=True)
+    # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
     dir_clib.mkdir(parents=True, exist_ok=True)
     dir_clib_x86 = dir_clib / "x86"
-    shutil.copytree(ctx.ctx.clib_package / "x86", dir_clib_x86, dirs_exist_ok=True)
+    shutil.copytree(package_clib() / "x86", dir_clib_x86, dirs_exist_ok=True)
     dir_clib_riscv = dir_clib / "riscv"
-    shutil.copytree(ctx.ctx.clib_package / "riscv", dir_clib_riscv, dirs_exist_ok=True)
+    shutil.copytree(package_clib() / "riscv", dir_clib_riscv, dirs_exist_ok=True)
     dir_clib_lib = dir_clib / "src/lib/include"
-    shutil.copytree(ctx.ctx.clib_package / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True)
+    shutil.copytree(package_clib() / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True)
 
 
-def cmd_show(ctx, init, build, quant_):
-    init_data = read_init_if_exists(ctx)
-    if ctx.file_init.exists():
+def cmd_show(repo, init, build, quant_):
+    init_data = read_init_if_exists(repo)
+    if repo.file_init.exists():
         if init:
-            return read_init_if_exists(ctx)
-        if build and ctx.file_build.exists():
+            return read_init_if_exists(repo)
+        if build and repo.file_build.exists():
             if init_data["dim"] == 1:
-                return read_build_1d(ctx)
+                return read_build_1d(repo)
             elif init_data["dim"] == 2:
-                return read_build_2d(ctx)
-        if quant_ and ctx.file_quant.exists():
-            return read_quant_if_exists(ctx)
+                return read_build_2d(repo)
+        if quant_ and repo.file_quant.exists():
+            return read_quant_if_exists(repo)
 
 
-def cmd_build_toom_cook1d(ctx, points):
-    dim, c_len, b_len, a_len = read_init(ctx)
+def cmd_build_toom_cook1d(repo, points):
+    dim, c_len, b_len, a_len = read_init(repo)
     # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == "inf" else int(p) for p in points]
 
@@ -231,11 +227,11 @@ def cmd_build_toom_cook1d(ctx, points):
         "b": np.array(b, dtype=int).tolist(),
         "a": np.array(a, dtype=int).tolist(),
     }
-    with open(ctx.file_build, "w", encoding="utf-8") as f:
+    with open(repo.file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    ctx.ctx.dir_build.mkdir(parents=True, exist_ok=True)
-    path = ctx.ctx.dir_build / "convolution"
+    repo.dir_build.mkdir(parents=True, exist_ok=True)
+    path = repo.dir_build / "convolution"
     latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
     a_sum = fast.count_sums(a)
     c_sum = fast.count_sums(c)
@@ -255,7 +251,7 @@ def cmd_build_toom_cook1d(ctx, points):
     fast.write_csa_parcels(csa_parcels, path / "csa")
     header_csa = {f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()}
 
-    ctx.ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
 
     csa_arr = [
         {
@@ -265,7 +261,7 @@ def cmd_build_toom_cook1d(ctx, points):
         }
         for (n, s), lst in csa_parcels.items()
     ]
-    c_header(ctx.ctx.dir_clib_data / "build_shift.h", csa_arr, header_csa)
+    c_header(repo.dir_clib_data / "build_shift.h", csa_arr, header_csa)
 
     # TODO export build_float.h with data in float
     list_array = [
@@ -276,26 +272,26 @@ def cmd_build_toom_cook1d(ctx, points):
     ]
     for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(ctx.ctx.dir_clib_data / path, arr, {})
+        c_header(repo.dir_clib_data / path, arr, {})
 
     shutil.copy(
-        ctx.ctx.clib_package / "src/int/simple-conv.c", ctx.ctx.dir_clib_data.parent / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib_data.parent / "simple-conv.c"
     )
     shutil.copy(
-        ctx.ctx.clib_package / "src/int/filter1d.c", ctx.ctx.dir_clib_data.parent / "filter1d.c"
+        package_clib() / "src/int/filter1d.c", repo.dir_clib_data.parent / "filter1d.c"
     )
 
-    dir_lib = ctx.ctx.dir_clib_data.parent / "lib"
+    dir_lib = repo.dir_clib_data.parent / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter1dim.c"]
     for f in libs:
-        shutil.copy(ctx.ctx.clib_package / "src/int/lib" / f, dir_lib)
+        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = ctx.ctx.dir_clib_data.parent / "lib_fast"
+    dir_lib_fast = repo.dir_clib_data.parent / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv.c", "opt_fast_conv.c"]
     for f in libs:
-        shutil.copy(ctx.ctx.clib_package / "src/int/lib" / f, dir_lib_fast)
+        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
 
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
@@ -322,13 +318,13 @@ def cmd_build_toom_cook1d(ctx, points):
     with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
     # makefile_str = makefile(["simple-conv", "filter1d"])
-    # dir_clib = ctx.dir_clib_data.parent.parent
+    # dir_clib = repo.dir_clib_data.parent.parent
     # with open(dir_clib / "riscv/Makefile", "w") as f:
     #     f.write(makefile_str)
 
 
-def cmd_build_toom_cook2d(ctx, points1d, points2d):
-    dim, c_len, b_len, a_len = read_init(ctx)
+def cmd_build_toom_cook2d(repo, points1d, points2d):
+    dim, c_len, b_len, a_len = read_init(repo)
     # at_len = ct_len + b_len - 1
     list_points1d = [np.inf if p == "inf" else int(p) for p in points1d]
     list_points2d = [np.inf if p == "inf" else int(p) for p in points2d]
@@ -356,13 +352,13 @@ def cmd_build_toom_cook2d(ctx, points1d, points2d):
         "b": [np.array(b1, dtype=int).tolist(), np.array(b2, dtype=int).tolist()],
         "a": [np.array(a1, dtype=int).tolist(), np.array(a2, dtype=int).tolist()],
     }
-    with open(ctx.file_build, "w", encoding="utf-8") as f:
+    with open(repo.file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    ctx.ctx.dir_build.mkdir(parents=True, exist_ok=True)
-    path1 = ctx.ctx.dir_build / "convolution-axis1"
+    repo.dir_build.mkdir(parents=True, exist_ok=True)
+    path1 = repo.dir_build / "convolution-axis1"
     latex.build_1d(b1, c1, a1, g1, di1, q1, path1)
-    path2 = ctx.ctx.dir_build / "convolution-axis2"
+    path2 = repo.dir_build / "convolution-axis2"
     latex.build_1d(b2, c2, a2, g2, di2, q2, path2)
 
     a1_sum = fast.count_sums(a1)
@@ -376,7 +372,7 @@ def cmd_build_toom_cook2d(ctx, points1d, points2d):
         f"C: {c1_sum + c2_sum}\n"
         f"Total: {a1_sum + a2_sum + c1_sum + c2_sum}\n"
     )
-    path = ctx.ctx.dir_build / "convolution-axis"
+    path = repo.dir_build / "convolution-axis"
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
     # TODO export build_float.h with data in float
@@ -392,43 +388,43 @@ def cmd_build_toom_cook2d(ctx, points1d, points2d):
         {"name": "ma2", "value": a2},
         {"name": "mq2", "value": qr2},
     ]
-    ctx.ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(ctx.dir_clib_data / path, arr, {})
+        c_header(repo.dir_clib_data / path, arr, {})
 
 
-def cmd_build2d_bind_iterate(ctx):
-    path = ctx.dir_build / "bind-iterated"
+def cmd_build2d_bind_iterate(repo):
+    path = repo.dir_build / "bind-iterated"
     path.mkdir(parents=True, exist_ok=True)
-    init_data = read_init(ctx)
-    build_data = read_build_2d(ctx)
-    write_bind(ctx, "iterate")
+    init_data = read_init(repo)
+    build_data = read_build_2d(repo)
+    write_bind(repo, "iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
 
     shutil.copy(
-        ctx.clib_package / "src/int/simple-conv.c", ctx.dir_clib_data.parent / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib_data.parent / "simple-conv.c"
     )
     shutil.copy(
-        ctx.clib_package / "src/int/filter2d-iter.c", ctx.dir_clib_data.parent / "filter2d-iter.c",
+        package_clib() / "src/int/filter2d-iter.c", repo.dir_clib_data.parent / "filter2d-iter.c",
     )
 
-    dir_lib = ctx.dir_clib_data.parent / "lib"
+    dir_lib = repo.dir_clib_data.parent / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter2dim_iter.c"]
     for f in libs:
-        shutil.copy(ctx.clib_package / "src/int/lib" / f, dir_lib)
+        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = ctx.dir_clib_data.parent / "lib_fast"
+    dir_lib_fast = repo.dir_clib_data.parent / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv_iter.c", "opt_fast_conv_iter.c"]
     # for f in libs:
-    #     shutil.copy(ctx.clib_package / "src/int/lib" / f, dir_lib_fast)
+    #     shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
     shutil.copy(
-        ctx.clib_package / "src/int/lib/fast_conv_iter.c", dir_lib_fast / "fast_conv.c"
+        package_clib() / "src/int/lib/fast_conv_iter.c", dir_lib_fast / "fast_conv.c"
     )
     shutil.copy(
-        ctx.clib_package / "src/int/lib/opt_fast_conv_iter.c", dir_lib_fast / "opt_fast_conv.c",
+        package_clib() / "src/int/lib/opt_fast_conv_iter.c", dir_lib_fast / "opt_fast_conv.c",
     )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
@@ -468,17 +464,17 @@ def cmd_build2d_bind_iterate(ctx):
     with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
     # makefile_str = makefile(["simple-conv", "filter2d-iter"])
-    # dir_clib = ctx.dir_clib_data.parent.parent
+    # dir_clib = repo.dir_clib_data.parent.parent
     # with open(dir_clib / "riscv/Makefile", "w") as f:
     #     f.write(makefile_str)
 
 
-def cmd_build2d_bind_nest(ctx):
-    path = ctx.dir_build / "bind-nest"
+def cmd_build2d_bind_nest(repo):
+    path = repo.dir_build / "bind-nest"
     path.mkdir(parents=True, exist_ok=True)
-    init_data = read_init(ctx)
-    build_data = read_build_2d(ctx)
-    write_bind(ctx, "nest")
+    init_data = read_init(repo)
+    build_data = read_build_2d(repo)
+    write_bind(repo, "nest")
     latex.build_2d_bind_nest(init_data, build_data, path)
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
@@ -495,29 +491,29 @@ def cmd_build2d_bind_nest(ctx):
         {"name": "ma_nest", "value": a.T},
         {"name": "mc_nest", "value": c.T},
     ]
-    ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     for path, typ in zip(["bind_nest.h", "bind_nest_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(ctx.dir_clib_data / path, arr, {})
+        c_header(repo.dir_clib_data / path, arr, {})
 
     shutil.copy(
-        ctx.clib_package / "src/int/simple-conv.c", ctx.dir_clib_data.parent / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib_data.parent / "simple-conv.c"
     )
     shutil.copy(
-        ctx.clib_package / "src/int/filter2d-nest.c", ctx.dir_clib_data.parent / "filter2d-nest.c",
+        package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_data.parent / "filter2d-nest.c",
     )
 
-    dir_lib = ctx.dir_clib_data.parent / "lib"
+    dir_lib = repo.dir_clib_data.parent / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter2dim_nest.c"]
     for f in libs:
-        shutil.copy(ctx.clib_package / "src/int/lib" / f, dir_lib)
+        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = ctx.dir_clib_data.parent / "lib_fast"
+    dir_lib_fast = repo.dir_clib_data.parent / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv.c", "opt_fast_conv.c"]
     for f in libs:
-        shutil.copy(ctx.clib_package / "src/int/lib" / f, dir_lib_fast)
+        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
 
     matmul_a = c_matmul_shift_noloop(a.T, "a")
     matmul_c = c_matmul_shift_noloop(c.T, "c")
@@ -545,24 +541,24 @@ def cmd_build2d_bind_nest(ctx):
     with open(dir_lib / "include/optim.h", "w") as f:
         f.write(c_head)
     # makefile_str = makefile(["simple-conv", "filter2d-nest"])
-    # dir_clib = ctx.dir_clib_data.parent.parent
+    # dir_clib = repo.dir_clib_data.parent.parent
     # with open(dir_clib / "riscv/Makefile", "w") as f:
     #     f.write(makefile_str)
 
 
-def cmd_quant_none(ctx):
-    ctx.file_quant.unlink(missing_ok=True)
+def cmd_quant_none(repo):
+    repo.file_quant.unlink(missing_ok=True)
 
 
-def cmd_quant_shift(ctx, bits):
+def cmd_quant_shift(repo, bits):
     data = {"func": "shift", "params": {"bits": bits}}
-    with open(ctx.file_quant, "w", encoding="utf-8") as f:
+    with open(repo.file_quant, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def cmd_sim_file(ctx, feature, weight):
-    dim, c_len, b_len, a_len = read_init(ctx)
-    quant_data = read_quant_if_exists(ctx)
+def cmd_sim_file(repo, feature, weight):
+    dim, c_len, b_len, a_len = read_init(repo)
+    quant_data = read_quant_if_exists(repo)
     with open(feature) as f:
         image = Image.open(feature).convert("L")
         feat_arr = np.array(image)
@@ -579,7 +575,7 @@ def cmd_sim_file(ctx, feature, weight):
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
 
     if dim == 1:
-        points, c, b, a, q = read_build_1d(ctx)
+        points, c, b, a, q = read_build_1d(repo)
         # Corrected error in fast 1d conv
         # between C and python in quantized data
         # In python the data is right shifted and after that is summed
@@ -639,7 +635,7 @@ def cmd_sim_file(ctx, feature, weight):
         count_mult = count_iter * len(points) * len(fast_conv)
 
     elif dim == 2:
-        points, c, b, a, q = read_build_2d(ctx)
+        points, c, b, a, q = read_build_2d(repo)
         conv_func = (
             fast.conv2d if len(quant_data) == 0 else quant.select_conv2d(quant_data)
         )
@@ -678,7 +674,7 @@ def cmd_sim_file(ctx, feature, weight):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    path = ctx.dir_sim / f"file-{now()}"
+    path = repo.dir_sim / f"file-{now()}"
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
@@ -688,7 +684,7 @@ def cmd_sim_file(ctx, feature, weight):
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
 
-    ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
@@ -711,13 +707,13 @@ def cmd_sim_file(ctx, feature, weight):
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(ctx.dir_clib_data / path, arr, dict_def)
+        c_header(repo.dir_clib_data / path, arr, dict_def)
     return text
 
 
-def cmd_sim_random(ctx, feature_random, weight_random, image_side, loop):
-    dim, c_len, b_len, a_len = read_init(ctx)
-    quant_data = read_quant_if_exists(ctx)
+def cmd_sim_random(repo, feature_random, weight_random, image_side, loop):
+    dim, c_len, b_len, a_len = read_init(repo)
+    quant_data = read_quant_if_exists(repo)
     feat = np.random.randint(feature_random[0], feature_random[1], size=image_side**2)
     feat_arr = feat.reshape(image_side, image_side)
 
@@ -736,7 +732,7 @@ def cmd_sim_random(ctx, feature_random, weight_random, image_side, loop):
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
 
     if dim == 1:
-        points, c, b, a, q = read_build_1d(ctx)
+        points, c, b, a, q = read_build_1d(repo)
         # Corrected error in fast 1d conv
         # between C and python in quantized data
         # In python the data is right shifted and after that is summed
@@ -795,7 +791,7 @@ def cmd_sim_random(ctx, feature_random, weight_random, image_side, loop):
         count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_iter * len(points) * len(fast_conv)
     elif dim == 2:
-        points, c, b, a, q = read_build_2d(ctx)
+        points, c, b, a, q = read_build_2d(repo)
         conv_func = (
             fast.conv2d if len(quant_data) == 0 else quant.select_conv2d(quant_data)
         )
@@ -835,7 +831,7 @@ def cmd_sim_random(ctx, feature_random, weight_random, image_side, loop):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    path = ctx.dir_sim / f"random-{now()}"
+    path = repo.dir_sim / f"random-{now()}"
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
@@ -845,7 +841,7 @@ def cmd_sim_random(ctx, feature_random, weight_random, image_side, loop):
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
 
-    ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_arr},
         {"name": "weight_gg", "value": bg},
@@ -868,13 +864,13 @@ def cmd_sim_random(ctx, feature_random, weight_random, image_side, loop):
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(ctx.dir_clib_data / path, arr, dict_def)
+        c_header(repo.dir_clib_data / path, arr, dict_def)
     return text
 
 
-def cmd_example_random(ctx, feature, weight):
-    dim, c_len, b_len, a_len = read_init(ctx)
-    ctx.ctx.dir_example.mkdir(parents=True, exist_ok=True)
+def cmd_example_random(repo, feature, weight):
+    dim, c_len, b_len, a_len = read_init(repo)
+    repo.dir_example.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
         f = np.random.randint(feature[0], feature[1], size=c_len)
@@ -890,9 +886,9 @@ def cmd_example_random(ctx, feature, weight):
         g = sy.Matrix(w)
 
     if dim == 1:
-        points, c, b, a, q = read_build_1d(ctx)
-        latex.example_1d(b, c, a, g, d, q, ctx.ctx.dir_example / f"example-random-{now()}")
-        ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+        points, c, b, a, q = read_build_1d(repo)
+        latex.example_1d(b, c, a, g, d, q, repo.dir_example / f"example-random-{now()}")
+        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
             {"name": "md", "type": "int", "value": d},
@@ -901,25 +897,25 @@ def cmd_example_random(ctx, feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(ctx.dir_clib_data / path, arr, {})
+            c_header(repo.dir_clib_data / path, arr, {})
 
     elif dim == 2:
-        data_bind = read_bind_if_exists(ctx)
-        init_data = read_init(ctx)
-        build_data = read_build_2d(ctx)
+        data_bind = read_bind_if_exists(repo)
+        init_data = read_init(repo)
+        build_data = read_build_2d(repo)
 
         if data_bind["func"] == "iterate":
             latex.example_2d_bind_iterate(
-                init_data, build_data, d, g, ctx.dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(
-                init_data, build_data, d, g, ctx.dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
             )
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
-        ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         list_array = [
             {"name": "md", "value": d},
             {"name": "mg", "value": g},
@@ -927,12 +923,12 @@ def cmd_example_random(ctx, feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(ctx.dir_clib_data / path, arr, {})
+            c_header(repo.dir_clib_data / path, arr, {})
 
 
-def cmd_example_sequential(ctx, feature, weight):
-    dim, c_len, b_len, a_len = read_init(ctx)
-    ctx.dir_example.mkdir(parents=True, exist_ok=True)
+def cmd_example_sequential(repo, feature, weight):
+    dim, c_len, b_len, a_len = read_init(repo)
+    repo.dir_example.mkdir(parents=True, exist_ok=True)
 
     if dim == 1:
         f = np.arange(feature, feature + c_len)
@@ -950,9 +946,9 @@ def cmd_example_sequential(ctx, feature, weight):
         s = default_convolve(d, g)
 
     if dim == 1:
-        points, c, b, a, q = read_build_1d(ctx)
-        latex.example_1d(b, c, a, g, d, q, ctx.dir_example / f"example-seq-{now()}")
-        ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+        points, c, b, a, q = read_build_1d(repo)
+        latex.example_1d(b, c, a, g, d, q, repo.dir_example / f"example-seq-{now()}")
+        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
             {"name": "md", "value": d},
@@ -962,24 +958,24 @@ def cmd_example_sequential(ctx, feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(ctx.dir_clib_data / path, arr, {})
+            c_header(repo.dir_clib_data / path, arr, {})
 
     elif dim == 2:
-        data_bind = read_bind_if_exists(ctx)
-        init_data = read_init(ctx)
-        build_data = read_build_2d(ctx)
+        data_bind = read_bind_if_exists(repo)
+        init_data = read_init(repo)
+        build_data = read_build_2d(repo)
         if data_bind["func"] == "iterate":
             latex.example_2d_bind_iterate(
-                init_data, build_data, d, g, ctx.dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
             )
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(
-                init_data, build_data, d, g, ctx.dir_example / f"example-seq-{now()}"
+                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
             )
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
-        ctx.dir_clib_data.mkdir(parents=True, exist_ok=True)
+        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         list_array = [
             {"name": "md", "value": d},
             {"name": "mg", "value": g},
@@ -988,4 +984,4 @@ def cmd_example_sequential(ctx, feature, weight):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(ctx.dir_clib_data / path, arr, {})
+            c_header(repo.dir_clib_data / path, arr, {})
