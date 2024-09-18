@@ -212,8 +212,10 @@ def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
     return {"header": f"{header};\n", "function": function}
 
 
-def c_hadamart_product_nollop(size, suffix=""):
-    lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(size)]
+def c_hadamart_product_nollop(out_size, mtx, suffix=""):
+    # lst_zeros = np.array(mtx).reshape(-1).tolist()
+    # lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(out_size) if lst_zeros[i] != 0]
+    lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(out_size)]
     lst_str = "\n".join(lst)
     header = f"void hadamart_product_noloop{suffix}(int *out, const int *in1, const int *in2)"
     function = f"{header}{{\n" f"{lst_str}\n" "}\n"

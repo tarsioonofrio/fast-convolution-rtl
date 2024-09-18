@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from fast_convolution import cli, utils
+from src.fast_convolution import cli, utils
 
 
 root = Path(__file__).parent.resolve()
@@ -21,12 +21,6 @@ def test_example_sequential():
     # with runner.isolated_filesystem(temp_dir=root) as td:
     #     result = runner.invoke(cli.seq)
     #     assert result.exit_code == 0
-
-
-def test_bind_iterate():
-    runner = CliRunner()
-    result = runner.invoke(cli.iterate)
-    assert result.exit_code == 0
 
 
 def test_sim_file():

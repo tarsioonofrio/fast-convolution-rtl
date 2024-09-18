@@ -19,6 +19,5 @@ void hadamart_product_noloop(int *out, const int *in1, const int *in2){
 	out[1] = in1[1] * in2[1];
 	out[2] = in1[2] * in2[2];
 	out[3] = in1[3] * in2[3];
-	out[4] = in1[4] * in2[4];
 }
 

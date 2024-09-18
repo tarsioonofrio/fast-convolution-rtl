@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from fast_convolution import cli, utils
+from src.fast_convolution import cli, utils
 
 
 root = Path(__file__).parent.resolve()

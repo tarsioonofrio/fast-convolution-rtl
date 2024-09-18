@@ -3,7 +3,6 @@ NC   =\033[0m # No Color
 
 
 TARGET   ?= simple-conv
-GCCOPT   ?= O2
 ARCH     ?= rv32im_zicsr
 MEM_SIZE ?= 65536
 
@@ -19,7 +18,7 @@ LIBOPT  = $(SRCDIR)/lib_fast/$(if $(OPT),$(OPT)_fast_conv.c,fast_conv.c)
 INCDIR  = $(LIBDIR)/include
 HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMMDIR}/include/*.h)
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -$(GCCOPT) -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I${COMMDIR}/include
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Os -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I${COMMDIR}/include
 LDFLAGS = --specs=nano.specs -T ${COMMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
 
 CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard ${COMMDIR}/*.c) $(LIBOPT)

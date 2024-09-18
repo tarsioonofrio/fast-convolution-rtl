@@ -1,0 +1,5 @@
+Total multiplications: 20
+Sums:
+A: 66
+C: 136
+Total: 202
