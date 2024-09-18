@@ -2,29 +2,17 @@
 
 """Tests for `fast_convolution` package."""
 
-import pytest
 import shutil
 import subprocess
 from pathlib import Path
 
-
 root = Path(__file__).parent.resolve()
-tmp_dir = [
-    root / "build",
-    root / "clib",
-    root / "config",
-    root / "example",
-    root / "sim",
-]
-# name_file = Path(__file__).stem
-# root = root / name_file
 
 
 def test_init():
-    for d in tmp_dir:
-        shutil.rmtree(d, ignore_errors=True)
+    shutil.rmtree(root / "repo", ignore_errors=True)
     result = subprocess.run(
-        ['fast-conv', 'init', '1d', '-o', '3'],
+        ['fast-conv', '-p', './repo', '-p', './repo', 'init', '1d', '-o', '3'],
         capture_output=True,
         cwd=root
     )
@@ -33,7 +21,7 @@ def test_init():
 
 def test_build_toomcook():
     result = subprocess.run(
-        ['fast-conv', 'build', '1d', 'toom-cook'],
+        ['fast-conv', '-p', './repo', 'build', '1d', 'toom-cook'],
         capture_output=True,
         cwd=root
     )
@@ -42,16 +30,7 @@ def test_build_toomcook():
 
 def test_quant_shift():
     result = subprocess.run(
-        ['fast-conv', 'quant', 'shift', '-b', '4'],
-        capture_output=True,
-        cwd=root
-    )
-    assert result.returncode == 0
-
-
-def test_example_seq():
-    result = subprocess.run(
-        ['fast-conv', 'example', 'seq'],
+        ['fast-conv', '-p', './repo', 'quant', 'shift', '-b', '4'],
         capture_output=True,
         cwd=root
     )
@@ -60,16 +39,16 @@ def test_example_seq():
 
 def test_example_rand():
     result = subprocess.run(
-        ['fast-conv', 'example', 'rand'],
+        ['fast-conv', '-p', './repo', 'example', 'rand'],
         capture_output=True,
         cwd=root
     )
     assert result.returncode == 0
 
 
-def test_sim_file():
+def test_example_seq():
     result = subprocess.run(
-        ['fast-conv', 'sim', 'file'],
+        ['fast-conv', '-p', './repo', 'example', 'seq'],
         capture_output=True,
         cwd=root
     )
@@ -78,7 +57,16 @@ def test_sim_file():
 
 def test_sim_rand():
     result = subprocess.run(
-        ['fast-conv', 'sim', ' rand'],
+        ['fast-conv', '-p', './repo', 'sim', ' rand'],
+        capture_output=True,
+        cwd=root
+    )
+    assert result.returncode == 0
+
+
+def test_sim_file():
+    result = subprocess.run(
+        ['fast-conv', '-p', './repo', 'sim', 'file'],
         capture_output=True,
         cwd=root
     )
@@ -87,7 +75,7 @@ def test_sim_rand():
 
 # def test_show():
 #     result = subprocess.run(
-#         ['fast-conv', 'show'],
+#         ['fast-conv', '-p', './repo', 'show'],
 #         capture_output=True,
 #         cwd=root
 #     )

@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -13,6 +14,7 @@ with open(root / "cmd.json") as f:
 
 
 def test_init1d():
+    shutil.rmtree(root / "repo", ignore_errors=True)
     runner = CliRunner()
     result = runner.invoke(cli.main, cmd_dict["init"])
     assert result.exit_code == 0
