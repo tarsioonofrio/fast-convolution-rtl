@@ -6,7 +6,7 @@ import sympy as sy
 from PIL import Image, ImageOps
 from scipy import signal
 
-from fast_convolution import fast
+from . import fast
 
 
 def plot_pdf(

@@ -198,8 +198,8 @@ def cmd_init(ctx, dimensions, in_len, out_len, w):
     shutil.copytree(ctx.ctx.clib_package / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True)
 
 
-def cmd_show(ctx, init, build, quant_, path):
-    init_data = read_init_if_exists(path)
+def cmd_show(ctx, init, build, quant_):
+    init_data = read_init_if_exists(ctx)
     if ctx.file_init.exists():
         if init:
             return read_init_if_exists(ctx)

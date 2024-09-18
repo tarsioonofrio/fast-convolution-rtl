@@ -11,6 +11,8 @@ from .commands import (
     default_toom_cook_points1d, default_toom_cook_points2d,
 )
 
+example_path = Path(__file__).resolve().parent.parent.parent / "images"
+
 
 class Repo(object):
     def __init__(self, path=None, debug=False):
@@ -100,7 +102,7 @@ def build_d1(): pass
 @click.option(
     '--points', '-p', type=str,
     default=default_toom_cook_points1d(init_data.get("c", 1)),
-    nargs=num_points1d(init_data.get("c", 1)), show_default=True,
+    nargs=num_points1d(read_init_if_exists(ctx).get("c", 1)), show_default=True,
     help="List of points to be interpolate for Toom-Cook."
 )
 @click.pass_context
@@ -160,14 +162,14 @@ def bind(): pass
 
 @bind.command(name="iter", help="Iterated multidimensional bind")
 @click.pass_context
-def iterate():
+def iterate(ctx):
     from .commands import cmd_build2d_bind_iterate
     cmd_build2d_bind_iterate(ctx)
 
 
 @bind.command(help="Nested multidimensional bind")
 @click.pass_context
-def nest():
+def nest(ctx):
     from .commands import cmd_build2d_bind_nest
     cmd_build2d_bind_nest(ctx)
 
@@ -186,7 +188,7 @@ def quant(): pass
 
 @quant.command(help="Set quantization to none", name="none")
 @click.pass_context
-def no_quant():
+def no_quant(ctx):
     from .commands import cmd_quant_none
     cmd_quant_none(ctx)
 
@@ -197,7 +199,7 @@ def no_quant():
     help=("Number of bits to be shifted.")
 )
 @click.pass_context
-def shift(bits):
+def shift(ctx, bits):
     from .commands import cmd_quant_shift
     cmd_quant_shift(ctx, bits)
     click.echo("Shift quantization")
@@ -221,7 +223,7 @@ def sim(): pass
 # @click.option("--mse", flag_value=True, help="Mean squared error")
 # @click.option("--rmse", flag_value=True, help="Root mean squared error")
 # @click.option("--r2", flag_value=True, help="R2", default=True)
-def file(feature, weight):
+def file(ctx, feature, weight):
     from .commands import cmd_sim_file
     text = cmd_sim_file(ctx, feature, weight)
     click.echo(text)
@@ -249,7 +251,7 @@ def file(feature, weight):
     help=("Minimal and maximal value of weight random data.")
 )
 @click.pass_context
-def rand(feature, weight, image_side, loop):
+def rand(ctx, feature, weight, image_side, loop):
     from .commands import cmd_sim_random
     text = cmd_sim_random(ctx, feature, weight, image_side, loop)
     click.echo(text)
@@ -269,7 +271,7 @@ def example(): pass
     help=("Minimal and maximal value of weight random data.")
 )
 @click.pass_context
-def rand(feature, weight):
+def rand(ctx, feature, weight):
     from .commands import cmd_example_random
     cmd_example_random(ctx, feature, weight)
     click.echo("Random example")
@@ -285,7 +287,7 @@ def rand(feature, weight):
     help=("Minimal value of sequential weight data.")
 )
 @click.pass_context
-def seq(feature, weight):
+def seq(ctx, feature, weight):
     from .commands import cmd_example_sequential
     cmd_example_sequential(ctx, feature, weight)
     click.echo("Sequential example")
