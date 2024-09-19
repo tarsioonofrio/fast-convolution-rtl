@@ -34,7 +34,8 @@ class Repo(object):
         self.dir_example = self.root / "example"
         self.dir_sim = self.root / "sim"
         self.dir_clib = self.root / "clib"
-        self.dir_clib_data = self.dir_clib / "data"
+        self.dir_clib_src = self.dir_clib / "src"
+        self.dir_clib_data = self.dir_clib_src / "data"
 
 
 @click.group()

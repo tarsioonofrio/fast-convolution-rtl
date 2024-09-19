@@ -182,15 +182,14 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
         }
         c_header(init_path, [], dict_defs)
 
-    dir_clib = repo.dir_clib_data.parent.parent
     # # shutil.copytree(package_clib(), dir_clib, dirs_exist_ok=True)
     # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
-    dir_clib.mkdir(parents=True, exist_ok=True)
-    dir_clib_x86 = dir_clib / "x86"
+    repo.dir_clib.mkdir(parents=True, exist_ok=True)
+    dir_clib_x86 = repo.dir_clib / "x86"
     shutil.copytree(package_clib() / "x86", dir_clib_x86, dirs_exist_ok=True)
-    dir_clib_riscv = dir_clib / "riscv"
+    dir_clib_riscv = repo.dir_clib / "riscv"
     shutil.copytree(package_clib() / "riscv", dir_clib_riscv, dirs_exist_ok=True)
-    dir_clib_lib = dir_clib / "src/lib/include"
+    dir_clib_lib = repo.dir_clib_src / "lib/include"
     shutil.copytree(package_clib() / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True)
 
 
@@ -275,19 +274,19 @@ def cmd_build_toom_cook1d(repo, points):
         c_header(repo.dir_clib_data / path, arr, {})
 
     shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib_data.parent / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter1d.c", repo.dir_clib_data.parent / "filter1d.c"
+        package_clib() / "src/int/filter1d.c", repo.dir_clib_src / "filter1d.c"
     )
 
-    dir_lib = repo.dir_clib_data.parent / "lib"
+    dir_lib = repo.dir_clib_src / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter1dim.c"]
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = repo.dir_clib_data.parent / "lib_fast"
+    dir_lib_fast = repo.dir_clib_src / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv.c", "opt_fast_conv.c"]
     for f in libs:
@@ -403,19 +402,19 @@ def cmd_build2d_bind_iterate(repo):
     latex.build_2d_bind_iterated(init_data, build_data, path)
 
     shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib_data.parent / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter2d-iter.c", repo.dir_clib_data.parent / "filter2d-iter.c",
+        package_clib() / "src/int/filter2d-iter.c", repo.dir_clib_src / "filter2d-iter.c",
     )
 
-    dir_lib = repo.dir_clib_data.parent / "lib"
+    dir_lib = repo.dir_clib_src / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter2dim_iter.c"]
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = repo.dir_clib_data.parent / "lib_fast"
+    dir_lib_fast = repo.dir_clib_src / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv_iter.c", "opt_fast_conv_iter.c"]
     # for f in libs:
@@ -497,19 +496,19 @@ def cmd_build2d_bind_nest(repo):
         c_header(repo.dir_clib_data / path, arr, {})
 
     shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib_data.parent / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_data.parent / "filter2d-nest.c",
+        package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_src / "filter2d-nest.c",
     )
 
-    dir_lib = repo.dir_clib_data.parent / "lib"
+    dir_lib = repo.dir_clib_src / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter2dim_nest.c"]
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = repo.dir_clib_data.parent / "lib_fast"
+    dir_lib_fast = repo.dir_clib_src / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv.c", "opt_fast_conv.c"]
     for f in libs:
