@@ -9,7 +9,7 @@ from fast_convolution import cli
 
 root = Path(__file__).parent.resolve()
 repo_path = root / "repo"
-repo_opt = ["-p" "./repo"]
+repo_opt = ["-p", repo_path.as_posix()]
 
 with open(root / "cmd.json") as f:
     cmd_dict = json.load(f)
