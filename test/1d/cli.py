@@ -2,82 +2,61 @@
 
 """Tests for `fast_convolution` package."""
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
 
 root = Path(__file__).parent.resolve()
+repo_path = root / "repo"
+
+cmd_lst = ['fast-conv', '-p', './repo']
+
+with open(root / "cmd.json") as f:
+    cmd_dict = json.load(f)
+
+
+def subprocess_test(cmd):
+    return subprocess.run(cmd, capture_output=True, cwd=root)
 
 
 def test_init():
-    shutil.rmtree(root / "repo", ignore_errors=True)
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', '-p', './repo', 'init', '1d', '-o', '3'],
-        capture_output=True,
-        cwd=root
-    )
+    shutil.rmtree(repo_path, ignore_errors=True)
+    result = subprocess_test(cmd_lst + cmd_dict["init"])
     assert result.returncode == 0, result.stderr
 
 
-def test_build_toomcook():
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', 'build', '1d', 'toom-cook'],
-        capture_output=True,
-        cwd=root
-    )
+def test_build():
+    result = subprocess_test(cmd_lst + cmd_dict["build"])
     assert result.returncode == 0
 
 
-def test_quant_shift():
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', 'quant', 'shift', '-b', '4'],
-        capture_output=True,
-        cwd=root
-    )
+def test_quant():
+    result = subprocess_test(cmd_lst + cmd_dict["quant"])
     assert result.returncode == 0
 
 
-def test_example_rand():
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', 'example', 'rand'],
-        capture_output=True,
-        cwd=root
-    )
+def test_ex_rand():
+    result = subprocess_test(cmd_lst + cmd_dict["ex_rand"])
     assert result.returncode == 0
 
 
-def test_example_seq():
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', 'example', 'seq'],
-        capture_output=True,
-        cwd=root
-    )
+def test_ex_seq():
+    result = subprocess_test(cmd_lst + cmd_dict["ex_seq"])
     assert result.returncode == 0
 
 
 def test_sim_rand():
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', 'sim', ' rand'],
-        capture_output=True,
-        cwd=root
-    )
+    result = subprocess_test(cmd_lst + cmd_dict["sim_rand"])
     assert result.returncode == 0
 
 
 def test_sim_file():
-    result = subprocess.run(
-        ['fast-conv', '-p', './repo', 'sim', 'file'],
-        capture_output=True,
-        cwd=root
-    )
+    result = subprocess_test(cmd_lst + cmd_dict["sim_file"])
     assert result.returncode == 0
 
 
 # def test_show():
-#     result = subprocess.run(
-#         ['fast-conv', '-p', './repo', 'show'],
-#         capture_output=True,
-#         cwd=root
-#     )
+#     result = subprocess_test(['show'])
 #     assert result.returncode == 0
 

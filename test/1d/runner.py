@@ -4,35 +4,55 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from src.fast_convolution import cli
+from fast_convolution import cli
 
 
 root = Path(__file__).parent.resolve()
+repo_path = root / "repo"
+repo_opt = ["-p" "./repo"]
 
 with open(root / "cmd.json") as f:
     cmd_dict = json.load(f)
 
 
-def test_init1d():
-    shutil.rmtree(root / "repo", ignore_errors=True)
+def test_init():
+    shutil.rmtree(repo_path, ignore_errors=True)
     runner = CliRunner()
-    result = runner.invoke(cli.main, cmd_dict["init"])
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["init"])
     assert result.exit_code == 0
 
 
-def test_build_toom_cook1d():
+def test_build():
     runner = CliRunner()
-    result = runner.invoke(cli.main, cmd_dict["build"])
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["build"])
     assert result.exit_code == 0
 
 
-def test_example_sequential():
+def test_quant():
     runner = CliRunner()
-    result = runner.invoke(cli.main, cmd_dict["example_seq"])
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["quant"])
+    assert result.exit_code == 0
+
+
+def test_ex_rand():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["ex_rand"])
+    assert result.exit_code == 0
+
+
+def test_ex_seq():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["ex_seq"])
+    assert result.exit_code == 0
+
+
+def test_sim_rand():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["sim_rand"])
     assert result.exit_code == 0
 
 
 def test_sim_file():
     runner = CliRunner()
-    result = runner.invoke(cli.main, cmd_dict["sim_file"])
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["sim_file"])
     assert result.exit_code == 0

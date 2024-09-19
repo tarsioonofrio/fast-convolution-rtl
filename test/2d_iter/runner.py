@@ -1,35 +1,64 @@
+import json
+import shutil
 from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
-from src.fast_convolution import cli, utils
+from fast_convolution import cli
 
 
 root = Path(__file__).parent.resolve()
+repo_path = root / "repo"
+repo_opt = ["-p" "./repo"]
+
+with open(root / "cmd.json") as f:
+    cmd_dict = json.load(f)
 
 
-def test_bind_nest():
+def test_init():
+    shutil.rmtree(repo_path, ignore_errors=True)
     runner = CliRunner()
-    result = runner.invoke(cli.nest)
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["init"])
     assert result.exit_code == 0
 
 
-def test_example_sequential():
+def test_build():
     runner = CliRunner()
-    result = runner.invoke(cli.seq)
-    # with runner.isolated_filesystem(temp_dir=root) as td:
-    #     result = runner.invoke(cli.seq)
-    #     assert result.exit_code == 0
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["build"])
+    assert result.exit_code == 0
 
 
-def test_bind_nest():
+def test_bind():
     runner = CliRunner()
-    result = runner.invoke(cli.nest)
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["bind"])
+    assert result.exit_code == 0
+
+
+def test_quant():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["quant"])
+    assert result.exit_code == 0
+
+
+def test_example_rand():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["ex_rand"])
+    assert result.exit_code == 0
+
+
+def test_example_seq():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["ex_seq"])
+    assert result.exit_code == 0
+
+
+def test_sim_rand():
+    runner = CliRunner()
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["sim_rand"])
     assert result.exit_code == 0
 
 
 def test_sim_file():
     runner = CliRunner()
-    result = runner.invoke(cli.sim)
+    result = runner.invoke(cli.main, repo_opt + cmd_dict["sim_file"])
     assert result.exit_code == 0
