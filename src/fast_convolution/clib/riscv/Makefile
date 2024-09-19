@@ -4,7 +4,7 @@ NC   =\033[0m # No Color
 
 TARGET   ?= simple-conv
 GCCOPT   ?= O2
-ROOT     ?= $(CURDIR)
+CLIBDIR  ?= $(CURDIR)
 ARCH     ?= rv32im_zicsr
 MEM_SIZE ?= 65536
 
@@ -12,8 +12,8 @@ CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
-SRCDIR  = $(ROOT)/../src
-COMMDIR = $(ROOT)/common
+SRCDIR  = $(CLIBDIR)/../src
+COMMDIR = $(CLIBDIR)/common
 LIBDIR  = $(SRCDIR)/lib
 DATADIR = $(SRCDIR)/data
 LIBOPT  = $(SRCDIR)/lib_fast/$(if $(OPT),$(OPT)_fast_conv.c,fast_conv.c)
@@ -54,9 +54,8 @@ $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 
 clean:
 	@printf "Cleaning up\n"
-	@rm -rf src/*.o
-	@rm -rf src/lib/*.o
-	@rm -rf common/*.o
+	@find $(SRCDIR) -name "*.o" -type f -delete
+	@rm -rf $(COMMDIR)/*.o
 	@rm -rf *.bin
 	@rm -rf *.map
 	@rm -rf *.lst

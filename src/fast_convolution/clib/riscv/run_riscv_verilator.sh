@@ -1,19 +1,20 @@
 #!/bin/bash
 
-RISCV_DIR=$PWD
-# Diretório de origem
-SRC_DIR=$(realpath ../src)
 SIM_DIR=$1
 
+RISCV_DIR=$PWD
+SRC_DIR=$(realpath ${RISCV_DIR}/../src)
+
+echo ${RISCV_DIR}
 
 function run_riscv_verilator(){
     # Linha específica para edição
     LINE_NUM=47
-    for FILE in "$SRC_DIR"/*.c; do
+    for FILE in ${2}/*.c; do
         cd ${1}
         # Extrai o nome do arquivo sem o caminho e sem a extensão
-        FILE_NAME=$(basename "$FILE" .c)
-        if [ -n "$2" ] && [ "$FILE_NAME" == "simple-conv" ]; then
+        FILE_NAME=$(basename ${FILE} .c)
+        if [ ${2} == 1 ] && [ ${FILE_NAME} == "simple-conv" ]; then
             continue  # Pula para o próximo arquivo
         fi
         
@@ -23,7 +24,7 @@ function run_riscv_verilator(){
         module load riscv64-elf/14.1.0
         make clean
 
-        if [ -z "${3}" ]; then
+        if [ ${2} == 0 ]; then
             make all TARGET=${FILE_NAME}
             REPORT=report_${FILE_NAME}
         else
@@ -31,7 +32,7 @@ function run_riscv_verilator(){
             REPORT=report_opt_${FILE_NAME}
         fi
 
-        cd ${SIM_DIR}
+        cd ${3}
         # Novo texto para substituição
         BIN_FILE="\"${1}/${FILE_NAME}.bin\""
         # Substituir o conteúdo entre aspas na linha 45
@@ -46,6 +47,6 @@ function run_riscv_verilator(){
     done
 }
 
-run_riscv_verilator ${RISCV_DIR} 0
-run_riscv_verilator ${RISCV_DIR} 1 1
+run_riscv_verilator ${RISCV_DIR} ${SRC_DIR} ${SIM_DIR} 0
+run_riscv_verilator ${RISCV_DIR} ${SRC_DIR} ${SIM_DIR} 1
 
