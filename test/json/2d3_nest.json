@@ -1,5 +1,5 @@
 {
-  "init": ["init", "2d", "-o", "3", "3"],
+  "init": ["init", "2d", "-o", "3"],
   "build": ["build", "2d", "toom-cook"],
   "bind": ["build", "2d", "bind", "nest"]
 }

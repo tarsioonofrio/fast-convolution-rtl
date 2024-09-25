@@ -134,30 +134,39 @@ def read_bind_if_exists(repo):
 def cmd_init(repo, dimensions, in_len, out_len, w):
     if repo.file_init.exists():
         return "init.json existis, fconv model already initialized"
-    in_arr = np.array(in_len)
-    w_arr = np.array(w)
-    out_arr = np.array(out_len)
+    # in_len = np.array(in_len)
+    # w = np.array(w)
+    # out_len = np.array(out_len)
     if in_len is None and out_len is None:
-        b = in_arr - out_arr + 1
-        c = in_arr
-        a = out_arr
+        b = in_len - out_len + 1
+        c = in_len
+        a = out_len
     elif in_len is None:
-        c = out_arr + w_arr - 1
-        a = out_arr
-        b = w_arr
+        c = out_len + w - 1
+        a = out_len
+        b = w
     elif out_len is None:
-        a = in_arr - w_arr + 1
-        c = in_arr
-        b = w_arr
+        a = in_len - w + 1
+        c = in_len
+        b = w
     else:
         return "Just one param is passed, inform another."
 
-    data = {
-        "dim": dimensions,
-        "c": c.tolist(),
-        "a": a.tolist(),
-        "b": b.tolist(),
-    }
+    if dimensions == 1:
+        data = {
+            "dim": dimensions,
+            "c": c,
+            "a": a,
+            "b": b,
+        }
+    else:
+        data = {
+            "dim": dimensions,
+            "c": [c] * dimensions,
+            "a": [a] * dimensions,
+            "b": [b] * dimensions,
+        }
+
     repo.file_init.parent.mkdir(parents=True, exist_ok=True)
     with open(repo.file_init, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -173,12 +182,12 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
         c_header(init_path, [], dict_defs)
     elif dimensions == 2:
         dict_defs = {
-            "A1_SIZE": a[0],
-            "B1_SIZE": b[0],
-            "C1_SIZE": c[0],
-            "A2_SIZE": a[1],
-            "B2_SIZE": b[1],
-            "C2_SIZE": c[1],
+            "A1_SIZE": a,
+            "B1_SIZE": b,
+            "C1_SIZE": c,
+            "A2_SIZE": a,
+            "B2_SIZE": b,
+            "C2_SIZE": c,
         }
         c_header(init_path, [], dict_defs)
 

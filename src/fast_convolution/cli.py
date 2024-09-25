@@ -80,9 +80,9 @@ def init1d(ctx, in_len, out_len, w):
 
 
 @init.command(name="2d")
-@click.option("-i", "--in-len", nargs=2, default=None, type=int)
-@click.option("-o", "--out-len", nargs=2, default=None, type=int)
-@click.option("-w", default=[3, 3], nargs=2)
+@click.option("-i", "--in-len", default=None, type=int)
+@click.option("-o", "--out-len", default=None, type=int)
+@click.option("-w", default=3)
 @click.pass_context
 def init2d(ctx, in_len, out_len, w):
     from .commands import cmd_init
@@ -135,6 +135,7 @@ def toom_cook1d(ctx, points):
             click.Abort()
     default = default_toom_cook_points1d(read_init_if_exists(repo).get("c", 1))
     points_ = points if points is not None else default
+    
     cmd_build_toom_cook1d(repo, points_)
     click.echo("Build 1D Toom Cook")
 
