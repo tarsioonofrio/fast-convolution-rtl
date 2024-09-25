@@ -7,7 +7,7 @@ import numpy as np
 import sympy as sy
 from PIL import Image
 from scipy import signal
-from sklearn import metrics
+from sklearn.metrics import r2_score
 
 from . import fast
 from . import quant
@@ -560,7 +560,7 @@ def cmd_quant_shift(repo, bits):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def cmd_sim_file(repo, feature, weight, suffix, date):
+def cmd_sim_file(repo, feature, weight, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     with open(feature) as f:
@@ -657,11 +657,11 @@ def cmd_sim_file(repo, feature, weight, suffix, date):
             bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
 
     if len(quant_data) != 0:
-        r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = f"R2: {r2}\n"
+        metric = r2_score(output_default.reshape(-1), output_fast.reshape(-1))
+        text_metric = f"R2: {metric}\n"
     else:
-        compare_fast = np.all(output_default == output_fast)
-        text_metric = f"Output default and fast are equals: {compare_fast}\n"
+        metric = np.all(output_default == output_fast)
+        text_metric = f"Output default and fast are equals: {metric}\n"
 
     size = output_default.size
     text = (
@@ -678,12 +678,8 @@ def cmd_sim_file(repo, feature, weight, suffix, date):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    if suffix and date:
-        path = repo.dir_sim / f"file-{suffix}-{now()}"
-    elif suffix and date is False:
+    if len(suffix) > 0:
         path = repo.dir_sim / f"file-{suffix}"
-    elif suffix is False and date:
-        path = repo.dir_sim / f"file-{now()}"
     else:
         path = repo.dir_sim / "file"
 
@@ -720,10 +716,12 @@ def cmd_sim_file(repo, feature, weight, suffix, date):
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(repo.dir_clib_data / path, arr, dict_def)
-    return text
+
+    out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
+    return out_dict
 
 
-def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix, date):
+def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     feat = np.random.randint(feature_random[0], feature_random[1], size=image_side**2)
@@ -821,11 +819,11 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
             bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
 
     if len(quant_data) != 0:
-        r2 = metrics.r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = f"R2: {r2}%\n"
+        metric = r2_score(output_default.reshape(-1), output_fast.reshape(-1))
+        text_metric = f"R2: {metric}%\n"
     else:
-        compare_fast = np.all(output_default == output_fast)
-        text_metric = f"Output default and fast are equals: {compare_fast}\n"
+        metric = np.all(output_default == output_fast)
+        text_metric = f"Output default and fast are equals: {metric}\n"
 
     size = output_default.size
     text = (
@@ -844,14 +842,10 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
         f"Multiplications: {count_mult}\n"
     )
 
-    if suffix and date:
-        path = repo.dir_sim / f"file-{suffix}-{now()}"
-    elif suffix and date is False:
-        path = repo.dir_sim / f"file-{suffix}"
-    elif suffix is False and date:
-        path = repo.dir_sim / f"file-{now()}"
+    if len(suffix) > 0:
+        path = repo.dir_sim / f"rand-{suffix}"
     else:
-        path = repo.dir_sim / "file"
+        path = repo.dir_sim / "rand"
 
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
@@ -886,12 +880,18 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
         c_header(repo.dir_clib_data / path, arr, dict_def)
-    return text
+    out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
+    return out_dict
 
 
-def cmd_example_random(repo, feature, weight):
+def cmd_example_random(repo, feature, weight, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     repo.dir_example.mkdir(parents=True, exist_ok=True)
+
+    if len(suffix) > 0:
+        name = repo.dir_example / f"example-random-{suffix}"
+    else:
+        name = repo.dir_example / "example-random"
 
     if dim == 1:
         f = np.random.randint(feature[0], feature[1], size=c_len)
@@ -908,7 +908,7 @@ def cmd_example_random(repo, feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        latex.example_1d(b, c, a, g, d, q, repo.dir_example / f"example-random-{now()}")
+        latex.example_1d(b, c, a, g, d, q, name)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -926,13 +926,9 @@ def cmd_example_random(repo, feature, weight):
         build_data = read_build_2d(repo)
 
         if data_bind["func"] == "iterate":
-            latex.example_2d_bind_iterate(
-                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
-            )
+            latex.example_2d_bind_iterate(init_data, build_data, d, g, name)
         if data_bind["func"] == "nest":
-            latex.example_2d_bind_nest(
-                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
-            )
+            latex.example_2d_bind_nest(init_data, build_data, d, g, name)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
@@ -947,10 +943,13 @@ def cmd_example_random(repo, feature, weight):
             c_header(repo.dir_clib_data / path, arr, {})
 
 
-def cmd_example_sequential(repo, feature, weight):
+def cmd_example_sequential(repo, feature, weight, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     repo.dir_example.mkdir(parents=True, exist_ok=True)
-
+    if len(suffix) > 0:
+        name = repo.dir_example / f"example-seq-{suffix}"
+    else:
+        name = repo.dir_example / "example-seq"
     if dim == 1:
         f = np.arange(feature, feature + c_len)
         d = sy.Matrix(f)
@@ -968,7 +967,7 @@ def cmd_example_sequential(repo, feature, weight):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        latex.example_1d(b, c, a, g, d, q, repo.dir_example / f"example-seq-{now()}")
+        latex.example_1d(b, c, a, g, d, q, name)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -986,13 +985,9 @@ def cmd_example_sequential(repo, feature, weight):
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
         if data_bind["func"] == "iterate":
-            latex.example_2d_bind_iterate(
-                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
-            )
+            latex.example_2d_bind_iterate(init_data, build_data, d, g, name)
         if data_bind["func"] == "nest":
-            latex.example_2d_bind_nest(
-                init_data, build_data, d, g, repo.dir_example / f"example-seq-{now()}"
-            )
+            latex.example_2d_bind_nest(init_data, build_data, d, g, name)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
