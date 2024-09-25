@@ -8,7 +8,7 @@ from fast_convolution import cli
 
 
 root = Path(__file__).parent.resolve()
-repo_path = root / Path(__file__).stem / "repo"
+repo_path = root / Path(__file__).stem
 repo_opt = ["-p", repo_path.as_posix()]
 
 with open(root / "json/cmd_common.json") as f:
