@@ -1,8 +1,17 @@
 import importlib
 from pathlib import Path
+import sys
+import ipdb
 
-repo_name = "1d3"
-function_name = "test_build"
+
+def excepthook(type, value, traceback):
+    ipdb.post_mortem(traceback)
+
+
+sys.excepthook = excepthook
+
+repo_name = "2d2_iter"
+function_name = "test_bind"
 
 root = Path(__file__).parent.parent.resolve() / "test"
 file_path = root / f"{repo_name}.py"
@@ -22,4 +31,3 @@ function = getattr(module, function_name)
 output = function()
 
 print(output)
-
