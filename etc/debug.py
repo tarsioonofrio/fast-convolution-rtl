@@ -1,14 +1,11 @@
-import importlib
+import json
+import shutil
 from pathlib import Path
-import sys
-import ipdb
 
+from click.testing import CliRunner
 
-def excepthook(type, value, traceback):
-    ipdb.post_mortem(traceback)
+from fast_convolution import cli
 
-
-sys.excepthook = excepthook
 
 repo_name = "2d2_iter"
 function_name = "test_bind"
@@ -18,16 +15,15 @@ file_path = root / f"{repo_name}.py"
 repo_path = root / repo_name
 repo_opt = ["-p", repo_path.as_posix()]
 
-# Cria um spec de importação baseado no caminho do arquivo
-spec = importlib.util.spec_from_file_location(repo_name, file_path)
-module = importlib.util.module_from_spec(spec)
 
-# Carrega o módulo
-spec.loader.exec_module(module)
+with open(root / "json/cmd_common.json") as f:
+    cmd_common_dict = json.load(f)
 
-# Retorna a função importada
-function = getattr(module, function_name)
 
-output = function()
+with open(root / f"json/{repo_name}.json") as f:
+    cmd_dict = json.load(f)
 
-print(output)
+
+runner = CliRunner()
+result = runner.invoke(cli.main, repo_opt + cmd_dict["bind"])
+print(result.exit_code)
