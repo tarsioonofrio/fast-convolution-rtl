@@ -190,7 +190,9 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
     dir_clib_riscv = repo.dir_clib / "riscv"
     shutil.copytree(package_clib() / "riscv", dir_clib_riscv, dirs_exist_ok=True)
     dir_clib_lib = repo.dir_clib_src / "lib/include"
-    shutil.copytree(package_clib() / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True)
+    shutil.copytree(
+        package_clib() / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True
+    )
 
 
 def cmd_show(repo, init, build, quant_):
@@ -276,9 +278,7 @@ def cmd_build_toom_cook1d(repo, points):
     shutil.copy(
         package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
     )
-    shutil.copy(
-        package_clib() / "src/int/filter1d.c", repo.dir_clib_src / "filter1d.c"
-    )
+    shutil.copy(package_clib() / "src/int/filter1d.c", repo.dir_clib_src / "filter1d.c")
 
     dir_lib = repo.dir_clib_src / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
@@ -405,7 +405,8 @@ def cmd_build2d_bind_iterate(repo):
         package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter2d-iter.c", repo.dir_clib_src / "filter2d-iter.c",
+        package_clib() / "src/int/filter2d-iter.c",
+        repo.dir_clib_src / "filter2d-iter.c",
     )
 
     dir_lib = repo.dir_clib_src / "lib"
@@ -423,7 +424,8 @@ def cmd_build2d_bind_iterate(repo):
         package_clib() / "src/int/lib/fast_conv_iter.c", dir_lib_fast / "fast_conv.c"
     )
     shutil.copy(
-        package_clib() / "src/int/lib/opt_fast_conv_iter.c", dir_lib_fast / "opt_fast_conv.c",
+        package_clib() / "src/int/lib/opt_fast_conv_iter.c",
+        dir_lib_fast / "opt_fast_conv.c",
     )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
@@ -435,7 +437,9 @@ def cmd_build2d_bind_iterate(repo):
     matmul_a1t = c_matmul_shift_noloop_iter(
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
-    hadamart = c_hadamart_product_nollop(a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_iter")
+    hadamart = c_hadamart_product_nollop(
+        a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_iter"
+    )
 
     dir_lib.mkdir(parents=True, exist_ok=True)
     dir_lib_inc = dir_lib / "include"
@@ -499,7 +503,8 @@ def cmd_build2d_bind_nest(repo):
         package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_src / "filter2d-nest.c",
+        package_clib() / "src/int/filter2d-nest.c",
+        repo.dir_clib_src / "filter2d-nest.c",
     )
 
     dir_lib = repo.dir_clib_src / "lib"
@@ -555,7 +560,7 @@ def cmd_quant_shift(repo, bits):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def cmd_sim_file(repo, feature, weight):
+def cmd_sim_file(repo, feature, weight, suffix, date):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     with open(feature) as f:
@@ -673,7 +678,15 @@ def cmd_sim_file(repo, feature, weight):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    path = repo.dir_sim / f"file-{now()}"
+    if suffix and date:
+        path = repo.dir_sim / f"file-{suffix}-{now()}"
+    elif suffix and date is False:
+        path = repo.dir_sim / f"file-{suffix}"
+    elif suffix is False and date:
+        path = repo.dir_sim / f"file-{now()}"
+    else:
+        path = repo.dir_sim / "file"
+
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
@@ -710,7 +723,7 @@ def cmd_sim_file(repo, feature, weight):
     return text
 
 
-def cmd_sim_random(repo, feature_random, weight_random, image_side, loop):
+def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix, date):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     feat = np.random.randint(feature_random[0], feature_random[1], size=image_side**2)
@@ -830,7 +843,16 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop):
         f"Convolutions: {count_iter}\n"
         f"Multiplications: {count_mult}\n"
     )
-    path = repo.dir_sim / f"random-{now()}"
+
+    if suffix and date:
+        path = repo.dir_sim / f"file-{suffix}-{now()}"
+    elif suffix and date is False:
+        path = repo.dir_sim / f"file-{suffix}"
+    elif suffix is False and date:
+        path = repo.dir_sim / f"file-{now()}"
+    else:
+        path = repo.dir_sim / "file"
+
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)

@@ -241,14 +241,20 @@ def sim(): pass
     "--weight", "-w", default=example_path() / "laplace.json",
     help="Weight file, need to be a json list file."
 )
+@click.option(
+    "--suffix", "-s", default="", help="Suffix of output file name."
+)
+@click.option(
+    "--date", "-d", is_flag=True, help="Suffix of output file name."
+)
 @click.pass_obj
 # @click.option("--mae", flag_value=True, help="Mean absolute error")
 # @click.option("--mse", flag_value=True, help="Mean squared error")
 # @click.option("--rmse", flag_value=True, help="Root mean squared error")
 # @click.option("--r2", flag_value=True, help="R2", default=True)
-def file(repo, feature, weight):
+def file(repo, feature, weight, suffix, date):
     from .commands import cmd_sim_file
-    text = cmd_sim_file(repo, feature, weight)
+    text = cmd_sim_file(repo, feature, weight, suffix, date)
     click.echo(text)
 
 
@@ -273,10 +279,16 @@ def file(repo, feature, weight):
     "--weight", "-w", nargs=2, default=[0, 1024],
     help="Minimal and maximal value of weight random data."
 )
+@click.option(
+    "--suffix", "-s", default="", help="Suffix of output file name."
+)
+@click.option(
+    "--date", "-d", is_flag=True, help="Suffix of output file name."
+)
 @click.pass_obj
-def rand(repo, feature, weight, image_side, loop):
+def rand(repo, feature, weight, image_side, loop, suffix, date):
     from .commands import cmd_sim_random
-    text = cmd_sim_random(repo, feature, weight, image_side, loop)
+    text = cmd_sim_random(repo, feature, weight, image_side, loop, suffix, date)
     click.echo(text)
 
 
