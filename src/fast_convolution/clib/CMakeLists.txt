@@ -11,11 +11,11 @@ set(TEST_PATH ../../../test)
 # set include paths
 set(INC_INT src/int/lib/include)
 #set(INC_INT_ITER src/int/include/base src/int/include/fast_iter)
-set(TEST_DATA1 ${TEST_PATH}/1d/clib/src/data)
-set(TEST_DATA2 ${TEST_PATH}/2d_nest/clib/src/data)
-set(TEST_INC_OPT1 ${TEST_PATH}/1d/clib/src/lib/optim/include)
-set(TEST_INC_OPT2_NEST ${TEST_PATH}/2d_nest/clib/src/lib_optim/include)
-set(TEST_INC_OPT2_ITER ${TEST_PATH}/2d_iter/clib/src/lib_optim/include)
+set(TEST_DATA1 ${TEST_PATH}/1d3/clib/src/data)
+set(TEST_DATA2 ${TEST_PATH}/2d3_nest/clib/src/data)
+set(TEST_INC_OPT1 ${TEST_PATH}/1d3/clib/src/lib/include)
+set(TEST_INC_OPT2_NEST ${TEST_PATH}/2d3_nest/clib/src/lib/include)
+set(TEST_INC_OPT2_ITER ${TEST_PATH}/2d3_iter/clib/src/lib/include)
 
 # set libs paths
 set(LIB_FLOAT src/float/lib/convolution_float.c src/float/lib/util_float.c)
@@ -26,9 +26,9 @@ set(LIB2D_ITER src/int/lib/convolution.c src/int/lib/util.c src/int/lib/fast_con
 set(LIB1D_OPT src/int/lib/convolution.c src/int/lib/util.c src/int/lib/opt_fast_conv.c src/int/lib/filter1dim.c)
 set(LIB2D_NEST_OPT src/int/lib/convolution.c src/int/lib/util.c src/int/lib/opt_fast_conv.c src/int/lib/filter2dim_nest.c)
 set(LIB2D_ITER_OPT src/int/lib/convolution.c src/int/lib/util.c src/int/lib/opt_fast_conv_iter.c src/int/lib/filter2dim_iter.c)
-set(TEST_LIB_OPT1 ${TEST_PATH}/1d/clib/src/lib_optim/optim.c)
-set(TEST_LIB_OPT2_NEST ${TEST_PATH}/2d_nest/clib/src/lib_optim/optim.c)
-set(TEST_LIB_OPT2_ITER ${TEST_PATH}/2d_iter/clib/src/lib_optim/optim.c)
+set(TEST_LIB_OPT1 ${TEST_PATH}/1d3/clib/src/lib/optim.c)
+set(TEST_LIB_OPT2_NEST ${TEST_PATH}/2d3_nest/clib/src/lib/optim.c)
+set(TEST_LIB_OPT2_ITER ${TEST_PATH}/2d3_iter/clib/src/lib/optim.c)
 
 
 
