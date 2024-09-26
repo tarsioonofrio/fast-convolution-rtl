@@ -189,52 +189,21 @@ def c_matmul_shift_noloop(mtx, name_suffix):
     return {"header": f"{header};\n", "function": function}
 
 
-def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
-    mtx_log = fast.log2_lst(mtx)
-    var_in = (
-        np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])])
-        .reshape(in_shp)
-        .T.reshape(-1)
-        .tolist()
-    )
-    var_out = (
-        np.array([f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])])
-        .reshape(out_shp)
-        .T.reshape(-1)
-        .tolist()
-    )
-
-    lst_data = [
-        [
-            [c_shift(d, num["s"], z) for z in num["z"]]
-            for d, num in zip(var_in[r: r + out_shp[0]], row)
-            if "s" in num
-        ]
-        for r in range(0, in_shp[0] * out_shp[0], in_shp[1])
-        for row in mtx_log
-    ]
-    lst_join = ["".join(["".join(num) for num in row]) for row in lst_data]
-    lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
-    lst_str = "\n".join(lst_output)
-    header = f"void matrix_mul_shift_noloop_{name_suffix}(int *m_out, const int *m_in)"
-    function = f"{header}{{\n" f"{lst_str}\n" "}\n"
-    return {"header": f"{header};\n", "function": function}
-
-
-def c_matmul_shift_noloop_iter_transp(mtx, name_suffix, in_shp, out_shp):
-    mtx_log = fast.log2_lst(mtx)
-    var_in = [f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]
+def c_matmul_shift_noloop_(mtx1, name_suffix, in_shp, out_shp, swap=False):
+    mtx1_log = fast.log2_lst(mtx1)
+    mtx2 = np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]).reshape(*in_shp)
+    mtx3 = matmul(mtx2, np.array(mtx1_log)) if swap else matmul(np.array(mtx1_log), mtx2)
     var_out = [f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])]
 
-    lst_data = [
-        [
-            [c_shift(d, num["s"], z) for z in num["z"]]
-            for d, num in zip(var_in[r : r + out_shp[0]], row)
-            if "s" in num
+    lst_data = [[
+            c_shift(k, v["s"], z)
+            for shift in data
+            for k, v in shift.items() if "s" in v
+            for z in v["z"]
         ]
-        for r in range(0, in_shp[0] * out_shp[0], in_shp[1])
-        for row in mtx_log
+        for data in mtx3
     ]
+
     lst_join = ["".join(["".join(num) for num in row]) for row in lst_data]
     lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
     lst_str = "\n".join(lst_output)
@@ -263,6 +232,23 @@ def getcwd():
         return Path(os.getcwd())
     else:
         return Path(os.environ.get("TEST_PATH"))
+
+
+def matmul(m1, m2):
+    row1 = m1.shape[0]
+    col2 = m2.shape[1]
+    col2_row1 = m1.shape[1]
+    in1 = m1.reshape(-1)
+    in2 = m2.reshape(-1)
+    out = [[] for _ in range(row1 * col2)]
+    for r in range(row1):
+        for c in range(col2):
+            for k in range(col2_row1):
+                d1 = in1[r * col2_row1 + k]
+                d2 = in2[k * col2 + c]
+                data = {d2: d1} if isinstance(d2, str) else {d1: d2}
+                out[r * col2 + c] += [data]
+    return out
 
 
 root_project_path = getcwd()
