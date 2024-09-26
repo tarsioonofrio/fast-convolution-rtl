@@ -190,7 +190,38 @@ def c_matmul_shift_noloop(mtx, name_suffix):
 
 
 def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
-    print(name_suffix, in_shp, out_shp)
+    mtx_log = fast.log2_lst(mtx)
+    var_in = (
+        np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])])
+        .reshape(in_shp)
+        .T.reshape(-1)
+        .tolist()
+    )
+    var_out = (
+        np.array([f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])])
+        .reshape(out_shp)
+        .T.reshape(-1)
+        .tolist()
+    )
+
+    lst_data = [
+        [
+            [c_shift(d, num["s"], z) for z in num["z"]]
+            for d, num in zip(var_in[r: r + out_shp[0]], row)
+            if "s" in num
+        ]
+        for r in range(0, in_shp[0] * out_shp[0], in_shp[1])
+        for row in mtx_log
+    ]
+    lst_join = ["".join(["".join(num) for num in row]) for row in lst_data]
+    lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
+    lst_str = "\n".join(lst_output)
+    header = f"void matrix_mul_shift_noloop_{name_suffix}(int *m_out, const int *m_in)"
+    function = f"{header}{{\n" f"{lst_str}\n" "}\n"
+    return {"header": f"{header};\n", "function": function}
+
+
+def c_matmul_shift_noloop_iter_transp(mtx, name_suffix, in_shp, out_shp):
     mtx_log = fast.log2_lst(mtx)
     var_in = [f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]
     var_out = [f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])]

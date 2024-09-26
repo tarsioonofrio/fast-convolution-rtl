@@ -1,25 +1,6 @@
 #include "optim.h"
 
 void matrix_mul_shift_noloop_c2(int *m_out, const int *m_in){
-	m_out[0] =  - m_in[0];
-	m_out[1] =  + m_in[1] - m_in[2] - m_in[3];
-	m_out[2] =  + m_in[0] + m_in[1] + m_in[2];
-	m_out[3] =  + m_in[3];
-	m_out[4] =  - m_in[4];
-	m_out[5] =  + m_in[5] - m_in[6] - m_in[7];
-	m_out[6] =  + m_in[4] + m_in[5] + m_in[6];
-	m_out[7] =  + m_in[7];
-	m_out[8] =  - m_in[8];
-	m_out[9] =  + m_in[9] - m_in[10] - m_in[11];
-	m_out[10] =  + m_in[8] + m_in[9] + m_in[10];
-	m_out[11] =  + m_in[11];
-	m_out[12] =  - m_in[12];
-	m_out[13] =  + m_in[13] - m_in[14] - m_in[15];
-	m_out[14] =  + m_in[12] + m_in[13] + m_in[14];
-	m_out[15] =  + m_in[15];
-}
-
-void matrix_mul_shift_noloop_c1t(int *m_out, const int *m_in){
 	m_out[0] =  - m_in[0] + m_in[2];
 	m_out[1] =  + m_in[1] + m_in[2];
 	m_out[2] =  - m_in[1] + m_in[2];
@@ -38,22 +19,39 @@ void matrix_mul_shift_noloop_c1t(int *m_out, const int *m_in){
 	m_out[15] =  - m_in[13] + m_in[15];
 }
 
+void matrix_mul_shift_noloop_c1t(int *m_out, const int *m_in){
+	m_out[0] =  - m_in[0] + m_in[8];
+	m_out[4] =  + m_in[4] + m_in[8];
+	m_out[8] =  - m_in[4] + m_in[8];
+	m_out[12] =  - m_in[4] + m_in[12];
+	m_out[1] =  - m_in[1] + m_in[9];
+	m_out[5] =  + m_in[5] + m_in[9];
+	m_out[9] =  - m_in[5] + m_in[9];
+	m_out[13] =  - m_in[5] + m_in[13];
+	m_out[2] =  - m_in[2] + m_in[10];
+	m_out[6] =  + m_in[6] + m_in[10];
+	m_out[10] =  - m_in[6] + m_in[10];
+	m_out[14] =  - m_in[6] + m_in[14];
+	m_out[3] =  - m_in[3] + m_in[11];
+	m_out[7] =  + m_in[7] + m_in[11];
+	m_out[11] =  - m_in[7] + m_in[11];
+	m_out[15] =  - m_in[7] + m_in[15];
+}
+
 void matrix_mul_shift_noloop_a2(int *m_out, const int *m_in){
-	m_out[0] =  + m_in[0];
-	m_out[1] =  + m_in[0] + m_in[1];
-	m_out[2] =  + m_in[0] - m_in[1];
-	m_out[3] =  + m_in[1];
-	m_out[4] =  + m_in[4];
-	m_out[5] =  + m_in[4] + m_in[5];
-	m_out[6] =  + m_in[4] - m_in[5];
-	m_out[7] =  + m_in[5];
+	m_out[0] =  + m_in[0] + m_in[1] + m_in[2];
+	m_out[1] =  + m_in[1] - m_in[2] + m_in[3];
+	m_out[2] =  + m_in[4] + m_in[5] + m_in[6];
+	m_out[3] =  + m_in[5] - m_in[6] + m_in[7];
+	m_out[4] =  + m_in[8] + m_in[9] + m_in[10];
+	m_out[5] =  + m_in[9] - m_in[10] + m_in[11];
+	m_out[6] =  + m_in[12] + m_in[13] + m_in[14];
+	m_out[7] =  + m_in[13] - m_in[14] + m_in[15];
 }
 
 void matrix_mul_shift_noloop_a1t(int *m_out, const int *m_in){
-	m_out[0] =  + m_in[0] + m_in[1];
-	m_out[1] =  + m_in[1];
-	m_out[2] =  + m_in[2] + m_in[3];
-	m_out[3] =  + m_in[3];
+	m_out[0] =  + m_in[0] + m_in[4];
+	m_out[2] =  + m_in[4];
 }
 
 void hadamart_product_noloop_iter(int *out, const int *in1, const int *in2){
