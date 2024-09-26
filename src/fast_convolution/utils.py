@@ -189,7 +189,7 @@ def c_matmul_shift_noloop(mtx, name_suffix):
     return {"header": f"{header};\n", "function": function}
 
 
-def c_matmul_shift_noloop_(mtx1, name_suffix, in_shp, out_shp, swap=False):
+def c_matmul_shift_noloop_iter(mtx1, name_suffix, in_shp, out_shp, swap=False):
     mtx1_log = fast.log2_lst(mtx1)
     mtx2 = np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]).reshape(*in_shp)
     mtx3 = matmul(mtx2, np.array(mtx1_log)) if swap else matmul(np.array(mtx1_log), mtx2)

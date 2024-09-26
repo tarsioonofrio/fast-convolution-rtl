@@ -19,10 +19,8 @@ from .utils import (
     c_header,
     default_convolve,
     c_matmul_shift_noloop,
-    c_hadamart_product_nollop,
     c_matmul_shift_noloop_iter,
-    c_matmul_shift_noloop_iter_transp,
-    c_matmul_shift_noloop_,
+    c_hadamart_product_nollop,
 )
 
 
@@ -440,10 +438,10 @@ def cmd_build2d_bind_iterate(repo):
     )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-    matmul_c2 = c_matmul_shift_noloop_(c2, "c2", c2.shape, c2.shape, True)
-    matmul_c1t = c_matmul_shift_noloop_(c1.T, "c1t", c1.T.shape, c1.T.shape)
-    matmul_a2 = c_matmul_shift_noloop_(a2, "a2", c1.shape, a2.shape, True)
-    matmul_a1t = c_matmul_shift_noloop_(
+    matmul_c2 = c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape, True)
+    matmul_c1t = c_matmul_shift_noloop_iter(c1.T, "c1t", c1.T.shape, c1.T.shape)
+    matmul_a2 = c_matmul_shift_noloop_iter(a2, "a2", c1.shape, a2.shape, True)
+    matmul_a1t = c_matmul_shift_noloop_iter(
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
     hadamart = c_hadamart_product_nollop(
