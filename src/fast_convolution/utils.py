@@ -6,7 +6,7 @@ import sympy as sy
 from PIL import Image, ImageOps
 from scipy import signal
 
-from fast_convolution import fast
+from . import fast
 
 
 def plot_pdf(
@@ -189,21 +189,27 @@ def c_matmul_shift_noloop(mtx, name_suffix):
     return {"header": f"{header};\n", "function": function}
 
 
-def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
-    print(name_suffix, in_shp, out_shp)
-    mtx_log = fast.log2_lst(mtx)
-    var_in = [f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]
+def c_matmul_shift_noloop_iter(mtx1, name_suffix, in_shp, out_shp, swap=False):
+    mtx1_log = fast.log2_lst(mtx1)
+    mtx2 = np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]).reshape(
+        *in_shp
+    )
+    mtx3 = (
+        matmul(mtx2, np.array(mtx1_log)) if swap else matmul(np.array(mtx1_log), mtx2)
+    )
     var_out = [f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])]
 
     lst_data = [
         [
-            [c_shift(d, num["s"], z) for z in num["z"]]
-            for d, num in zip(var_in[r : r + out_shp[0]], row)
-            if "s" in num
+            c_shift(k, v["s"], z)
+            for shift in data
+            for k, v in shift.items()
+            if "s" in v
+            for z in v["z"]
         ]
-        for r in range(0, in_shp[0] * out_shp[0], in_shp[1])
-        for row in mtx_log
+        for data in mtx3
     ]
+
     lst_join = ["".join(["".join(num) for num in row]) for row in lst_data]
     lst_output = [f"\t{m} = {d};" for m, d in zip(var_out, lst_join)]
     lst_str = "\n".join(lst_output)
@@ -212,8 +218,10 @@ def c_matmul_shift_noloop_iter(mtx, name_suffix, in_shp, out_shp):
     return {"header": f"{header};\n", "function": function}
 
 
-def c_hadamart_product_nollop(size, suffix=""):
-    lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(size)]
+def c_hadamart_product_nollop(out_size, mtx, suffix=""):
+    # lst_zeros = np.array(mtx).reshape(-1).tolist()
+    # lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(out_size) if lst_zeros[i] != 0]
+    lst = [f"\tout[{i}] = in1[{i}] * in2[{i}];" for i in range(out_size)]
     lst_str = "\n".join(lst)
     header = f"void hadamart_product_noloop{suffix}(int *out, const int *in1, const int *in2)"
     function = f"{header}{{\n" f"{lst_str}\n" "}\n"
@@ -225,22 +233,18 @@ def default_convolve(f, w):
     return output_default
 
 
-def getcwd():
-    if os.environ.get("TEST_PATH") is None:
-        return Path(os.getcwd())
-    else:
-        return Path(os.environ.get("TEST_PATH"))
-
-
-root_project_path = getcwd()
-dir_config = root_project_path / "config"
-file_init = dir_config / "init.json"
-file_build = dir_config / "build.json"
-file_bind = dir_config / "bind.json"
-file_quant = dir_config / "quant.json"
-dir_build = root_project_path / "build"
-dir_quant = root_project_path / "quant"
-dir_example = root_project_path / "example"
-dir_sim = root_project_path / "sim"
-dir_clib_data = root_project_path / "clib/src/data"
-clib_package = Path(__file__).resolve().parent / "clib"
+def matmul(m1, m2):
+    row1 = m1.shape[0]
+    col2 = m2.shape[1]
+    col2_row1 = m1.shape[1]
+    in1 = m1.reshape(-1)
+    in2 = m2.reshape(-1)
+    out = [[] for _ in range(row1 * col2)]
+    for r in range(row1):
+        for c in range(col2):
+            for k in range(col2_row1):
+                d1 = in1[r * col2_row1 + k]
+                d2 = in2[k * col2 + c]
+                data = {d2: d1} if isinstance(d2, str) else {d1: d2}
+                out[r * col2 + c] += [data]
+    return out

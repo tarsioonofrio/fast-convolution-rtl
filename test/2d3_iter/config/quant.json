@@ -1,0 +1,6 @@
+{
+    "func": "shift",
+    "params": {
+        "bits": 4
+    }
+}

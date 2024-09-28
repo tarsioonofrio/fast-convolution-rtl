@@ -124,12 +124,12 @@ def build_2d_bind_iterated(init_data, build_data, path):
         sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     ss_sym1 = sy.Matrix(
-        c_len[0], b_len[0],
-        sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
+        c_len[0], a_len[0],
+        sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(c_len[0] * a_len[0])))
     )
     s_sym = sy.Matrix(
-        a_len[0], a_len[1],
-        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[1])))
+        a_len[0], a_len[0],
+        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[0])))
     )
 
     doc = tex.Document()
@@ -499,12 +499,12 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
         sy.symbols(" ".join(f"S_{{{i}}}"for i in range(c_len[0] * c_len[1])))
     )
     ss_sym1 = sy.Matrix(
-        c_len[0], b_len[0],
-        sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(b_len[0] * c_len[0])))
+        c_len[0], a_len[0],
+        sy.symbols(" ".join(f"\\sigma_{{{i}}}"for i in range(c_len[0] * a_len[0])))
     )
     s_sym = sy.Matrix(
         a_len[0], a_len[0],
-        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(b_len[0] * b_len[1])))
+        sy.symbols(" ".join(f"s_{{{i}}}"for i in range(a_len[0] * a_len[0])))
     )
 
     doc = tex.Document()
