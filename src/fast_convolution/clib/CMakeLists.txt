@@ -47,7 +47,7 @@ add_executable(float-filter2d-nest src/float/filter2d-nest-float.c ${LIB_FLOAT})
 add_executable(float-filter2d-iter src/float/filter2d-iter-float.c ${LIB_FLOAT})
 
 # int
-add_executable(simple-conv src/int/simple-conv.c ${LIB_INT})
+add_executable(standard src/int/standard.c ${LIB_INT})
 add_executable(matrix-mult src/int/matrix-mult.c ${LIB_INT})
 
 add_executable(filter1d src/int/filter1d.c ${LIB_INT})
@@ -73,7 +73,7 @@ target_include_directories(float-filter2d-iter PRIVATE ${INC_FLOAT})
 
 # int
 target_include_directories(matrix-mult PRIVATE ${INC_INT})
-target_include_directories(simple-conv PRIVATE ${INC_INT})
+target_include_directories(standard PRIVATE ${INC_INT})
 
 target_include_directories(filter1d PRIVATE ${INC_INT})
 target_include_directories(filter2d-nest PRIVATE ${INC_INT})
@@ -96,7 +96,7 @@ target_include_directories(float-filter2d-iter PRIVATE ${TEST_DATA2})
 
 # int
 target_include_directories(matrix-mult PRIVATE ${TEST_DATA1})
-target_include_directories(simple-conv PRIVATE ${TEST_DATA1})
+target_include_directories(standard PRIVATE ${TEST_DATA1})
 
 target_include_directories(filter1d PRIVATE ${TEST_DATA1})
 target_include_directories(filter2d-nest PRIVATE ${TEST_DATA2})

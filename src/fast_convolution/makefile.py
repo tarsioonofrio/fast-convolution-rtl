@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def makefile(files):
+def makefile_(files):
     root = Path(__file__).parent.resolve()
     with open(root / "template/makefile_base") as f:
         makefile_base = f.read()
@@ -17,4 +17,17 @@ def makefile(files):
     makefile_str = (
         files_str + "\n" + makefile_base + "\n" + all_str + "\n" + targets_str
     )
+    return makefile_str
+
+
+def makefile(target, opt):
+    makefile_template = (
+        "TARGET   ?= {target}\n"
+        "GCCOPT   ?= O2\n"
+        "OPT      ?= {opt}\n"
+        "COMMDIR  ?= $(CURDIR)\n"
+        "ARCH     ?= rv32im_zicsr\n"
+        "MEM_SIZE ?= 65536\n"
+    )
+    makefile_str = makefile_template.format(target=target, opt=opt)
     return makefile_str

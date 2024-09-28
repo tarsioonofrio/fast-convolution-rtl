@@ -15,7 +15,7 @@ from . import latex
 from . import utils
 from .naive import naive_convolve
 
-# from .makefile import makefile
+from .makefile import makefile
 
 
 def package_clib():
@@ -188,13 +188,12 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
     # # shutil.copytree(package_clib(), dir_clib, dirs_exist_ok=True)
     # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
     repo.dir_clib.mkdir(parents=True, exist_ok=True)
-    dir_clib_x86 = repo.dir_clib / "x86"
-    shutil.copytree(package_clib() / "x86", dir_clib_x86, dirs_exist_ok=True)
-    dir_clib_riscv = repo.dir_clib / "riscv"
-    shutil.copytree(package_clib() / "riscv", dir_clib_riscv, dirs_exist_ok=True)
-    dir_clib_lib = repo.dir_clib_src / "lib/include"
+    dir_clib_x86 = repo.dir_clib / "cmake-gcc"
+    shutil.copytree(package_clib() / "cmake-gcc", dir_clib_x86, dirs_exist_ok=True)
+    dir_clib_common = repo.dir_clib / "common"
+    shutil.copytree(package_clib() / "common", dir_clib_common, dirs_exist_ok=True)
     shutil.copytree(
-        package_clib() / "src/int/lib/include", dir_clib_lib, dirs_exist_ok=True
+        package_clib() / "src/int/lib", repo.dir_clib_lib, dirs_exist_ok=True
     )
 
 
@@ -274,37 +273,28 @@ def cmd_build_toom_cook1d(repo, points):
         {"name": "mat", "value": a.T},
         {"name": "mq", "value": qr},
     ]
-    for path, typ, dir_data in zip(
-        ["build.h", "build_float.h"],
-        ["int", "float"],
-        [repo.dir_clib_data, repo.dir_clib_data_float],
-    ):
-        arr = [{**r, "type": typ} for r in list_array]
-        utils.c_header(dir_data / path, arr, {})
 
-    shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
-    )
-    shutil.copy(package_clib() / "src/int/filter1d.c", repo.dir_clib_src / "filter1d.c")
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "build.h", arr, {})
 
-    dir_lib = repo.dir_clib_src / "lib"
-    dir_lib.mkdir(parents=True, exist_ok=True)
-    libs = ["convolution.c", "util.c", "filter1dim.c"]
-    for f in libs:
-        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
-    dir_lib_fast = repo.dir_clib_src / "lib_fast"
-    dir_lib_fast.mkdir(parents=True, exist_ok=True)
-    libs = ["fast_conv.c", "opt_fast_conv.c"]
-    for f in libs:
-        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
+    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
+    shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
+    # dir_filter1d = repo.dir_clib
+    # dir_filter1d.mkdir(parents=True, exist_ok=True)
+    shutil.copy(package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c")
 
+    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
     hadamart = utils.c_hadamart_product_nollop(len(list_points), c.T)
 
-    dir_lib_inc = dir_lib / "include"
-    dir_lib_inc.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = repo.dir_clib_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -319,14 +309,17 @@ def cmd_build_toom_cook1d(repo, points):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_H'
     )
-    with open(dir_lib / "optim.c", "w") as f:
+    with open(repo.dir_clib_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
-    with open(dir_lib / "include/optim.h", "w") as f:
+    with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
-    # makefile_str = makefile(["simple-conv", "filter1d"])
-    # dir_clib = repo.dir_clib_data.parent.parent
-    # with open(dir_clib / "riscv/Makefile", "w") as f:
-    #     f.write(makefile_str)
+
+    for target, opt in [["standard", "0"], ["filter1d", 0], ["filter1d", 1]]:
+        makefile_str = makefile(target, opt)
+        dir_clib_main = repo.dir_clib / f"make_{target}"
+        dir_clib_main.mkdir(parents=True, exist_ok=True)
+        with open(dir_clib_main / "Makefile", "w") as f:
+            f.write(makefile_str)
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -409,20 +402,20 @@ def cmd_build2d_bind_iterate(repo):
     latex.build_2d_bind_iterated(init_data, build_data, path)
 
     shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib / "simple-conv.c"
     )
     shutil.copy(
         package_clib() / "src/int/filter2d-iter.c",
-        repo.dir_clib_src / "filter2d-iter.c",
+        repo.dir_clib / "filter2d-iter.c",
     )
 
-    dir_lib = repo.dir_clib_src / "lib"
+    dir_lib = repo.dir_clib / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter2dim_iter.c"]
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = repo.dir_clib_src / "lib_fast"
+    dir_lib_fast = repo.dir_clib / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv_iter.c", "opt_fast_conv_iter.c"]
     # for f in libs:
@@ -505,20 +498,20 @@ def cmd_build2d_bind_nest(repo):
         utils.c_header(repo.dir_clib_data / path, arr, {})
 
     shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
+        package_clib() / "src/int/simple-conv.c", repo.dir_clib / "simple-conv.c"
     )
     shutil.copy(
         package_clib() / "src/int/filter2d-nest.c",
-        repo.dir_clib_src / "filter2d-nest.c",
+        repo.dir_clib / "filter2d-nest.c",
     )
 
-    dir_lib = repo.dir_clib_src / "lib"
+    dir_lib = repo.dir_clib / "lib"
     dir_lib.mkdir(parents=True, exist_ok=True)
     libs = ["convolution.c", "util.c", "filter2dim_nest.c"]
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
 
-    dir_lib_fast = repo.dir_clib_src / "lib_fast"
+    dir_lib_fast = repo.dir_clib / "lib_fast"
     dir_lib_fast.mkdir(parents=True, exist_ok=True)
     libs = ["fast_conv.c", "opt_fast_conv.c"]
     for f in libs:
@@ -718,9 +711,12 @@ def cmd_sim_file(repo, feature, weight, suffix):
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_default.shape[0],
     }
-    for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
-        arr = [{**r, "type": typ} for r in list_array]
-        utils.c_header(repo.dir_clib_data / path, arr, dict_def)
+    # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
+
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr, dict_def)
 
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     return out_dict
@@ -882,9 +878,13 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_fast.shape[0],
     }
-    for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
-        arr = [{**r, "type": typ} for r in list_array]
-        utils.c_header(repo.dir_clib_data / path, arr, dict_def)
+
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
+
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr, dict_def)
+
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     return out_dict
 
@@ -921,9 +921,11 @@ def cmd_example_random(repo, feature, weight, suffix):
             {"name": "mg", "value": g},
             {"name": "mgg", "value": bg},
         ]
-        for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
-            arr = [{**r, "type": typ} for r in list_array]
-            utils.c_header(repo.dir_clib_data / path, arr, {})
+        arr = [{**r, "type": "int"} for r in list_array]
+        utils.c_header(repo.dir_clib_data / "example.h", arr, {})
+
+        arr = [{**r, "type": "float"} for r in list_array]
+        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists(repo)
@@ -943,9 +945,12 @@ def cmd_example_random(repo, feature, weight, suffix):
             {"name": "mg", "value": g},
             {"name": "mgg", "value": bg},
         ]
-        for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
-            arr = [{**r, "type": typ} for r in list_array]
-            utils.c_header(repo.dir_clib_data / path, arr, {})
+
+        arr = [{**r, "type": "int"} for r in list_array]
+        utils.c_header(repo.dir_clib_data / "example.h", arr, {})
+
+        arr = [{**r, "type": "float"} for r in list_array]
+        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
 
 
 def cmd_example_sequential(repo, feature, weight, suffix):
@@ -981,9 +986,11 @@ def cmd_example_sequential(repo, feature, weight, suffix):
             {"name": "mgg", "value": bg},
             {"name": "ms_gold", "value": s},
         ]
-        for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
-            arr = [{**r, "type": typ} for r in list_array]
-            utils.c_header(repo.dir_clib_data / path, arr, {})
+        arr = [{**r, "type": "int"} for r in list_array]
+        utils.c_header(repo.dir_clib_data / "example.h", arr, {})
+
+        arr = [{**r, "type": "float"} for r in list_array]
+        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists(repo)
@@ -1003,6 +1010,8 @@ def cmd_example_sequential(repo, feature, weight, suffix):
             {"name": "mgg", "value": bg},
             {"name": "ms_gold", "value": s},
         ]
-        for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
-            arr = [{**r, "type": typ} for r in list_array]
-            utils.c_header(repo.dir_clib_data / path, arr, {})
+        arr = [{**r, "type": "int"} for r in list_array]
+        utils.c_header(repo.dir_clib_data / "example.h", arr, {})
+
+        arr = [{**r, "type": "float"} for r in list_array]
+        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})

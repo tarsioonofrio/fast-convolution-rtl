@@ -1,8 +1,7 @@
 #ifndef C_SIM_FLOAT_H
 #define C_SIM_FLOAT_H
 
-#define QUANT SHIFT
-#define QUANT_BITS 4
+#define QUANT None
 #define W_SIZE 3
 #define FIN_SIZE 32
 #define FOUT_SIZE 30
@@ -18,9 +17,9 @@ const float weight_gg[3*4] = {
 	0.0f, 0.5f, -0.5f, 0.0f
 };
 const float weight_gg_quant[3*4] = {
-	0.0f, 8.0f, -8.0f, 0.0f,
-	-16.0f, -16.0f, 48.0f, 16.0f,
-	0.0f, 8.0f, -8.0f, 0.0f
+	0.0f, 0.5f, -0.5f, 0.0f,
+	-1.0f, -1.0f, 3.0f, 1.0f,
+	0.0f, 0.5f, -0.5f, 0.0f
 };
 const float feat_in[32*32] = {
 	118.0f, 120.0f, 124.0f, 118.0f, 122.0f, 116.0f, 115.0f, 116.0f, 111.0f, 109.0f, 111.0f, 107.0f, 109.0f, 108.0f, 110.0f, 116.0f, 117.0f, 121.0f, 124.0f, 132.0f, 135.0f, 136.0f, 140.0f, 143.0f, 144.0f, 148.0f, 151.0f, 152.0f, 153.0f, 154.0f, 152.0f, 152.0f,
