@@ -38,6 +38,7 @@ class Repo(object):
         self.dir_clib = self.root / "clib"
         self.dir_clib_src = self.dir_clib / "src"
         self.dir_clib_data = self.dir_clib_src / "data"
+        self.dir_clib_data_float = self.dir_clib_src / "data"
 
 
 @click.group()
@@ -135,7 +136,7 @@ def toom_cook1d(ctx, points):
             click.Abort()
     default = default_toom_cook_points1d(read_init_if_exists(repo).get("c", 1))
     points_ = points if points is not None else default
-    
+
     cmd_build_toom_cook1d(repo, points_)
     click.echo("Build 1D Toom Cook")
 

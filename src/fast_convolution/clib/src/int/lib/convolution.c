@@ -4,11 +4,17 @@
 
 #include <stdlib.h>
 #include "convolution.h"
-#include "fast_conv.h"
-#include "filter1dim.h"
 
 #ifdef __riscv
     #include <riscv-csr.h>
+#endif
+
+#if OPTIM == D1 || OPTIM == D2_NEST
+    #include "optim.h"
+#endif
+
+#if OPTIM == D2_ITER
+    #include "optim_iter.h"
 #endif
 
 
@@ -73,15 +79,166 @@ void init_array(int *array, int size) {
 void right_shift_array(int *array, int shift, int size) {
     int i;
 
+    for (i = 0; i < size; i++) {
+        array[i] = array[i] >> shift;
+    };
+}
+
+
+
+void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int *md, int a_size, int c_size) {
+    int *mss = (int *) malloc((c_size) * sizeof(int));
+    int *mdd = (int *) malloc((c_size) * sizeof(int));
+
+    init_array(mss, c_size);
+    init_array(mdd, c_size);
+    init_array(ms, a_size);
+
+    #if OPTIM == 0
+        // D=ct*d
+        matrix_mul(mdd, mc, md, c_size, c_size, 1);
+        // S=D.G
+        hadamart_product(mss, mdd, mgg, c_size);
+        // s=S*a
+        matrix_mul(ms, ma, mss, a_size, c_size, 1);
+    #elif OPTIM == D1 || OPTIM == D2_NEST
+        matrix_mul_shift_noloop_c(mdd, md);
+        hadamart_product_noloop(mss, mdd, mgg);
+        matrix_mul_shift_noloop_a(ms, mss);
+    #endif
+
+    free(mss);
+    free(mdd);
+}
+
+
+void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
+               const int *ma2, const int *mc2, const int *md,
+               int a1_size, int a2_size, int c1_size, int c2_size) {
+
+    int *mss = (int *) malloc((c1_size * c2_size) * sizeof(int));
+    int *mss2 = (int *) malloc((a1_size * c1_size) * sizeof(int));
+    int *mdd = (int *) malloc((c1_size * c2_size) * sizeof(int));
+    int *md2 = (int *) malloc((c1_size * c2_size) * sizeof(int));
+    // int *ma2 = (int *) malloc((a2_size * c2_size) * sizeof(int));
+    // int *mc2 = (int *) malloc((c2_size * c2_size) * sizeof(int));
+
+    init_array(ms, a1_size * a2_size);
+    init_array(mss, c1_size * c2_size);
+    init_array(mss2, a1_size * c1_size);
+    init_array(mdd, c1_size * c2_size);
+    init_array(md2, c1_size * c2_size);
+    // init_array(ma2, a2_size * c2_size);
+    // init_array(mc2, c2_size * c2_size);
+
+    // matrix_transpose(mc2, mc2t, c1_size, c2_size);
+    // matrix_transpose(ma2, ma2t, a2_size, c2_size);
+    #if OPTIM == 0
+        matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
+        matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
+        hadamart_product(mss, mdd, mgg, c1_size * c2_size);
+        matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
+        matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+    #elif OPTIM == D2_ITER
+        matrix_mul_shift_noloop_c2(md2, md);
+        matrix_mul_shift_noloop_c1t(mdd, md2);
+        hadamart_product_noloop_iter(mss, mdd, mgg);
+        matrix_mul_shift_noloop_a2(mss2, mss);
+        matrix_mul_shift_noloop_a1t(ms, mss2);
+    #endif
+
+    free(mss);
+    free(mss2);
+    free(mdd);
+    free(md2);
+}
+
+void filter1d(int *feature_out, const int *feature_in, int index, const int *mc, const int *ma,
+              const int *mgg, int a_size, int c_size, int fin_size, int fout_size) {
+    int r, c, i;
+    int *ms = (int *) malloc((a_size) * sizeof(int));
+    int *md = (int *) malloc((c_size) * sizeof(int));
+
+//    void (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
+
     #ifdef __riscv
         csr_write_mcountinhibit(0);
     #endif
 
-    for (i = 0; i < size; i++) {
-        array[i] = array[i] >> shift;
-    };
+
+    for (r = index; r < fout_size + index; r++) {
+        for (c = 0; c <= fout_size; c = c + a_size) {
+            for (i = 0; i < c_size; i++) {
+                if (c + i < fin_size) {
+                    md[i] = feature_in[r * fin_size + c + i];
+                } else {
+                    md[i] = 0;
+                }
+            }
+            fast_conv(ms, ma, mgg, mc, md, a_size, c_size);
+            for (i = 0; i < a_size; i++) {
+                if (c + i < fout_size) {
+                    feature_out[(r - index) * fout_size + c + i] += ms[i];
+                }
+            }
+        }
+    }
 
     #ifdef __riscv
         csr_write_mcountinhibit(-1);
     #endif
+
+    free(ms);
+    free(md);
+}
+
+
+void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_size, int type_conv,
+              type_struct_conv *params) {
+    int r, c, rd, cd;
+    int a1_size = params->a1_size;
+    int a2_size = params->a2_size;
+    int c1_size = params->c1_size;
+    int c2_size = params->c2_size;
+    int *ms = (int *) malloc((a1_size * a1_size) * sizeof(int));
+    int *md = (int *) malloc((c1_size * c1_size) * sizeof(int));
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
+
+    for (r = 0; r < fout_size; r = r + a1_size) {
+        for (c = 0; c <= fout_size; c = c + a2_size) {
+            for (rd = 0; rd < c1_size; rd++) {
+                for (cd = 0; cd < c2_size; cd++) {
+                    if ((r + rd < fin_size) && (c + cd < fin_size)) {
+                        md[rd * c1_size + cd] = feature_in[r * fin_size + rd * fin_size + c + cd];
+                    } else {
+                        md[rd * c1_size + cd] = 0;
+                    }
+                }
+            }
+            if (type_conv == NEST) {
+                fast_conv(ms, params->ma, params->mgg, params->mc, md,
+                          a1_size * a2_size, c1_size * c2_size);
+            } else if (type_conv == ITER) {
+                fast_conv_iter(ms, params->ma1, params->mc1, params->mgg, params->ma2,
+                               params->mc2, md, a1_size, a2_size, c1_size, c2_size);
+            }
+            for (rd = 0; rd < a1_size; rd++) {
+                for (cd = 0; cd < a2_size; cd++) {
+                    if (c + rd < fout_size) {
+                        feature_out[r * fout_size + rd * fout_size + c + cd] = ms[rd * a1_size + cd];
+                    }
+                }
+            }
+        }
+    }
+
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
+
+    free(ms);
+    free(md);
 }

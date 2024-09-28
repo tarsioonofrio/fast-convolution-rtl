@@ -12,16 +12,10 @@ from sklearn.metrics import r2_score
 from . import fast
 from . import quant
 from . import latex
+from . import utils
 from .naive import naive_convolve
 
 # from .makefile import makefile
-from .utils import (
-    c_header,
-    default_convolve,
-    c_matmul_shift_noloop,
-    c_matmul_shift_noloop_iter,
-    c_hadamart_product_nollop,
-)
 
 
 def package_clib():
@@ -179,7 +173,7 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
             "B_SIZE": b,
             "C_SIZE": c,
         }
-        c_header(init_path, [], dict_defs)
+        utils.c_header(init_path, [], dict_defs)
     elif dimensions == 2:
         dict_defs = {
             "A1_SIZE": a,
@@ -189,7 +183,7 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
             "B2_SIZE": b,
             "C2_SIZE": c,
         }
-        c_header(init_path, [], dict_defs)
+        utils.c_header(init_path, [], dict_defs)
 
     # # shutil.copytree(package_clib(), dir_clib, dirs_exist_ok=True)
     # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
@@ -271,7 +265,7 @@ def cmd_build_toom_cook1d(repo, points):
         }
         for (n, s), lst in csa_parcels.items()
     ]
-    c_header(repo.dir_clib_data / "build_shift.h", csa_arr, header_csa)
+    utils.c_header(repo.dir_clib_data / "build_shift.h", csa_arr, header_csa)
 
     # TODO export build_float.h with data in float
     list_array = [
@@ -280,9 +274,13 @@ def cmd_build_toom_cook1d(repo, points):
         {"name": "mat", "value": a.T},
         {"name": "mq", "value": qr},
     ]
-    for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
+    for path, typ, dir_data in zip(
+        ["build.h", "build_float.h"],
+        ["int", "float"],
+        [repo.dir_clib_data, repo.dir_clib_data_float],
+    ):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(repo.dir_clib_data / path, arr, {})
+        utils.c_header(dir_data / path, arr, {})
 
     shutil.copy(
         package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
@@ -301,9 +299,9 @@ def cmd_build_toom_cook1d(repo, points):
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
 
-    matmul_a = c_matmul_shift_noloop(a.T, "a")
-    matmul_c = c_matmul_shift_noloop(c.T, "c")
-    hadamart = c_hadamart_product_nollop(len(list_points), c.T)
+    matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
+    matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
+    hadamart = utils.c_hadamart_product_nollop(len(list_points), c.T)
 
     dir_lib_inc = dir_lib / "include"
     dir_lib_inc.mkdir(parents=True, exist_ok=True)
@@ -399,7 +397,7 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(repo.dir_clib_data / path, arr, {})
+        utils.c_header(repo.dir_clib_data / path, arr, {})
 
 
 def cmd_build2d_bind_iterate(repo):
@@ -438,13 +436,13 @@ def cmd_build2d_bind_iterate(repo):
     )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-    matmul_c2 = c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape, True)
-    matmul_c1t = c_matmul_shift_noloop_iter(c1.T, "c1t", c1.T.shape, c1.T.shape)
-    matmul_a2 = c_matmul_shift_noloop_iter(a2, "a2", c1.shape, a2.shape, True)
-    matmul_a1t = c_matmul_shift_noloop_iter(
+    matmul_c2 = utils.c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape, True)
+    matmul_c1t = utils.c_matmul_shift_noloop_iter(c1.T, "c1t", c1.T.shape, c1.T.shape)
+    matmul_a2 = utils.c_matmul_shift_noloop_iter(a2, "a2", c1.shape, a2.shape, True)
+    matmul_a1t = utils.c_matmul_shift_noloop_iter(
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
-    hadamart = c_hadamart_product_nollop(
+    hadamart = utils.c_hadamart_product_nollop(
         a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_iter"
     )
 
@@ -504,7 +502,7 @@ def cmd_build2d_bind_nest(repo):
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     for path, typ in zip(["bind_nest.h", "bind_nest_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(repo.dir_clib_data / path, arr, {})
+        utils.c_header(repo.dir_clib_data / path, arr, {})
 
     shutil.copy(
         package_clib() / "src/int/simple-conv.c", repo.dir_clib_src / "simple-conv.c"
@@ -526,9 +524,9 @@ def cmd_build2d_bind_nest(repo):
     for f in libs:
         shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
 
-    matmul_a = c_matmul_shift_noloop(a.T, "a")
-    matmul_c = c_matmul_shift_noloop(c.T, "c")
-    hadamart = c_hadamart_product_nollop(a.shape[0], c.T)
+    matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
+    matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
+    hadamart = utils.c_hadamart_product_nollop(a.shape[0], c.T)
 
     dir_lib.mkdir(parents=True, exist_ok=True)
     dir_lib_inc = dir_lib / "include"
@@ -722,7 +720,7 @@ def cmd_sim_file(repo, feature, weight, suffix):
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(repo.dir_clib_data / path, arr, dict_def)
+        utils.c_header(repo.dir_clib_data / path, arr, dict_def)
 
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     return out_dict
@@ -886,7 +884,7 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
     }
     for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": typ} for r in list_array]
-        c_header(repo.dir_clib_data / path, arr, dict_def)
+        utils.c_header(repo.dir_clib_data / path, arr, dict_def)
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     return out_dict
 
@@ -925,7 +923,7 @@ def cmd_example_random(repo, feature, weight, suffix):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(repo.dir_clib_data / path, arr, {})
+            utils.c_header(repo.dir_clib_data / path, arr, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists(repo)
@@ -947,7 +945,7 @@ def cmd_example_random(repo, feature, weight, suffix):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(repo.dir_clib_data / path, arr, {})
+            utils.c_header(repo.dir_clib_data / path, arr, {})
 
 
 def cmd_example_sequential(repo, feature, weight, suffix):
@@ -962,7 +960,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         d = sy.Matrix(f)
         w = np.arange(weight, weight + b_len)
         g = sy.Matrix(w)
-        s = default_convolve(d, g)
+        s = utils.default_convolve(d, g)
     elif dim == 2:
         f0 = np.arange(feature, feature + c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
@@ -970,7 +968,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         w0 = np.arange(weight, weight + b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
         g = sy.Matrix(w)
-        s = default_convolve(d, g)
+        s = utils.default_convolve(d, g)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
@@ -985,7 +983,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(repo.dir_clib_data / path, arr, {})
+            utils.c_header(repo.dir_clib_data / path, arr, {})
 
     elif dim == 2:
         data_bind = read_bind_if_exists(repo)
@@ -1007,4 +1005,4 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         ]
         for path, typ in zip(["example.h", "example_float.h"], ["int", "float"]):
             arr = [{**r, "type": typ} for r in list_array]
-            c_header(repo.dir_clib_data / path, arr, {})
+            utils.c_header(repo.dir_clib_data / path, arr, {})

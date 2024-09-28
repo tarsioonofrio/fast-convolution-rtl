@@ -3,7 +3,6 @@
 #include "init.h"
 #include "build.h"
 #include "sim.h"
-#include "filter1dim.h"
 
 #ifdef __riscv
     #include <riscv-csr.h>
@@ -14,7 +13,7 @@ int main() {
     #ifdef __riscv
         csr_write_mcountinhibit(0);
     #endif
-        
+
     int i;
     const int *mgg;
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
@@ -31,4 +30,3 @@ int main() {
 
     return 0;
 }
-

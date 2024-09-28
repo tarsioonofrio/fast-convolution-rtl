@@ -191,14 +191,20 @@ def c_matmul_shift_noloop(mtx, name_suffix):
 
 def c_matmul_shift_noloop_iter(mtx1, name_suffix, in_shp, out_shp, swap=False):
     mtx1_log = fast.log2_lst(mtx1)
-    mtx2 = np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]).reshape(*in_shp)
-    mtx3 = matmul(mtx2, np.array(mtx1_log)) if swap else matmul(np.array(mtx1_log), mtx2)
+    mtx2 = np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]).reshape(
+        *in_shp
+    )
+    mtx3 = (
+        matmul(mtx2, np.array(mtx1_log)) if swap else matmul(np.array(mtx1_log), mtx2)
+    )
     var_out = [f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])]
 
-    lst_data = [[
+    lst_data = [
+        [
             c_shift(k, v["s"], z)
             for shift in data
-            for k, v in shift.items() if "s" in v
+            for k, v in shift.items()
+            if "s" in v
             for z in v["z"]
         ]
         for data in mtx3
@@ -227,13 +233,6 @@ def default_convolve(f, w):
     return output_default
 
 
-def getcwd():
-    if os.environ.get("TEST_PATH") is None:
-        return Path(os.getcwd())
-    else:
-        return Path(os.environ.get("TEST_PATH"))
-
-
 def matmul(m1, m2):
     row1 = m1.shape[0]
     col2 = m2.shape[1]
@@ -249,17 +248,3 @@ def matmul(m1, m2):
                 data = {d2: d1} if isinstance(d2, str) else {d1: d2}
                 out[r * col2 + c] += [data]
     return out
-
-
-root_project_path = getcwd()
-dir_config = root_project_path / "config"
-file_init = dir_config / "init.json"
-file_build = dir_config / "build.json"
-file_bind = dir_config / "bind.json"
-file_quant = dir_config / "quant.json"
-dir_build = root_project_path / "build"
-dir_quant = root_project_path / "quant"
-dir_example = root_project_path / "example"
-dir_sim = root_project_path / "sim"
-dir_clib_data = root_project_path / "clib/src/data"
-clib_package = Path(__file__).resolve().parent / "clib"
