@@ -1,5 +1,5 @@
 TARGET   ?= {target}
-OPT      ?= {opt}
+OPTIM    ?= {opt}
 GCCOPT   ?= O2
 SRCDIR   ?= $(realpath $(CURDIR)/../../src)
 ARCH     ?= rv32im_zicsr

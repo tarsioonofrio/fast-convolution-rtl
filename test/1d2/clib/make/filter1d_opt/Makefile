@@ -1,5 +1,5 @@
 TARGET   ?= filter1d
-OPT      ?= 1
+OPTIM    ?= 1
 GCCOPT   ?= O2
 SRCDIR   ?= $(realpath $(CURDIR)/../../src)
 ARCH     ?= rv32im_zicsr

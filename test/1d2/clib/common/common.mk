@@ -3,7 +3,7 @@ NC   =\033[0m # No Color
 
 TARGET   ?= simple-conv
 GCCOPT   ?= O2
-OPT      ?= 0
+OPTIM    ?= 0
 ARCH     ?= rv32im_zicsr
 MEM_SIZE ?= 65536
 SRCDIR   ?= $(CURDIR)/../src
@@ -22,7 +22,7 @@ OBJCOPY = riscv64-elf-objcopy
 # HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMMDIR}/include/*.h)
 HEADERS = $(INCFILES) $(wildcard ${COMMDIR}/include/*.h)
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Wall -std=c23 -I${COMMDIR}/include $(INCFLAGS) -$(GCCOPT) -DOPT=$(OPT)
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Wall -std=c23 -I${COMMDIR}/include $(INCFLAGS) -$(GCCOPT) -DOPTIM=$(OPTIM)
 LDFLAGS = --specs=nano.specs -march=$(ARCH) -mabi=ilp32 -nostartfiles -T ${COMMDIR}/link.ld
 
 $(info CFLAGS $(CFLAGS))
