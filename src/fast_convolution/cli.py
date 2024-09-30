@@ -37,6 +37,7 @@ class Repo(object):
         self.dir_sim = self.root / "sim"
         self.dir_clib = self.root / "clib"
         self.dir_clib_src = self.dir_clib / "src"
+        self.dir_clib_make = self.dir_clib / "make"
         self.dir_clib_main = self.dir_clib_src / "main"
         self.dir_clib_lib = self.dir_clib_src / "lib"
         self.dir_clib_lib_opt = self.dir_clib_src / "lib_opt"

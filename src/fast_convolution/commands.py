@@ -312,11 +312,14 @@ def cmd_build_toom_cook1d(repo, points):
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    for target, opt in [["standard", "0"], ["filter1d", 0], ["filter1d", 1]]:
-        makefile_str = makefile(target, opt)
-        dir_clib_main = repo.dir_clib / f"make_{target}"
-        dir_clib_main.mkdir(parents=True, exist_ok=True)
-        with open(dir_clib_main / "Makefile", "w") as f:
+    for target, opt in [["standard", 0], ["filter1d", 0], ["filter1d", 1]]:
+        source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
+        include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
+        makefile_str = makefile(target, opt, source, include)
+        name = target if opt == 0 else f"{target}_opt"
+        dir_clib_make = repo.dir_clib_make / name
+        dir_clib_make.mkdir(parents=True, exist_ok=True)
+        with open(dir_clib_make / "Makefile", "w") as f:
             f.write(makefile_str)
 
 
