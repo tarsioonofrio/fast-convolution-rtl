@@ -284,8 +284,6 @@ def cmd_build_toom_cook1d(repo, points):
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
-    # dir_filter1d = repo.dir_clib
-    # dir_filter1d.mkdir(parents=True, exist_ok=True)
     shutil.copy(package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c")
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
