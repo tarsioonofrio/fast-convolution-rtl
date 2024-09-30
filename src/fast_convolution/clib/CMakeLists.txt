@@ -16,6 +16,8 @@ set(INC_FLOAT src/float/lib/include)
 set(INC_INT src/int/lib/include)
 set(TEST_DATA1 ${TEST_PATH}/${PRJ1D}/clib/src/data)
 set(TEST_DATA2 ${TEST_PATH}/${PRJ2D_NEST}/clib/src/data)
+set(TEST_DATA1_FLOAT ${TEST_PATH}/${PRJ1D}/clib/src/data_float)
+set(TEST_DATA2_FLOAT ${TEST_PATH}/${PRJ2D_NEST}/clib/src/data_float)
 set(TEST_INC_OPT1 ${TEST_PATH}/${PRJ1D}/clib/src/lib/include)
 set(TEST_INC_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/src/lib/include)
 set(TEST_INC_OPT2_ITER ${TEST_PATH}/${PRJ2D_ITER}/clib/src/lib/include)
@@ -86,13 +88,13 @@ target_include_directories(filter2d-iter-opt PRIVATE ${INC_INT} ${TEST_INC_OPT2_
 
 # include data
 # float
-target_include_directories(float-fast-conv1d PRIVATE ${TEST_DATA1})
-target_include_directories(float-fast-conv2d-nest PRIVATE ${TEST_DATA2})
-target_include_directories(float-fast-conv2d-iter PRIVATE ${TEST_DATA2})
+target_include_directories(float-fast-conv1d PRIVATE  ${TEST_DATA1} ${TEST_DATA1_FLOAT})
+target_include_directories(float-fast-conv2d-nest PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
+target_include_directories(float-fast-conv2d-iter PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
 
-target_include_directories(float-filter1d PRIVATE ${TEST_DATA1})
-target_include_directories(float-filter2d-nest PRIVATE ${TEST_DATA2})
-target_include_directories(float-filter2d-iter PRIVATE ${TEST_DATA2})
+target_include_directories(float-filter1d PRIVATE ${TEST_DATA1} ${TEST_DATA1_FLOAT})
+target_include_directories(float-filter2d-nest PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
+target_include_directories(float-filter2d-iter PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
 
 # int
 target_include_directories(matrix-mult PRIVATE ${TEST_DATA1})
