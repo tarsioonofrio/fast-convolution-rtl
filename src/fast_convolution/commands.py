@@ -286,13 +286,10 @@ def cmd_build_toom_cook1d(repo, points):
     shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
     shutil.copy(package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c")
 
-    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
     hadamart = utils.c_hadamart_product_nollop(len(list_points), c.T)
 
-    dir_lib_opt_inc = repo.dir_clib_lib_opt / "include"
-    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -307,16 +304,25 @@ def cmd_build_toom_cook1d(repo, points):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_H'
     )
-    with open(repo.dir_clib_lib_opt / "optim.c", "w") as f:
+
+    lib_opt = "filter1d-opt"
+    dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
+    dir_lib_opt.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = dir_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
+
+    with open(dir_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    for target, opt in [["standard", 0], ["filter1d", 0], ["filter1d", 1]]:
-        source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
-        include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
+    target_opt = [["standard", None], ["filter1d", None], ["filter1d", lib_opt]]
+    for target, opt_name in target_opt:
+        source = ""  if opt_name is None else "$(CURDIR)/lib"
+        include = ""  if opt_name is None else "$(CURDIR)/lib/include"
+        opt = 0 if opt_name is None else 1
         makefile_str = makefile(target, opt, source, include)
-        name = target if opt == 0 else f"{target}-opt"
+        name = target if opt_name is None else lib_opt
         dir_clib_make = repo.dir_clib_make / name
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
@@ -420,8 +426,6 @@ def cmd_build2d_bind_iterate(repo):
         a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_iter"
     )
 
-    dir_lib_opt_inc = repo.dir_clib_lib_opt / "include"
-    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_c2['function']}\n"
@@ -440,16 +444,26 @@ def cmd_build2d_bind_iterate(repo):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_ITER_H'
     )
-    with open(repo.dir_clib_lib_opt / "optim.c", "w") as f:
+
+    lib_opt = "filter2d-iter-opt"
+    dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
+    dir_lib_opt.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = dir_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
+
+    with open(dir_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    for target, opt in [["standard", 0], ["filter2d-iter", 0], ["filter2d-iter", 1]]:
-        source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
-        include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
+    target_opt = [["standard", None], ["filter2d-iter", None], ["filter2d-iter", lib_opt]]
+
+    for target, opt_name in target_opt:
+        source = ""  if opt_name is None else "$(CURDIR)/lib"
+        include = ""  if opt_name is None else "$(CURDIR)/lib/include"
+        opt = 0 if opt_name is None else 1
         makefile_str = makefile(target, opt, source, include)
-        name = target if opt == 0 else f"{target}-opt"
+        name = target if opt_name is None else lib_opt
         dir_clib_make = repo.dir_clib_make / name
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
@@ -503,8 +517,6 @@ def cmd_build2d_bind_nest(repo):
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
     hadamart = utils.c_hadamart_product_nollop(a.shape[0], c.T)
 
-    dir_lib_opt_inc = repo.dir_clib_lib_opt / "include"
-    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -519,16 +531,26 @@ def cmd_build2d_bind_nest(repo):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_H'
     )
-    with open(repo.dir_clib_lib_opt / "optim.c", "w") as f:
+
+    lib_opt = "filter2d-nest-opt"
+    dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
+    dir_lib_opt.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = dir_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
+
+    with open(dir_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    for target, opt in [["standard", 0], ["filter2d-nest", 0], ["filter2d-nest", 1]]:
-        source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
-        include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
+    target_opt = [["standard", None], ["filter2d-nest", None], ["filter2d-nest", lib_opt]]
+
+    for target, opt_name in target_opt:
+        source = ""  if opt_name is None else "$(CURDIR)/lib"
+        include = ""  if opt_name is None else "$(CURDIR)/lib/include"
+        opt = 0 if opt_name is None else 1
         makefile_str = makefile(target, opt, source, include)
-        name = target if opt == 0 else f"{target}-opt"
+        name = target if opt_name is None else lib_opt
         dir_clib_make = repo.dir_clib_make / name
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
