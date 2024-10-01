@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "convolution.h"
 #include "util.h"
 #include "sim.h"
@@ -9,9 +8,7 @@
 #endif
 
 int main() {
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
+    inhibit_all();
 
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
 

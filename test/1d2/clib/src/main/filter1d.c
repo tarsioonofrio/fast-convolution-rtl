@@ -10,9 +10,7 @@
 
 
 int main() {
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
+    inhibit_all();
 
     int i;
     const int *mgg;

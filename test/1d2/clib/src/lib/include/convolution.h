@@ -26,7 +26,6 @@ typedef struct {
     int c2_size;
 } type_struct_conv;
 
-
 void simple_convolution(const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col,
                         int out_col);
 
@@ -51,6 +50,10 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
 
 void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_size, int type_conv,
               type_struct_conv *params);
+
+void inhibit_all();
+
+void inhibit_none();
 
 
 #endif //C_CONVOLUTION_H

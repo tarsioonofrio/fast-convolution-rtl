@@ -10,9 +10,7 @@
 #endif
 
 int main() {
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
+    inhibit_all();
 
     int feat_out[FOUT_SIZE * FOUT_SIZE] = {0};
     type_struct_conv struct_conv = {weight_gg_quant, 0, 0, ma1t, ma2, mc1t, mc2,

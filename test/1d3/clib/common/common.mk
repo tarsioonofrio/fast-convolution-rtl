@@ -1,30 +1,33 @@
 RED  =\033[0;31m
 NC   =\033[0m # No Color
 
-
 TARGET   ?= simple-conv
 GCCOPT   ?= O2
-RISCVDIR ?= $(CURDIR)
+OPTIM    ?= 0
 ARCH     ?= rv32im_zicsr
 MEM_SIZE ?= 65536
+SRCDIR   ?= $(CURDIR)/../src
+
+COMMDIR  ?= $(CURDIR)/common
 
 CC 		= riscv64-elf-gcc
 OBJDUMP = riscv64-elf-objdump
 OBJCOPY = riscv64-elf-objcopy
 
+# SRCDIR  = $(COMMDIR)/../src
+# COMMDIR = $(RISCVDIR)/common
+# LIBDIR  = $(SRCDIR)/lib
+# DATADIR = $(SRCDIR)/data
+# INCDIR  = $(LIBDIR)/include
+# HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMMDIR}/include/*.h)
+HEADERS = $(INCFILES) $(wildcard ${COMMDIR}/include/*.h)
 
-SRCDIR  = $(RISCVDIR)/../src
-COMMDIR = $(RISCVDIR)/common
-LIBDIR  = $(SRCDIR)/lib
-DATADIR = $(SRCDIR)/data
-LIBOPT  = $(SRCDIR)/lib_fast/$(if $(OPT),$(OPT)_fast_conv.c,fast_conv.c)
-INCDIR  = $(LIBDIR)/include
-HEADERS = $(wildcard $(INCDIR)/*.h) $(wildcard $(DATADIR)/*.h) $(wildcard ${COMMDIR}/include/*.h)
+CFLAGS  = -march=$(ARCH) -mabi=ilp32 -Wall -std=c23 -I${COMMDIR}/include $(INCFLAGS) -$(GCCOPT) -DOPTIM=$(OPTIM)
+LDFLAGS = --specs=nano.specs -march=$(ARCH) -mabi=ilp32 -nostartfiles -T ${COMMDIR}/link.ld
 
-CFLAGS  = -march=$(ARCH) -mabi=ilp32 -$(GCCOPT) -Wall -std=c23 -I$(INCDIR) -I$(DATADIR) -I${COMMDIR}/include
-LDFLAGS = --specs=nano.specs -T ${COMMDIR}/link.ld -march=$(ARCH) -mabi=ilp32 -nostartfiles
+$(info CFLAGS $(CFLAGS))
 
-CCSRC = $(SRCDIR)/$(TARGET).c $(wildcard $(LIBDIR)/*.c) $(wildcard ${COMMDIR}/*.c) $(LIBOPT)
+CCSRC = $(SRCFILES) $(wildcard ${COMMDIR}/*.c)
 CCOBJ = $(patsubst %.c, %.o, $(CCSRC))
 
 ASSRC = $(wildcard ${COMMDIR}/*.S)
@@ -47,7 +50,7 @@ $(TARGET).elf: $(CCOBJ) $(ASOBJ)
 
 %.o: %.S
 	@printf "${RED}Assemblying %s...${NC}\n" "$<"
-	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE) -DRISCV=1
+	@$(CC) -c $< -o $@ $(CFLAGS) -march=$(ARCH) -DMEM_SIZE=$(MEM_SIZE)
 
 %.o: %.c $(HEADERS)
 	@printf "${RED}Compiling %s...${NC}\n" "$<"

@@ -18,13 +18,23 @@
 #endif
 
 
+void inhibit_all(){
+    #ifdef __riscv
+        csr_write_mcountinhibit(-1);
+    #endif
+}
+
+void inhibit_none(){
+    #ifdef __riscv
+        csr_write_mcountinhibit(0);
+    #endif
+}
+
 void simple_convolution(
         const int *weight, const int *feature, int *output, int f_row, int f_col, int w_row, int w_col, int out_col) {
     int fr, fc, wr, wc;
 
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
+    inhibit_none();
 
     for (fr = 0; fr < f_row - w_row + 1; fr++) {
         for (fc = 0; fc < f_col - w_col + 1; fc++) {
@@ -36,9 +46,7 @@ void simple_convolution(
             }
         }
     }
-    #ifdef __riscv
-        csr_write_mcountinhibit(-1);
-    #endif
+    inhibit_all();
 }
 
 void matrix_mul(int *out, const int *in1, const int *in2, int row1, int col2_row1, int col2) {
@@ -79,20 +87,27 @@ void init_array(int *array, int size) {
 void right_shift_array(int *array, int shift, int size) {
     int i;
 
+    inhibit_none();
     for (i = 0; i < size; i++) {
         array[i] = array[i] >> shift;
     };
+    inhibit_all();
 }
 
 
 
 void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int *md, int a_size, int c_size) {
+
     int *mss = (int *) malloc((c_size) * sizeof(int));
     int *mdd = (int *) malloc((c_size) * sizeof(int));
+
+    // mallocs are inhibited, becase it increasy the number of multiplcations
+    inhibit_none();
 
     init_array(mss, c_size);
     init_array(mdd, c_size);
     init_array(ms, a_size);
+
 
     #if OPTIM == 0
         // D=ct*d
@@ -102,10 +117,13 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
         // s=S*a
         matrix_mul(ms, ma, mss, a_size, c_size, 1);
     #elif OPTIM == D1 || OPTIM == D2_NEST
+        // printf("******* OI *******\n");
         matrix_mul_shift_noloop_c(mdd, md);
         hadamart_product_noloop(mss, mdd, mgg);
         matrix_mul_shift_noloop_a(ms, mss);
     #endif
+
+    inhibit_all();
 
     free(mss);
     free(mdd);
@@ -122,6 +140,9 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
     int *md2 = (int *) malloc((c1_size * c2_size) * sizeof(int));
     // int *ma2 = (int *) malloc((a2_size * c2_size) * sizeof(int));
     // int *mc2 = (int *) malloc((c2_size * c2_size) * sizeof(int));
+
+    // mallocs are inhibited, becase it increasy the number of multiplcations
+    inhibit_none();
 
     init_array(ms, a1_size * a2_size);
     init_array(mss, c1_size * c2_size);
@@ -147,6 +168,8 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         matrix_mul_shift_noloop_a1t(ms, mss2);
     #endif
 
+    inhibit_all();
+
     free(mss);
     free(mss2);
     free(mdd);
@@ -159,12 +182,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
     int *ms = (int *) malloc((a_size) * sizeof(int));
     int *md = (int *) malloc((c_size) * sizeof(int));
 
-//    void (*fast_func)(int *, const int *, const int *, const int *, const int *, int, int) = fast_conv;
-
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
-
+    inhibit_none();
 
     for (r = index; r < fout_size + index; r++) {
         for (c = 0; c <= fout_size; c = c + a_size) {
@@ -175,6 +193,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
                     md[i] = 0;
                 }
             }
+
             fast_conv(ms, ma, mgg, mc, md, a_size, c_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
@@ -184,9 +203,7 @@ void filter1d(int *feature_out, const int *feature_in, int index, const int *mc,
         }
     }
 
-    #ifdef __riscv
-        csr_write_mcountinhibit(-1);
-    #endif
+    inhibit_none();
 
     free(ms);
     free(md);
@@ -203,9 +220,7 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
     int *ms = (int *) malloc((a1_size * a1_size) * sizeof(int));
     int *md = (int *) malloc((c1_size * c1_size) * sizeof(int));
 
-    #ifdef __riscv
-        csr_write_mcountinhibit(0);
-    #endif
+    inhibit_none();
 
     for (r = 0; r < fout_size; r = r + a1_size) {
         for (c = 0; c <= fout_size; c = c + a2_size) {
@@ -235,9 +250,7 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
         }
     }
 
-    #ifdef __riscv
-        csr_write_mcountinhibit(-1);
-    #endif
+    inhibit_all();
 
     free(ms);
     free(md);
