@@ -316,7 +316,7 @@ def cmd_build_toom_cook1d(repo, points):
         source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
         include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
         makefile_str = makefile(target, opt, source, include)
-        name = target if opt == 0 else f"{target}_opt"
+        name = target if opt == 0 else f"{target}-opt"
         dir_clib_make = repo.dir_clib_make / name
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
@@ -389,9 +389,12 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
         {"name": "mq2", "value": qr2},
     ]
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    for path, typ in zip(["build.h", "build_float.h"], ["int", "float"]):
-        arr = [{**r, "type": typ} for r in list_array]
-        utils.c_header(repo.dir_clib_data / path, arr, {})
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "build.h", arr, {})
+
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
 
 def cmd_build2d_bind_iterate(repo):
@@ -402,32 +405,9 @@ def cmd_build2d_bind_iterate(repo):
     write_bind(repo, "iterate")
     latex.build_2d_bind_iterated(init_data, build_data, path)
 
-    shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib / "simple-conv.c"
-    )
-    shutil.copy(
-        package_clib() / "src/int/filter2d-iter.c",
-        repo.dir_clib / "filter2d-iter.c",
-    )
-
-    dir_lib = repo.dir_clib / "lib"
-    dir_lib.mkdir(parents=True, exist_ok=True)
-    libs = ["convolution.c", "util.c", "filter2dim_iter.c"]
-    for f in libs:
-        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
-
-    dir_lib_fast = repo.dir_clib / "lib_fast"
-    dir_lib_fast.mkdir(parents=True, exist_ok=True)
-    libs = ["fast_conv_iter.c", "opt_fast_conv_iter.c"]
-    # for f in libs:
-    #     shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
-    shutil.copy(
-        package_clib() / "src/int/lib/fast_conv_iter.c", dir_lib_fast / "fast_conv.c"
-    )
-    shutil.copy(
-        package_clib() / "src/int/lib/opt_fast_conv_iter.c",
-        dir_lib_fast / "opt_fast_conv.c",
-    )
+    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
+    shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
+    shutil.copy(package_clib() / "src/int/filter2d-iter.c", repo.dir_clib_main / "filter2d-iter.c")
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     matmul_c2 = utils.c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape, True)
@@ -440,9 +420,8 @@ def cmd_build2d_bind_iterate(repo):
         a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_iter"
     )
 
-    dir_lib.mkdir(parents=True, exist_ok=True)
-    dir_lib_inc = dir_lib / "include"
-    dir_lib_inc.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = repo.dir_clib_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_c2['function']}\n"
@@ -461,15 +440,20 @@ def cmd_build2d_bind_iterate(repo):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_ITER_H'
     )
-    with open(dir_lib / "optim.c", "w") as f:
+    with open(repo.dir_clib_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
-    with open(dir_lib / "include/optim.h", "w") as f:
+    with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
-    # makefile_str = makefile(["simple-conv", "filter2d-iter"])
-    # dir_clib = repo.dir_clib_data.parent.parent
-    # with open(dir_clib / "riscv/Makefile", "w") as f:
-    #     f.write(makefile_str)
 
+    for target, opt in [["standard", 0], ["filter2d-iter", 0], ["filter2d-iter", 1]]:
+        source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
+        include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
+        makefile_str = makefile(target, opt, source, include)
+        name = target if opt == 0 else f"{target}-opt"
+        dir_clib_make = repo.dir_clib_make / name
+        dir_clib_make.mkdir(parents=True, exist_ok=True)
+        with open(dir_clib_make / "Makefile", "w") as f:
+            f.write(makefile_str)
 
 def cmd_build2d_bind_nest(repo):
     path = repo.dir_build / "bind-nest"
@@ -494,37 +478,23 @@ def cmd_build2d_bind_nest(repo):
         {"name": "mc_nest", "value": c.T},
     ]
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    for path, typ in zip(["bind_nest.h", "bind_nest_float.h"], ["int", "float"]):
-        arr = [{**r, "type": typ} for r in list_array]
-        utils.c_header(repo.dir_clib_data / path, arr, {})
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "build.h", arr, {})
 
-    shutil.copy(
-        package_clib() / "src/int/simple-conv.c", repo.dir_clib / "simple-conv.c"
-    )
-    shutil.copy(
-        package_clib() / "src/int/filter2d-nest.c",
-        repo.dir_clib / "filter2d-nest.c",
-    )
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
-    dir_lib = repo.dir_clib / "lib"
-    dir_lib.mkdir(parents=True, exist_ok=True)
-    libs = ["convolution.c", "util.c", "filter2dim_nest.c"]
-    for f in libs:
-        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib)
-
-    dir_lib_fast = repo.dir_clib / "lib_fast"
-    dir_lib_fast.mkdir(parents=True, exist_ok=True)
-    libs = ["fast_conv.c", "opt_fast_conv.c"]
-    for f in libs:
-        shutil.copy(package_clib() / "src/int/lib" / f, dir_lib_fast)
+    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
+    shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
+    shutil.copy(package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_main / "filter2d-nest.c")
 
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
     hadamart = utils.c_hadamart_product_nollop(a.shape[0], c.T)
 
-    dir_lib.mkdir(parents=True, exist_ok=True)
-    dir_lib_inc = dir_lib / "include"
-    dir_lib_inc.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = repo.dir_clib_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -539,14 +509,21 @@ def cmd_build2d_bind_nest(repo):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_H'
     )
-    with open(dir_lib / "optim.c", "w") as f:
+    with open(repo.dir_clib_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
-    with open(dir_lib / "include/optim.h", "w") as f:
+    with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
-    # makefile_str = makefile(["simple-conv", "filter2d-nest"])
-    # dir_clib = repo.dir_clib_data.parent.parent
-    # with open(dir_clib / "riscv/Makefile", "w") as f:
-    #     f.write(makefile_str)
+
+    for target, opt in [["standard", 0], ["filter2d-nest", 0], ["filter2d-nest", 1]]:
+        source = ""  if opt == 0 else "$(SRCDIR)/lib_opt"
+        include = ""  if opt == 0 else "$(SRCDIR)/lib_opt/include"
+        makefile_str = makefile(target, opt, source, include)
+        name = target if opt == 0 else f"{target}-opt"
+        dir_clib_make = repo.dir_clib_make / name
+        dir_clib_make.mkdir(parents=True, exist_ok=True)
+        with open(dir_clib_make / "Makefile", "w") as f:
+            f.write(makefile_str)
+
 
 
 def cmd_quant_none(repo):
