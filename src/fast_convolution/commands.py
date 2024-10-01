@@ -485,6 +485,16 @@ def cmd_build2d_bind_nest(repo):
     arr = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
+    list_array = [
+        {"name": "ma_nest", "value": a.T},
+        {"name": "mc_nest", "value": c.T},
+    ]
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "bind_nest.h", arr, {})
+
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "bind_nest_float.h", arr, {})
+
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
     shutil.copy(package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_main / "filter2d-nest.c")
