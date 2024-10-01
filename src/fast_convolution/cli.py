@@ -36,14 +36,11 @@ class Repo(object):
         self.dir_example = self.root / "example"
         self.dir_sim = self.root / "sim"
         self.dir_clib = self.root / "clib"
-        self.dir_clib_src = self.dir_clib / "src"
         self.dir_clib_make = self.dir_clib / "make"
-        self.dir_clib_main = self.dir_clib_src / "main"
-        self.dir_clib_lib = self.dir_clib_src / "lib"
-        self.dir_clib_lib_opt = self.dir_clib_src / "lib_opt"
-        self.dir_clib_main = self.dir_clib_src / "main"
-        self.dir_clib_data = self.dir_clib_src / "data"
-        self.dir_clib_data_float = self.dir_clib_src / "data_float"
+        self.dir_clib_lib = self.dir_clib / "lib"
+        self.dir_clib_main = self.dir_clib / "main"
+        self.dir_clib_data = self.dir_clib / "data"
+        self.dir_clib_data_float = self.dir_clib / "data_float"
 
 
 @click.group()

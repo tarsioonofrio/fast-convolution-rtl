@@ -14,7 +14,7 @@
 #endif
 
 #if OPTIM == D2_ITER
-    #include "optim_iter.h"
+    #include "optim.h"
 #endif
 
 

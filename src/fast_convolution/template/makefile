@@ -1,21 +1,22 @@
 TARGET   ?= {target}
 OPTIM    ?= {opt}
 GCCOPT   ?= O2
-SRCDIR   ?= $(realpath $(CURDIR)/../../src)
 ARCH     ?= rv32im_zicsr
 MEM_SIZE ?= 65536
 
-# add more src files
-SRCPATH  = $(SRCDIR)/lib {source}
-SRCFILES = $(SRCDIR)/main/$(TARGET).c $(foreach dir,$(SRCPATH),$(wildcard $(dir)/*.c))
 
-# add more header files
-INCPATH  = $(SRCDIR)/data $(SRCDIR)/lib/include {include}
+# search for general files (common, lib and main)
+ROOTDIR  ?= $(realpath $(CURDIR)/../../)
+COMMFILE = $(ROOTDIR)/common/common.mk
+COMMDIR  = $(ROOTDIR)/common/
+
+# add src files
+SRCPATH  = $(ROOTDIR)/lib {source}
+SRCFILES = $(ROOTDIR)/main/$(TARGET).c $(foreach dir,$(SRCPATH),$(wildcard $(dir)/*.c))
+
+# add headers, data is parent (project) or children (RS5 repo)
+INCPATH  = $(ROOTDIR)/lib/include $(realpath $(CURDIR)/../../data) $(realpath $(CURDIR)/data) {include}
 INCFILES = $(foreach dir,$(INCPATH),$(wildcard $(dir)/*.h))
 INCFLAGS = $(foreach dir,$(INCPATH),-I$(dir))
 
-# search for common files in two levels above
-MAKECOMM = $(realpath $(CURDIR)/../../common/common.mk)
-COMMDIR  ?= $(dir $(MAKECOMM))
-
-include $(MAKECOMM)
+include $(COMMFILE)
