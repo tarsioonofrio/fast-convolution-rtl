@@ -9,13 +9,9 @@ from PIL import Image
 from scipy import signal
 from sklearn.metrics import r2_score
 
-from . import fast
-from . import quant
-from . import latex
-from . import utils
-from .naive import naive_convolve
-
+from . import fast, latex, quant, utils
 from .makefile import makefile
+from .naive import naive_convolve
 
 
 def package_clib():

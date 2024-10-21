@@ -1,130 +1,41 @@
-import math
 import itertools
 
 import numpy as np
 import sympy as sy
 
 
-# class C3x3_5m20a9e():
-#     '''
-#     From Blahut page 166
-#     Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
-#     :return:
-#     '''
-#     _rin = 5
-#     _rout = 3
-#     _a = [
-#         [1, 0, 0],
-#         [1, 1, 1],
-#         [1, -1, 1],
-#         [1, 2, 4],
-#         [0, 0, 1]
-#     ]
-#     _b = _a
-#     _n = [[1, 2], [-1, 2], [-1, 6], [1, 6], [1, 1]]
-#     _c = [
-#         [2, 0, 0, 0, 0],
-#         [-1, -2, 2, -1, 2],
-#         [-2, -1, -3, 0, -1],
-#         [1, 1, 1, 1, -2],
-#         [0, 0, 0, 0, 1]
-#     ]
-
-#     def __init__(self, gv):
-#         a = sy.Matrix(self._a)
-#         b = sy.Matrix(self._b)
-#         c = sy.Matrix(self._c)
-#         n = sy.Matrix([sy.Rational(d, q) for d, q in self._n])
-
-#         g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(self._rout))))
-#         f = sy.Matrix(sy.symbols(" ".join(f"f_{i}" for i in range(self._rin))))
-#         bg = sy.diag(*(b * g).tolist())
-#         bgn = sy.diag(*bg * n)
-#         subs = {k: v for k, v in zip(g.values(), gv)}
-#         gs = bgn.subs(subs)
-#         self.a = a
-#         self.c = c
-#         self.gs = gs
-#         self.s = sy.MatMul(a.T, gs, c.T, f)
-
-#     def __call__(self, fv):
-#         out = self.a.T * self.gs * self.c.T * sy.Matrix(fv)
-
-
-def c3x3_5m20a9e_old(gv):
-    '''
-    From Blahut page 166
-    Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
-    :return:
-    '''
-    _rin = 5
-    _rout = 3
-    _a = [
-        [1, 0, 0],
-        [1, 1, 1],
-        [1, -1, 1],
-        [1, 2, 4],
-        [0, 0, 1]
-    ]
-    _b = _a
-    _n = [[1, 2], [-1, 2], [-1, 6], [1, 6], [1, 1]]
-    _c = [
-        [2, 0, 0, 0, 0],
-        [-1, -2, 2, -1, 2],
-        [-2, -1, -3, 0, -1],
-        [1, 1, 1, 1, -2],
-        [0, 0, 0, 0, 1]
-    ]
-
-    a = sy.Matrix(_a)
-    b = sy.Matrix(_b)
-    c = sy.Matrix(_c)
-    n = sy.Matrix([sy.Rational(d, q) for d, q in _n])
-
-    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(_rout))))
-    # f = sy.Matrix(sy.symbols(" ".join(f"f_{i}" for i in range(_rin))))
-    bg = sy.diag(*(b * g).tolist())
-    bgn = sy.diag(*(bg * n))
-    subs = {k: v for k, v in zip(g.values(), gv)}
-    gs = bgn.subs(subs)
-    # s = sy.MatMul(a.T, gs, c.T, f)
-    return wrap_convolution(c, gs, a)
-
-
-def c3x3_6m10a0e(gv):
-    '''
+def c3x3_6m10a0e():
+    """
     From Blahut page 164
     Linear, 3x3, 6 multiplications, 10 aditions and 0 extra operations
     :return:
-    '''
+    """
     _rin = 5
     _rout = 3
-    _a = [
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 1],
-        [1, 1, 0],
-        [1, 0, 1],
-        [0, 1, 1]
-    ]
+    _a = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [0, 1, 1]]
     _b = _a
     _c = [
         [2, 0, 0, 0, 0],
         [-1, -2, 2, -1, 2],
         [-2, -1, -3, 0, -1],
         [1, 1, 1, 1, -2],
-        [0, 0, 0, 0, 1]
+        [0, 0, 0, 0, 1],
     ]
     _n = [1, 1, 1, 1, 1, 1]
 
     a = sy.Matrix(_a)
     b = sy.Matrix(_b)
     c = sy.Matrix(_c)
-    n = sy.Matrix([i for i in _n])
+    q = sy.Matrix([i for i in _n])
+    return a, b, c, q
 
-    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(_rout))))
+
+def wrap_c3x3_6m10a0e(gv):
+    a, b, c, q = c3x3_6m10a0e()
+
+    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(a.shape[0]))))
     bg = sy.diag(*(b * g).tolist())
-    bgn = sy.diag(*(bg * n))
+    bgn = sy.diag(*(bg * q))
     subs = {k: v for k, v in zip(g.values(), gv)}
     gs = bgn.subs(subs)
     return wrap_convolution(c, gs, a)
@@ -132,7 +43,7 @@ def c3x3_6m10a0e(gv):
 
 def recursive_log2(n):
     def _recursive_log2(n):
-        return [e for e, b in enumerate(bin(n)[2::][::-1]) if b == '1']
+        return [e for e, b in enumerate(bin(n)[2::][::-1]) if b == "1"]
 
     if n == 0:
         return {}
@@ -159,8 +70,7 @@ def recursive_log2(n):
 def log2_lst(mtx):
     lst_in = mtx.tolist()
     lst_out = [
-        [None for c in range(len(lst_in[0]))]
-        for r in range(len(lst_in))
+        [None for c in range(len(lst_in[0]))] for r in range(len(lst_in))
     ]
     for r, row in enumerate(lst_in):
         for c, col in enumerate(row):
@@ -171,26 +81,32 @@ def log2_lst(mtx):
 def log2_matrix(lst):
     def log2_rational(p, q):
         p0 = sy.UnevaluatedExpr(sy.Pow(2, p, evaluate=False))
-        q0 = sy.Pow(sy.UnevaluatedExpr(
-            sy.Pow(2, q, evaluate=False)), -1, evaluate=False
+        q0 = sy.Pow(
+            sy.UnevaluatedExpr(sy.Pow(2, q, evaluate=False)), -1, evaluate=False
         )
         return p0 * q0
 
     mtx = sy.zeros(len(lst), len(lst[0]))
     for er, r in enumerate(lst):
         for ec, c in enumerate(r):
-            if 'z' in c:
-                n = sum([
-                    c["s"] * sy.UnevaluatedExpr(sy.Pow(2, z, evaluate=False))
-                    for z in c["z"]
-                ])
-            elif 'p' in c:
-                p = sum([
-                    (c["s"] * sy.UnevaluatedExpr(
-                        sy.Pow(2, p, evaluate=False))
-                     )
-                    for p in c["p"]
-                ])
+            if "z" in c:
+                n = sum(
+                    [
+                        c["s"]
+                        * sy.UnevaluatedExpr(sy.Pow(2, z, evaluate=False))
+                        for z in c["z"]
+                    ]
+                )
+            elif "p" in c:
+                p = sum(
+                    [
+                        (
+                            c["s"]
+                            * sy.UnevaluatedExpr(sy.Pow(2, p, evaluate=False))
+                        )
+                        for p in c["p"]
+                    ]
+                )
                 # q = sum([
                 #     (c["s"] * sy.Pow(sy.UnevaluatedExpr(
                 #         sy.Pow(2, q, evaluate=False)), -1, evaluate=False)
@@ -198,9 +114,9 @@ def log2_matrix(lst):
                 #     for q in c["q"]
                 # ])
                 if len(c["q"]) == 1:
-                    _q = sy.UnevaluatedExpr(sy.Pow(
-                        2, c["q"][0], evaluate=False
-                    ))
+                    _q = sy.UnevaluatedExpr(
+                        sy.Pow(2, c["q"][0], evaluate=False)
+                    )
                     q = sy.Pow(_q, -1, evaluate=False)
                 else:
                     q = c["q"]
@@ -230,6 +146,7 @@ def wrap_convolution(c, bg, a):
         inv = a.T * m
         # out = a.T * bg * c.T * sy.Matrix(f)
         return inv
+
     return convolution
 
 
@@ -243,31 +160,33 @@ def wrap_convolution2d(c1, c2, bg, a1, a2):
         m = sy.HadamardProduct(tr, bg, evaluate=True)
         inv = a1.T * m * a2
         return inv
+
     return convolution
 
 
 def toom_cook(d_size, g_size, points):
     x = sy.symbols("x")
-    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(d_size))))
-    gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_size))))
-    dx = sum([i*x**e for e, i in enumerate(di)])
-    gx = sum([i*x**e for e, i in enumerate(gi)])
-    sx = gx*dx
+    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(d_size))))
+    gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(g_size))))
+    dx = sum([i * x**e for e, i in enumerate(di)])
+    gx = sum([i * x**e for e, i in enumerate(gi)])
+    sx = gx * dx
     xi = [x**i for i in range(1, sy.degree(sx.expand(), x) + 1)]
     s_degree = d_size + g_size - 1
     bi = [sy.nsimplify(p) for p in points]
     assert s_degree == len(bi), print(
         f"b_degree: {d_size} != len(bi): {len(bi)}"
     )
-    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}"for i in range(d_size))))
-    gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}"for i in range(g_size))))
+    di = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(d_size))))
+    gi = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(g_size))))
     _am = [[(b**e) for e, d in enumerate(di)] for b in bi if b != sy.oo]
     _bm = [[(b**e) for e, d in enumerate(gi)] for b in bi if b != sy.oo]
     bi_inf = [x for x in bi if x != sy.oo]
     _q = [
-        1/sy.expand(np.prod([(b0 - b) for b in i]))
-        for b0, i in
-        zip(bi_inf, itertools.combinations(reversed(bi_inf), len(bi_inf)-1))
+        1 / sy.expand(np.prod([(b0 - b) for b in i]))
+        for b0, i in zip(
+            bi_inf, itertools.combinations(reversed(bi_inf), len(bi_inf) - 1)
+        )
     ]
     if sy.oo in bi:
         _a_inf = [[0] * (len(di) - 1) + [1]]
@@ -284,7 +203,7 @@ def toom_cook(d_size, g_size, points):
     # bg_mtx = g2bg(cq, b_mtx)
     cd = [
         sy.expand(np.prod([(x - b) for b in i if b != sy.oo]))
-        for i in itertools.combinations(reversed(bi), len(bi)-1)
+        for i in itertools.combinations(reversed(bi), len(bi) - 1)
     ]
     c0 = sy.Matrix([s.subs({x: 0}) for s in cd])
     c1 = sy.Matrix([[d.coeff(c, 1) for c in xi] for d in cd])
@@ -297,9 +216,9 @@ def g_to_bg(q, b, g):
 
 
 def g_to_bg2d(q1, b1, q2, b2, g):
-    #  Works with 2d output or input of different sizes 
+    #  Works with 2d output or input of different sizes
     # bg = ((sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T).T
-    bg = ((sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T)
+    bg = (sy.diag(*q2) * b2) * sy.Matrix(g) * (sy.diag(*q1) * b1).T
     return bg
 
 
@@ -332,21 +251,23 @@ def filter1d_slide2d(filt, in_arr, out_shape, index, in_size=5, out_size=3):
     out_arr = np.zeros(out_shape, dtype=int)
     for r in range(index, out_shape[0] + index):
         for c in range(0, out_shape[1], out_size):
-            f = in_arr[r, c:c+in_size]
+            f = in_arr[r, c : c + in_size]
             if len(f) == in_size:
                 out = filt(f).flat()
-                out_arr[r - index, c:c+out_size] = out
+                out_arr[r - index, c : c + out_size] = out
             else:
-                tmp_in_size = (in_size - len(f))
+                tmp_in_size = in_size - len(f)
                 zeros = tmp_in_size * [0]
                 out = filt(f.tolist() + zeros)
                 tmp_out_size = out_shape[0] - c
-                out_arr[r - index, c:c+tmp_out_size] = out[:tmp_out_size]
+                out_arr[r - index, c : c + tmp_out_size] = out[:tmp_out_size]
     return out_arr
 
 
 def filter1d_slide2d_count(out_shape, out_size):
-    count = len(list(range(out_shape[0]))) * len(range(0, out_shape[1], out_size))
+    count = len(list(range(out_shape[0]))) * len(
+        range(0, out_shape[1], out_size)
+    )
     return count
 
 
@@ -354,32 +275,38 @@ def filter2d_slide2d(filt, in_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
     out_arr = np.zeros(out_shape, dtype=int)
     for r in range(0, out_shape[0], out_size[0]):
         for c in range(0, out_shape[1], out_size[1]):
-            feat = in_arr[r:r+in_size[0], c:c+in_size[1]]
+            feat = in_arr[r : r + in_size[0], c : c + in_size[1]]
             if tuple(feat.shape) == tuple(in_size):
                 out_tmp = filt(feat)
-                out_arr[r:r+out_size[0], c:c+out_size[1]] = out_tmp
+                out_arr[r : r + out_size[0], c : c + out_size[1]] = out_tmp
             else:
                 row_in = feat.shape[0]
                 col_in = feat.shape[1]
                 new_feat = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new_feat[:row_in, :col_in] = feat
                 out_tmp = filt(new_feat)
-                row_out, col_out = out_arr[r:r+out_size[0], c:c+out_size[1]].shape
-                out_arr[r:r+row_out, c:c+col_out] = out_tmp[:row_out, :col_out]
+                row_out, col_out = out_arr[
+                    r : r + out_size[0], c : c + out_size[1]
+                ].shape
+                out_arr[r : r + row_out, c : c + col_out] = out_tmp[
+                    :row_out, :col_out
+                ]
     return out_arr
 
 
 def filter2d_slide2d_count(out_shape, out_size):
-    count = len(list(range(0, out_shape[0], out_size[0]))) * len(range(0, out_shape[1], out_size[1]))
+    count = len(list(range(0, out_shape[0], out_size[0]))) * len(
+        range(0, out_shape[1], out_size[1])
+    )
     return count
 
 
 def c3x3_5m20a9e(g):
-    '''
+    """
     From Blahut page 166
     Linear, 3x3, 5 multiplications, 20 aditions and 9 extra operations
     :return:
-    '''
+    """
     points = [0, -1, 1, -2, np.inf]
     c, cq, b, a = toom_cook(3, 3, points)
     bg = g_to_bg(cq, b, g)
@@ -392,9 +319,13 @@ def csa_lst(mtx, positive=True):
     signal = 1 if positive else -1
     max_pow = max_power(lst, signal)
     max_lst = [
-        [[1 if len(c) > 0 and p in c["z"] and c["s"] == signal else 0
-          for c in r]
-         for r in lst]
+        [
+            [
+                1 if len(c) > 0 and p in c["z"] and c["s"] == signal else 0
+                for c in r
+            ]
+            for r in lst
+        ]
         for p in range(max_pow + 1)
     ]
     return max_lst
@@ -402,9 +333,15 @@ def csa_lst(mtx, positive=True):
 
 def max_power(lst, positive=True):
     signal = 1 if positive else -1
-    max_pow = max([0] + [max([0] + [
-        max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal
-        ]) for r in lst]
+    max_pow = max(
+        [0]
+        + [
+            max(
+                [0]
+                + [max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal]
+            )
+            for r in lst
+        ]
     )
     return max_pow
 
