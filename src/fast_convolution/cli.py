@@ -142,17 +142,22 @@ def toom_cook1d(ctx, points):
     cmd_build_toom_cook1d(repo, points_)
     click.echo("Build 1D Toom Cook")
 
-# @build_d1.command(name="toom-cook")
+
+@build_d1.command
 @click.pass_context
 def manual(ctx):
     # TODO break if user was trying to use for 2D
-    from .commands import manual_factorization
+    from .commands import cmd_build_manual_factorization
+
     repo = ctx.obj
-    manual_factorization(repo)
+    cmd_build_manual_factorization(repo)
     click.echo("Build 1D manual factorization")
 
+
 @build_d1.command()
-@click.option("--s", "-s", default=[5, 5], show_default=True, help="Not implemented.")
+@click.option(
+    "--s", "-s", default=[5, 5], show_default=True, help="Not implemented."
+)
 def cyclic_to_linear(points):
     pass
 
@@ -193,8 +198,12 @@ def toom_cook2d(ctx, points_1d, points_2d):
     if points_2d is not None:
         if len(points_2d) != nargs2:
             click.Abort()
-    default1 = default_toom_cook_points2d(read_init_if_exists(repo).get("c", 1), 0)
-    default2 = default_toom_cook_points2d(read_init_if_exists(repo).get("c", 1), 1)
+    default1 = default_toom_cook_points2d(
+        read_init_if_exists(repo).get("c", 1), 0
+    )
+    default2 = default_toom_cook_points2d(
+        read_init_if_exists(repo).get("c", 1), 1
+    )
     points_1d_ = points_1d if points_1d is not None else default1
     points_2d_ = points_2d if points_2d is not None else default2
     cmd_build_toom_cook2d(repo, points_1d_, points_2d_)
@@ -256,7 +265,11 @@ def no_quant(ctx):
 
 @quant.command(help="Shift quantization")
 @click.option(
-    "--bits", "-b", default=2, show_default=True, help="Number of bits to be shifted."
+    "--bits",
+    "-b",
+    default=2,
+    show_default=True,
+    help="Number of bits to be shifted.",
 )
 @click.pass_context
 def shift(ctx, bits):
@@ -374,7 +387,10 @@ def ex_rand(ctx, feature, weight, suffix):
 
 @example.command(help="Example with sequential numbers")
 @click.option(
-    "--feature", "-f", default=0, help="Minimal value of sequential feature data."
+    "--feature",
+    "-f",
+    default=0,
+    help="Minimal value of sequential feature data.",
 )
 @click.option(
     "--weight", "-w", default=0, help="Minimal value of sequential weight data."

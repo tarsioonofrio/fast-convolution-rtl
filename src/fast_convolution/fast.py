@@ -15,11 +15,11 @@ def conv_manual_factorization():
     _a = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1], [0, 1, 1]]
     _b = _a
     _c = [
-        [2, 0, 0, 0, 0],
-        [-1, -2, 2, -1, 2],
-        [-2, -1, -3, 0, -1],
-        [1, 1, 1, 1, -2],
-        [0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0],
+        [-1, -1, 0, 1, 0, 0],
+        [-1, 1, -1, 0, 1, 0],
+        [0, -1, -1, 0, 0, 1],
+        [0, 0, 1, 0, 0, 0],
     ]
     _n = [1, 1, 1, 1, 1, 1]
 
@@ -27,11 +27,11 @@ def conv_manual_factorization():
     b = sy.Matrix(_b)
     c = sy.Matrix(_c)
     q = sy.Matrix([i for i in _n])
-    return a, b, c, q
+    return c, q, b, a
 
 
 def wrap_conv_manual_factored(gv):
-    a, b, c, q = conv_manual_factored()
+    a, b, c, q = conv_manual_factorization()
 
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(a.shape[0]))))
     bg = sy.diag(*(b * g).tolist())

@@ -343,7 +343,7 @@ def cmd_build_manual_factorization(repo):
     dim, c_len, b_len, a_len = read_init(repo)
     # at_len = ct_len + b_len - 1
 
-    c, q, b, a = fast.conv_manual_factored()
+    c, q, b, a = fast.conv_manual_factorization()
     d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)
