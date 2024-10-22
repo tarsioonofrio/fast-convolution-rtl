@@ -185,9 +185,13 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
     # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
     repo.dir_clib.mkdir(parents=True, exist_ok=True)
     dir_clib_x86 = repo.dir_clib / "cmake-gcc"
-    shutil.copytree(package_clib() / "cmake-gcc", dir_clib_x86, dirs_exist_ok=True)
+    shutil.copytree(
+        package_clib() / "cmake-gcc", dir_clib_x86, dirs_exist_ok=True
+    )
     dir_clib_common = repo.dir_clib / "common"
-    shutil.copytree(package_clib() / "common", dir_clib_common, dirs_exist_ok=True)
+    shutil.copytree(
+        package_clib() / "common", dir_clib_common, dirs_exist_ok=True
+    )
     shutil.copytree(
         package_clib() / "src/int/lib", repo.dir_clib_lib, dirs_exist_ok=True
     )
@@ -217,7 +221,8 @@ def cmd_build_toom_cook1d(repo, points):
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)
     qr = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in q
     ]
     data = {
         "p": list_points,
@@ -248,7 +253,9 @@ def cmd_build_toom_cook1d(repo, points):
     fast.write_csa_config(csa_config, path / "csa")
     csa_parcels = fast.csa_parcels(a, c)
     fast.write_csa_parcels(csa_parcels, path / "csa")
-    header_csa = {f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()}
+    header_csa = {
+        f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
+    }
 
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
 
@@ -279,8 +286,12 @@ def cmd_build_toom_cook1d(repo, points):
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
-    shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
-    shutil.copy(package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c")
+    shutil.copy(
+        package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
+    )
+    shutil.copy(
+        package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c"
+    )
 
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
@@ -312,10 +323,141 @@ def cmd_build_toom_cook1d(repo, points):
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    target_opt = [["standard", None, 0], ["filter1d", None, 0], ["filter1d", lib_opt, 1]]
+    target_opt = [
+        ["standard", None, 0],
+        ["filter1d", None, 0],
+        ["filter1d", lib_opt, 1],
+    ]
     for target, name, opt in target_opt:
-        source = ""  if name is None else "$(CURDIR)/lib"
-        include = ""  if name is None else "$(CURDIR)/lib/include"
+        source = "" if name is None else "$(CURDIR)/lib"
+        include = "" if name is None else "$(CURDIR)/lib/include"
+        makefile_str = makefile(target, opt, source, include)
+        name_ = target if name is None else lib_opt
+        dir_clib_make = repo.dir_clib_make / name_
+        dir_clib_make.mkdir(parents=True, exist_ok=True)
+        with open(dir_clib_make / "Makefile", "w") as f:
+            f.write(makefile_str)
+
+
+def cmd_build_manual_factorization(repo):
+    dim, c_len, b_len, a_len = read_init(repo)
+    # at_len = ct_len + b_len - 1
+
+    c, q, b, a = fast.conv_manual_factored()
+    d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
+    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
+    # bg = fast.g_to_bg(q, b, g)
+    qr = [
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in q
+    ]
+    data = {
+        "p": [1],
+        "c": np.array(c, dtype=int).tolist(),
+        "q": qr,
+        "b": np.array(b, dtype=int).tolist(),
+        "a": np.array(a, dtype=int).tolist(),
+    }
+    with open(repo.file_build, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+    repo.dir_build.mkdir(parents=True, exist_ok=True)
+    path = repo.dir_build / "convolution"
+    latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
+    a_sum = fast.count_sums(a)
+    c_sum = fast.count_sums(c)
+    text = (
+        f"Total multiplications: {b_len}\n"
+        f"Sums:\n"
+        f"A: {a_sum}\n"
+        f"C: {c_sum}\n"
+        f"Total: {a_sum + c_sum}\n"
+    )
+    with open(f"{path}_info.txt", "w") as f:
+        f.write(text)
+
+    csa_config = fast.csa_config(a, c)
+    fast.write_csa_config(csa_config, path / "csa")
+    csa_parcels = fast.csa_parcels(a, c)
+    fast.write_csa_parcels(csa_parcels, path / "csa")
+    header_csa = {
+        f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
+    }
+
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+
+    csa_arr = [
+        {
+            "name": f"m{n}{s}",
+            "value": np.array(lst).reshape(-1, len(lst[0][0])),
+            "type": "int",
+        }
+        for (n, s), lst in csa_parcels.items()
+    ]
+    utils.c_header(repo.dir_clib_data / "build_shift.h", csa_arr, header_csa)
+
+    # TODO export build_float.h with data in float
+    list_array = [
+        {"name": "mct", "value": c.T},
+        {"name": "mb", "value": b},
+        {"name": "mat", "value": a.T},
+        {"name": "mq", "value": qr},
+    ]
+
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "build.h", arr, {})
+
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+    arr = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
+
+    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
+    shutil.copy(
+        package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
+    )
+    shutil.copy(
+        package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c"
+    )
+
+    matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
+    matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
+    hadamart = utils.c_hadamart_product_nollop(6, c.T)
+
+    c_fun = (
+        '#include "optim.h"\n\n'
+        f"{matmul_a['function']}\n"
+        f"{matmul_c['function']}\n"
+        f"{hadamart['function']}\n"
+    )
+    c_head = (
+        '#ifndef C_OPTIM_H\n'
+        '#define C_OPTIM_H\n\n'
+        f"{matmul_a['header']}\n"
+        f"{matmul_c['header']}\n"
+        f"{hadamart['header']}\n"
+        '#endif //C_OPTIM_H'
+    )
+
+    lib_opt = "filter1d-opt"
+    dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
+    dir_lib_opt.mkdir(parents=True, exist_ok=True)
+    dir_lib_opt_inc = dir_lib_opt / "include"
+    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
+
+    with open(dir_lib_opt / "optim.c", "w") as f:
+        f.write(c_fun)
+    with open(dir_lib_opt_inc / "optim.h", "w") as f:
+        f.write(c_head)
+
+    target_opt = [
+        ["standard", None, 0],
+        ["filter1d", None, 0],
+        ["filter1d", lib_opt, 1],
+    ]
+    for target, name, opt in target_opt:
+        source = "" if name is None else "$(CURDIR)/lib"
+        include = "" if name is None else "$(CURDIR)/lib/include"
         makefile_str = makefile(target, opt, source, include)
         name_ = target if name is None else lib_opt
         dir_clib_make = repo.dir_clib_make / name_
@@ -335,7 +477,8 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
     g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[0]))))
     # bg1 = fast.g_to_bg(q1, b1, g1)
     qr1 = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q1
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in q1
     ]
 
     c2, q2, b2, a2 = fast.toom_cook(a_len[1], b_len[1], list_points2d)
@@ -343,15 +486,25 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
     g2 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[1]))))
     # bg2 = fast.g_to_bg(q2, b2, g2)
     qr2 = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1] for i in q2
+        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
+        for i in q2
     ]
 
     data = {
         "p": [list_points1d, list_points2d],
-        "c": [np.array(c1, dtype=int).tolist(), np.array(c2, dtype=int).tolist()],
+        "c": [
+            np.array(c1, dtype=int).tolist(),
+            np.array(c2, dtype=int).tolist(),
+        ],
         "q": [qr1, qr2],
-        "b": [np.array(b1, dtype=int).tolist(), np.array(b2, dtype=int).tolist()],
-        "a": [np.array(a1, dtype=int).tolist(), np.array(a2, dtype=int).tolist()],
+        "b": [
+            np.array(b1, dtype=int).tolist(),
+            np.array(b2, dtype=int).tolist(),
+        ],
+        "a": [
+            np.array(a1, dtype=int).tolist(),
+            np.array(a2, dtype=int).tolist(),
+        ],
     }
     with open(repo.file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -407,13 +560,24 @@ def cmd_build2d_bind_iterate(repo):
     latex.build_2d_bind_iterated(init_data, build_data, path)
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
-    shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
-    shutil.copy(package_clib() / "src/int/filter2d-iter.c", repo.dir_clib_main / "filter2d-iter.c")
+    shutil.copy(
+        package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
+    )
+    shutil.copy(
+        package_clib() / "src/int/filter2d-iter.c",
+        repo.dir_clib_main / "filter2d-iter.c",
+    )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-    matmul_c2 = utils.c_matmul_shift_noloop_iter(c2, "c2", c2.shape, c2.shape, True)
-    matmul_c1t = utils.c_matmul_shift_noloop_iter(c1.T, "c1t", c1.T.shape, c1.T.shape)
-    matmul_a2 = utils.c_matmul_shift_noloop_iter(a2, "a2", c1.shape, a2.shape, True)
+    matmul_c2 = utils.c_matmul_shift_noloop_iter(
+        c2, "c2", c2.shape, c2.shape, True
+    )
+    matmul_c1t = utils.c_matmul_shift_noloop_iter(
+        c1.T, "c1t", c1.T.shape, c1.T.shape
+    )
+    matmul_a2 = utils.c_matmul_shift_noloop_iter(
+        a2, "a2", c1.shape, a2.shape, True
+    )
     matmul_a1t = utils.c_matmul_shift_noloop_iter(
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
@@ -451,11 +615,15 @@ def cmd_build2d_bind_iterate(repo):
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    target_opt = [["standard", None, 0], ["filter2d-iter", None, 0], ["filter2d-iter", lib_opt, 3]]
+    target_opt = [
+        ["standard", None, 0],
+        ["filter2d-iter", None, 0],
+        ["filter2d-iter", lib_opt, 3],
+    ]
 
     for target, name, opt in target_opt:
-        source = ""  if name is None else "$(CURDIR)/lib"
-        include = ""  if name is None else "$(CURDIR)/lib/include"
+        source = "" if name is None else "$(CURDIR)/lib"
+        include = "" if name is None else "$(CURDIR)/lib/include"
         makefile_str = makefile(target, opt, source, include)
         name_ = target if name is None else lib_opt
         dir_clib_make = repo.dir_clib_make / name_
@@ -505,8 +673,13 @@ def cmd_build2d_bind_nest(repo):
     utils.c_header(repo.dir_clib_data_float / "bind_nest_float.h", arr, {})
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
-    shutil.copy(package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c")
-    shutil.copy(package_clib() / "src/int/filter2d-nest.c", repo.dir_clib_main / "filter2d-nest.c")
+    shutil.copy(
+        package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
+    )
+    shutil.copy(
+        package_clib() / "src/int/filter2d-nest.c",
+        repo.dir_clib_main / "filter2d-nest.c",
+    )
 
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
@@ -538,19 +711,21 @@ def cmd_build2d_bind_nest(repo):
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
 
-    target_opt = [["standard", None, 0], ["filter2d-nest", None, 0], ["filter2d-nest", lib_opt, 1]]
+    target_opt = [
+        ["standard", None, 0],
+        ["filter2d-nest", None, 0],
+        ["filter2d-nest", lib_opt, 1],
+    ]
 
     for target, name, opt in target_opt:
-        source = ""  if name is None else "$(CURDIR)/lib"
-        include = ""  if name is None else "$(CURDIR)/lib/include"
+        source = "" if name is None else "$(CURDIR)/lib"
+        include = "" if name is None else "$(CURDIR)/lib/include"
         makefile_str = makefile(target, opt, source, include)
         name_ = target if name is None else lib_opt
         dir_clib_make = repo.dir_clib_make / name_
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
             f.write(makefile_str)
-
-
 
 
 def cmd_quant_none(repo):
@@ -576,7 +751,9 @@ def cmd_sim_file(repo, feature, weight, suffix):
         elif dim == 2:
             wght_arr = w_arr.reshape(b_len[0], b_len[1])
 
-    output_default = signal.convolve2d(feat_arr, w_arr[::-1, ::-1], mode="valid")
+    output_default = signal.convolve2d(
+        feat_arr, w_arr[::-1, ::-1], mode="valid"
+    )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
@@ -599,12 +776,19 @@ def cmd_sim_file(repo, feature, weight, suffix):
             .tolist()
         )
         if len(quant_data) == 0:
-            fast_conv = [fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)]
+            fast_conv = [
+                fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)
+            ]
             output_fast = np.sum(
                 axis=0,
                 a=[
                     fast.filter1d_slide2d(
-                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                        fast_conv[i],
+                        feat_arr,
+                        output_default.shape,
+                        i,
+                        c_len,
+                        a_len,
                     )
                     for i in range(0, wght_arr.shape[0])
                 ],
@@ -629,12 +813,19 @@ def cmd_sim_file(repo, feature, weight, suffix):
                 axis=0,
                 a=[
                     fast.filter1d_slide2d(
-                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                        fast_conv[i],
+                        feat_arr,
+                        output_default.shape,
+                        i,
+                        c_len,
+                        a_len,
                     )
                     for i in range(0, wght_arr.shape[0])
                 ],
             )
-            output_fast = np.right_shift(output_fast_, quant_data["params"]["bits"])
+            output_fast = np.right_shift(
+                output_fast_, quant_data["params"]["bits"]
+            )
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
 
@@ -644,9 +835,13 @@ def cmd_sim_file(repo, feature, weight, suffix):
     elif dim == 2:
         points, c, b, a, q = read_build_2d(repo)
         conv_func = (
-            fast.conv2d if len(quant_data) == 0 else quant.select_conv2d(quant_data)
+            fast.conv2d
+            if len(quant_data) == 0
+            else quant.select_conv2d(quant_data)
         )
-        fast_conv = conv_func(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
+        fast_conv = conv_func(
+            wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
+        )
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
@@ -691,7 +886,8 @@ def cmd_sim_file(repo, feature, weight, suffix):
         f.write(text)
 
     for arr, name in zip(
-        [feat_arr, wght_arr, output_default, output_fast], ["d", "g", "s_default", "s"]
+        [feat_arr, wght_arr, output_default, output_fast],
+        ["d", "g", "s_default", "s"],
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
 
@@ -727,14 +923,20 @@ def cmd_sim_file(repo, feature, weight, suffix):
     return out_dict
 
 
-def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix):
+def cmd_sim_random(
+    repo, feature_random, weight_random, image_side, loop, suffix
+):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
-    feat = np.random.randint(feature_random[0], feature_random[1], size=image_side**2)
+    feat = np.random.randint(
+        feature_random[0], feature_random[1], size=image_side**2
+    )
     feat_arr = feat.reshape(image_side, image_side)
 
     if dim == 1:
-        wght = np.random.randint(weight_random[0], weight_random[1], size=b_len**2)
+        wght = np.random.randint(
+            weight_random[0], weight_random[1], size=b_len**2
+        )
         wght_arr = wght.reshape(b_len, b_len)
     elif dim == 2:
         wght = np.random.randint(
@@ -742,7 +944,9 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
         )
         wght_arr = wght.reshape(b_len[0], b_len[1])
 
-    output_default = signal.convolve2d(feat_arr, wght_arr[::-1, ::-1], mode="valid")
+    output_default = signal.convolve2d(
+        feat_arr, wght_arr[::-1, ::-1], mode="valid"
+    )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
@@ -765,12 +969,19 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
             .tolist()
         )
         if len(quant_data) == 0:
-            fast_conv = [fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)]
+            fast_conv = [
+                fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)
+            ]
             output_fast = np.sum(
                 axis=0,
                 a=[
                     fast.filter1d_slide2d(
-                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                        fast_conv[i],
+                        feat_arr,
+                        output_default.shape,
+                        i,
+                        c_len,
+                        a_len,
                     )
                     for i in range(0, wght_arr.shape[0])
                 ],
@@ -795,12 +1006,19 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
                 axis=0,
                 a=[
                     fast.filter1d_slide2d(
-                        fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                        fast_conv[i],
+                        feat_arr,
+                        output_default.shape,
+                        i,
+                        c_len,
+                        a_len,
                     )
                     for i in range(0, wght_arr.shape[0])
                 ],
             )
-            output_fast = np.right_shift(output_fast_, quant_data["params"]["bits"])
+            output_fast = np.right_shift(
+                output_fast_, quant_data["params"]["bits"]
+            )
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
 
@@ -809,9 +1027,13 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
     elif dim == 2:
         points, c, b, a, q = read_build_2d(repo)
         conv_func = (
-            fast.conv2d if len(quant_data) == 0 else quant.select_conv2d(quant_data)
+            fast.conv2d
+            if len(quant_data) == 0
+            else quant.select_conv2d(quant_data)
         )
-        fast_conv = conv_func(wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1])
+        fast_conv = conv_func(
+            wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
+        )
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
@@ -858,7 +1080,8 @@ def cmd_sim_random(repo, feature_random, weight_random, image_side, loop, suffix
         f.write(text)
 
     for arr, name in zip(
-        [feat_arr, wght_arr, output_default, output_fast], ["d", "g", "s_default", "s"]
+        [feat_arr, wght_arr, output_default, output_fast],
+        ["d", "g", "s_default", "s"],
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
 

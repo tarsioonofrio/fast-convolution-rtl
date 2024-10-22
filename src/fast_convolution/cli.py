@@ -6,11 +6,11 @@ from pathlib import Path
 import click
 
 from .commands import (
-    read_init_if_exists,
-    num_points1d,
-    num_points2d,
     default_toom_cook_points1d,
     default_toom_cook_points2d,
+    num_points1d,
+    num_points2d,
+    read_init_if_exists,
 )
 
 
@@ -142,6 +142,14 @@ def toom_cook1d(ctx, points):
     cmd_build_toom_cook1d(repo, points_)
     click.echo("Build 1D Toom Cook")
 
+# @build_d1.command(name="toom-cook")
+@click.pass_context
+def manual(ctx):
+    # TODO break if user was trying to use for 2D
+    from .commands import manual_factorization
+    repo = ctx.obj
+    manual_factorization(repo)
+    click.echo("Build 1D manual factorization")
 
 @build_d1.command()
 @click.option("--s", "-s", default=[5, 5], show_default=True, help="Not implemented.")

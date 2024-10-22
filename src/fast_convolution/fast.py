@@ -4,7 +4,7 @@ import numpy as np
 import sympy as sy
 
 
-def c3x3_6m10a0e():
+def conv_manual_factorization():
     """
     From Blahut page 164
     Linear, 3x3, 6 multiplications, 10 aditions and 0 extra operations
@@ -30,8 +30,8 @@ def c3x3_6m10a0e():
     return a, b, c, q
 
 
-def wrap_c3x3_6m10a0e(gv):
-    a, b, c, q = c3x3_6m10a0e()
+def wrap_conv_manual_factored(gv):
+    a, b, c, q = conv_manual_factored()
 
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(a.shape[0]))))
     bg = sy.diag(*(b * g).tolist())
