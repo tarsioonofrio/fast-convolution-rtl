@@ -6,4 +6,4 @@ from fast_convolution import cli
 def run(cmd, repo_path, repo_opt, cmd_dict):
     runner = CliRunner()
     result = runner.invoke(cli.main, repo_opt + cmd_dict[cmd])
-    assert result.exit_code == 0, f"Project {repo_path.stem}"
+    assert result.exit_code == 0, f"Project {repo_path.stem}, cmd {cmd}"
