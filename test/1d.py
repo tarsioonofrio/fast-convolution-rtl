@@ -1,10 +1,11 @@
+import json
 import shutil
 from pathlib import Path
 
 import pytest
 
 from .conftest import file_list1d
-from .lib import read_json, run
+from .lib import list_cmd_common, read_json, run
 
 # @pytest.fixture(scope="session")
 # def file(pytestconfig):
@@ -13,8 +14,8 @@ from .lib import read_json, run
 
 root = Path(__file__).parent.resolve()
 
-# with open(root / "json/cmd_common.json") as f:
-#     cmd_common_dict = json.load(f)
+with open(root / "json/cmd_common.json") as f:
+    cmd_common_dict = json.load(f)
 
 list_repo_path = [root / (Path(f).stem) for f in file_list1d]
 list_repo_opt = [["-p", f.as_posix()] for f in list_repo_path]
@@ -39,3 +40,10 @@ def test_rm(args):
 def test_project(args, cmd):
     repo_path, repo_opt, cmd_dict = args
     run(cmd, repo_path, repo_opt, cmd_dict)
+
+
+@pytest.mark.parametrize("args", list_args)
+@pytest.mark.parametrize("cmd", list_cmd_common)
+def test_common(args, cmd):
+    repo_path, repo_opt, _ = args
+    run(cmd, repo_path, repo_opt, cmd_common_dict)

@@ -4,6 +4,16 @@ from click.testing import CliRunner
 
 from fast_convolution import cli
 
+list_cmd_common = [
+    "ex_rand",
+    "ex_seq",
+    "sim_rand",
+    "sim_file",
+    "quant",
+    "sim_rand_quant",
+    "sim_file_quant",
+]
+
 
 def run(cmd, repo_path, repo_opt, cmd_dict):
     runner = CliRunner()
