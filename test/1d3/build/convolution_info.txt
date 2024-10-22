@@ -1,5 +1,0 @@
-Total multiplications: 3
-Sums:
-A: 11
-C: 17
-Total: 28
