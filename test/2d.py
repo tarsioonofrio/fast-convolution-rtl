@@ -7,7 +7,8 @@ import pytest
 from .conftest import file_list2d
 from .lib import list_cmd_common, read_json, run
 
-root = Path(__file__).parent.resolve()
+test_repo = "fast-conv-test/test"
+root = Path(__file__).parent.parent.parent.resolve() / test_repo
 
 with open(root / "json/cmd_common.json") as f:
     cmd_common_dict = json.load(f)

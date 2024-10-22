@@ -11,13 +11,14 @@ from .lib import list_cmd_common, read_json, run
 # def file(pytestconfig):
 #     return pytestconfig.getoption("file")
 
-
 root = Path(__file__).parent.resolve()
+test_repo = "fast-conv-test/test"
+root_repo = Path(__file__).parent.parent.parent.resolve() / test_repo
 
 with open(root / "json/cmd_common.json") as f:
     cmd_common_dict = json.load(f)
 
-list_repo_path = [root / (Path(f).stem) for f in file_list1d]
+list_repo_path = [root_repo / (Path(f).stem) for f in file_list1d]
 list_repo_opt = [["-p", f.as_posix()] for f in list_repo_path]
 
 list_cmd_dict = [
