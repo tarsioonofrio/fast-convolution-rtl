@@ -217,6 +217,18 @@ def cmd_build_toom_cook1d(repo, points):
     list_points = [np.inf if p == "inf" else int(p) for p in points]
 
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
+    build1d(repo, list_points, a, b, c, q, b_len, c_len)
+
+
+def cmd_build_manual_factorization(repo):
+    dim, c_len, b_len, a_len = read_init(repo)
+    list_points = [1]
+
+    c, q, b, a = fast.conv_manual_factorization()
+    build1d(repo, list_points, a, b, c, q, b_len, c_len)
+
+
+def build1d(repo, list_points, a, b, c, q, b_len, c_len):
     d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)
@@ -233,7 +245,6 @@ def cmd_build_toom_cook1d(repo, points):
     }
     with open(repo.file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
     repo.dir_build.mkdir(parents=True, exist_ok=True)
     path = repo.dir_build / "convolution"
     latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
@@ -248,7 +259,6 @@ def cmd_build_toom_cook1d(repo, points):
     )
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
-
     csa_config = fast.csa_config(a, c)
     fast.write_csa_config(csa_config, path / "csa")
     csa_parcels = fast.csa_parcels(a, c)
@@ -256,9 +266,7 @@ def cmd_build_toom_cook1d(repo, points):
     header_csa = {
         f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
     }
-
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-
     csa_arr = [
         {
             "name": f"m{n}{s}",
@@ -268,7 +276,6 @@ def cmd_build_toom_cook1d(repo, points):
         for (n, s), lst in csa_parcels.items()
     ]
     utils.c_header(repo.dir_clib_data / "build_shift.h", csa_arr, header_csa)
-
     # TODO export build_float.h with data in float
     list_array = [
         {"name": "mct", "value": c.T},
@@ -276,15 +283,12 @@ def cmd_build_toom_cook1d(repo, points):
         {"name": "mat", "value": a.T},
         {"name": "mq", "value": qr},
     ]
-
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "build.h", arr, {})
-
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     arr = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
-
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
         package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
@@ -292,11 +296,9 @@ def cmd_build_toom_cook1d(repo, points):
     shutil.copy(
         package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c"
     )
-
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
-    hadamart = utils.c_hadamart_product_nollop(len(list_points), c.T)
-
+    hadamart = utils.c_hadamart_product_nollop(c.T[0], c.T)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -311,145 +313,15 @@ def cmd_build_toom_cook1d(repo, points):
         f"{hadamart['header']}\n"
         '#endif //C_OPTIM_H'
     )
-
     lib_opt = "filter1d-opt"
     dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
     dir_lib_opt.mkdir(parents=True, exist_ok=True)
     dir_lib_opt_inc = dir_lib_opt / "include"
     dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
-
     with open(dir_lib_opt / "optim.c", "w") as f:
         f.write(c_fun)
     with open(dir_lib_opt_inc / "optim.h", "w") as f:
         f.write(c_head)
-
-    target_opt = [
-        ["standard", None, 0],
-        ["filter1d", None, 0],
-        ["filter1d", lib_opt, 1],
-    ]
-    for target, name, opt in target_opt:
-        source = "" if name is None else "$(CURDIR)/lib"
-        include = "" if name is None else "$(CURDIR)/lib/include"
-        makefile_str = makefile(target, opt, source, include)
-        name_ = target if name is None else lib_opt
-        dir_clib_make = repo.dir_clib_make / name_
-        dir_clib_make.mkdir(parents=True, exist_ok=True)
-        with open(dir_clib_make / "Makefile", "w") as f:
-            f.write(makefile_str)
-
-
-def cmd_build_manual_factorization(repo):
-    dim, c_len, b_len, a_len = read_init(repo)
-    # at_len = ct_len + b_len - 1
-
-    c, q, b, a = fast.conv_manual_factorization()
-    d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
-    g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
-    # bg = fast.g_to_bg(q, b, g)
-    qr = [
-        [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
-        for i in q
-    ]
-    data = {
-        "p": [1],
-        "c": np.array(c, dtype=int).tolist(),
-        "q": qr,
-        "b": np.array(b, dtype=int).tolist(),
-        "a": np.array(a, dtype=int).tolist(),
-    }
-    with open(repo.file_build, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-    repo.dir_build.mkdir(parents=True, exist_ok=True)
-    path = repo.dir_build / "convolution"
-    latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
-    a_sum = fast.count_sums(a)
-    c_sum = fast.count_sums(c)
-    text = (
-        f"Total multiplications: {b_len}\n"
-        f"Sums:\n"
-        f"A: {a_sum}\n"
-        f"C: {c_sum}\n"
-        f"Total: {a_sum + c_sum}\n"
-    )
-    with open(f"{path}_info.txt", "w") as f:
-        f.write(text)
-
-    csa_config = fast.csa_config(a, c)
-    fast.write_csa_config(csa_config, path / "csa")
-    csa_parcels = fast.csa_parcels(a, c)
-    fast.write_csa_parcels(csa_parcels, path / "csa")
-    header_csa = {
-        f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
-    }
-
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-
-    csa_arr = [
-        {
-            "name": f"m{n}{s}",
-            "value": np.array(lst).reshape(-1, len(lst[0][0])),
-            "type": "int",
-        }
-        for (n, s), lst in csa_parcels.items()
-    ]
-    utils.c_header(repo.dir_clib_data / "build_shift.h", csa_arr, header_csa)
-
-    # TODO export build_float.h with data in float
-    list_array = [
-        {"name": "mct", "value": c.T},
-        {"name": "mb", "value": b},
-        {"name": "mat", "value": a.T},
-        {"name": "mq", "value": qr},
-    ]
-
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    arr = [{**r, "type": "int"} for r in list_array]
-    utils.c_header(repo.dir_clib_data / "build.h", arr, {})
-
-    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
-
-    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
-    shutil.copy(
-        package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
-    )
-    shutil.copy(
-        package_clib() / "src/int/filter1d.c", repo.dir_clib_main / "filter1d.c"
-    )
-
-    matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
-    matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
-    hadamart = utils.c_hadamart_product_nollop(6, c.T)
-
-    c_fun = (
-        '#include "optim.h"\n\n'
-        f"{matmul_a['function']}\n"
-        f"{matmul_c['function']}\n"
-        f"{hadamart['function']}\n"
-    )
-    c_head = (
-        '#ifndef C_OPTIM_H\n'
-        '#define C_OPTIM_H\n\n'
-        f"{matmul_a['header']}\n"
-        f"{matmul_c['header']}\n"
-        f"{hadamart['header']}\n"
-        '#endif //C_OPTIM_H'
-    )
-
-    lib_opt = "filter1d-opt"
-    dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
-    dir_lib_opt.mkdir(parents=True, exist_ok=True)
-    dir_lib_opt_inc = dir_lib_opt / "include"
-    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
-
-    with open(dir_lib_opt / "optim.c", "w") as f:
-        f.write(c_fun)
-    with open(dir_lib_opt_inc / "optim.h", "w") as f:
-        f.write(c_head)
-
     target_opt = [
         ["standard", None, 0],
         ["filter1d", None, 0],
