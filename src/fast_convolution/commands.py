@@ -215,7 +215,6 @@ def cmd_build_toom_cook1d(repo, points):
     dim, c_len, b_len, a_len = read_init(repo)
     # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == "inf" else int(p) for p in points]
-
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
     build1d(repo, list_points, a, b, c, q, b_len, c_len)
 
@@ -223,7 +222,6 @@ def cmd_build_toom_cook1d(repo, points):
 def cmd_build_manual_factorization(repo):
     dim, c_len, b_len, a_len = read_init(repo)
     list_points = [1]
-
     c, q, b, a = fast.conv_manual_factorization()
     build1d(repo, list_points, a, b, c, q, b_len, c_len)
 
@@ -298,7 +296,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len):
     )
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
-    hadamart = utils.c_hadamart_product_nollop(c.T[0], c.T)
+    hadamart = utils.c_hadamart_product_nollop(c.T.shape[0], c.T)
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
