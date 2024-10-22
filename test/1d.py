@@ -38,9 +38,21 @@ list_args = [
 
 
 @pytest.mark.parametrize("args", list_args)
-def test_init(args):
+def test_rm(args):
     repo_path, repo_opt, cmd_dict = args
     shutil.rmtree(repo_path, ignore_errors=True)
+
+
+# @pytest.mark.parametrize("args", list_args)
+# @pytest.mark.parametrize("key", [""])
+# def test_specific(args):
+#     repo_path, repo_opt, cmd_dict = args
+#     run("build", repo_path, repo_opt, cmd_dict)
+
+
+@pytest.mark.parametrize("args", list_args)
+def test_init(args):
+    repo_path, repo_opt, cmd_dict = args
     run("init", repo_path, repo_opt, cmd_dict)
 
 
