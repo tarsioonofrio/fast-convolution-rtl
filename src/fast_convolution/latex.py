@@ -124,7 +124,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
     # dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
-    d_sym1 = sy.Matrix(
+    d1_sym = sy.Matrix(
         c1.shape[0],
         c2.shape[0],
         sy.symbols(
@@ -132,7 +132,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
         ),
     )
 
-    d_sym2 = sy.Matrix(
+    d2_sym = sy.Matrix(
         c1.shape[0],
         c2.shape[0],
         sy.symbols(
@@ -148,14 +148,14 @@ def build_2d_bind_iterated(init_data, build_data, path):
             " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
         ),
     )
-    g_sym1 = sy.Matrix(
+    g1_sym = sy.Matrix(
         b1.shape[1],
         b2.shape[1],
         sy.symbols(
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    g_sym2 = sy.Matrix(
+    g2_sym = sy.Matrix(
         b1.shape[1],
         b2.shape[1],
         sy.symbols(
@@ -171,7 +171,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
             " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
         ),
     )
-    ss_sym2 = sy.Matrix(
+    ss2_sym = sy.Matrix(
         c1.shape[1],
         c2.shape[1],
         sy.symbols(
@@ -179,11 +179,13 @@ def build_2d_bind_iterated(init_data, build_data, path):
         ),
     )
 
-    ss_sym1 = sy.Matrix(
+    ss1_sym = sy.Matrix(
         c1.shape[1],
         a1.T.shape[0],
         sy.symbols(
-            " ".join(f"\\sigma_{{{i}}}" for i in range(c1.shape[1] * a1.T.shape[0]))
+            " ".join(
+                f"\\sigma_{{{i}}}" for i in range(c1.shape[1] * a1.T.shape[0])
+            )
         ),
     )
     s_sym = sy.Matrix(
@@ -217,20 +219,20 @@ def build_2d_bind_iterated(init_data, build_data, path):
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g_num2 = sy.Matrix(g_sym1) * (sy.diag(*q1) * b1).T
+    g_num2 = sy.Matrix(g1_sym) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(
             escape=False,
             data=[
-                syt(g_sym2),
+                syt(g2_sym),
                 "=",
                 syt(g_num2),
                 "=",
-                syt(g_sym1),
+                syt(g1_sym),
                 r"\odot",
                 syt((sy.diag(*q1) * b1).T),
                 "=",
-                syt(g_sym1),
+                syt(g1_sym),
                 r"\left(",
                 syt(q1),
                 r"\odot",
@@ -240,7 +242,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
         )
     )
 
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g_sym2)
+    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_sym)
     doc.append(
         tex.Math(
             escape=False,
@@ -251,29 +253,29 @@ def build_2d_bind_iterated(init_data, build_data, path):
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g_sym2),
+                syt(g2_sym),
                 r"= \left(",
                 syt(q2),
                 r"\odot",
                 syt(b2),
                 r"\right)",
-                syt(g_sym2),
+                syt(g2_sym),
             ],
         )
     )
 
     doc.append(tex.Math(data=[r"D = c_1^t d c_2"], escape=False))
-    d_num2 = d_sym1 * c2
+    d_num2 = d1_sym * c2
     doc.append(
         tex.Math(
-            data=[syt(d_sym2), "=", syt(d_num2), "=", syt(d_sym1), syt(c2)],
+            data=[syt(d2_sym), "=", syt(d_num2), "=", syt(d1_sym), syt(c2)],
             escape=False,
         )
     )
-    dd_num = c1.T * d_sym2
+    dd_num = c1.T * d2_sym
     doc.append(
         tex.Math(
-            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d_sym2)],
+            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d2_sym)],
             escape=False,
         )
     )
@@ -283,11 +285,11 @@ def build_2d_bind_iterated(init_data, build_data, path):
     doc.append(
         tex.Math(
             data=[
-                syt(ss_sym1),
+                syt(ss1_sym),
                 "=",
-                syt(ss_sym2 * a2),
+                syt(ss2_sym * a2),
                 "=",
-                syt(ss_sym2),
+                syt(ss2_sym),
                 syt(a2),
             ],
             escape=False,
@@ -298,10 +300,10 @@ def build_2d_bind_iterated(init_data, build_data, path):
             data=[
                 syt(s_sym),
                 "=",
-                syt(a1.T * ss_sym1),
+                syt(a1.T * ss1_sym),
                 "=",
                 syt(a1.T),
-                syt(ss_sym1),
+                syt(ss1_sym),
             ],
             escape=False,
         )
@@ -317,6 +319,21 @@ def build_2d_bind_iterated(init_data, build_data, path):
 def build_2d_bind_nest(init_data, build_data, path):
     # dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+
+    d1_user = sy.Matrix(
+        c1.shape[0],
+        c2.shape[0],
+        sy.symbols(
+            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
+    )
+    g1_user = sy.Matrix(
+        b1.shape[1],
+        b2.shape[1],
+        sy.symbols(
+            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+        ),
+    )
 
     aa_shape = (
         a1.shape[0] * a2.shape[0],
@@ -337,14 +354,14 @@ def build_2d_bind_nest(init_data, build_data, path):
             " ".join(f"C_{i}" for i in range(cc_shape[0] * cc_shape[1]))
         ),
     )
-    g_sym1 = sy.Matrix(
+    g1_sym = sy.Matrix(
         b1.shape[1],
         b2.shape[1],
         sy.symbols(
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    g_sym2 = sy.Matrix(
+    g2_sym = sy.Matrix(
         b1.shape[1],
         b1.shape[0],
         sy.symbols(
@@ -354,10 +371,10 @@ def build_2d_bind_nest(init_data, build_data, path):
         ),
     )
     gg_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        c1.T.shape[0],
+        c2.T.shape[0],
         sy.symbols(
-            " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+            " ".join(f"G_{{{i}}}" for i in range(c1.T.shape[0] * c2.T.shape[0]))
         ),
     )
     d_sym = sy.Matrix(
@@ -368,10 +385,10 @@ def build_2d_bind_nest(init_data, build_data, path):
         ),
     )
     dd_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        c1.T.shape[0],
+        c2.T.shape[0],
         sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+            " ".join(f"D_{{{i}}}" for i in range(c1.T.shape[0] * c2.T.shape[0]))
         ),
     )
     ss_sym = sy.Matrix(
@@ -411,20 +428,20 @@ def build_2d_bind_nest(init_data, build_data, path):
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g_num2 = sy.Matrix(g_sym1) * (sy.diag(*q1) * b1).T
+    g2_num = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(
             escape=False,
             data=[
-                syt(g_sym2),
+                syt(g2_sym),
                 "=",
-                syt(g_num2),
+                syt(g2_num),
                 "=",
-                syt(g_sym1),
+                syt(g1_user),
                 r"\odot",
                 syt((sy.diag(*q1) * b1).T),
                 "=",
-                syt(g_sym1),
+                syt(g1_sym),
                 r"\left(",
                 syt(q1),
                 r"\odot",
@@ -434,7 +451,7 @@ def build_2d_bind_nest(init_data, build_data, path):
         )
     )
 
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g_sym2)
+    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_sym)
     doc.append(
         tex.Math(
             escape=False,
@@ -445,13 +462,13 @@ def build_2d_bind_nest(init_data, build_data, path):
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g_sym2),
+                syt(g2_sym),
                 r"= \left(",
                 syt(q2),
                 r"\odot",
                 syt(b2),
                 r"\right)",
-                syt(g_sym2),
+                syt(g2_sym),
             ],
         )
     )
@@ -472,7 +489,7 @@ def build_2d_bind_nest(init_data, build_data, path):
         )
     )
     doc.append(tex.Math(data=[r"D = Cd"], escape=False))
-    dd_num = cc_num * d_sym.reshape(d_sym.shape[0] * d_sym.shape[1], 1)
+    dd_num = cc_num * d1_user.reshape(cc_num.shape[1], 1)
     doc.append(
         tex.Math(
             data=[
@@ -481,14 +498,25 @@ def build_2d_bind_nest(init_data, build_data, path):
                 syt(dd_num),
                 "=",
                 syt(cc_num),
-                syt(d_sym.reshape(dd_sym.shape[0] * dd_sym.shape[1], 1)),
+                syt(d1_user.reshape(cc_num.shape[1], 1)),
             ]
         )
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
+    ss_num = sy.hadamard_product(
+        gg_sym, dd_sym.reshape(gg_num.shape[0], gg_num.shape[1])
+    )
     doc.append(
         tex.Math(
-            data=[syt(ss_sym), "=", syt(gg_sym), r"\odot", syt(dd_sym)],
+            data=[
+                syt(ss_sym),
+                "=",
+                syt(ss_num),
+                "=",
+                syt(gg_sym),
+                r"\odot",
+                syt(dd_sym),
+            ],
             escape=False,
         )
     )
@@ -690,60 +718,80 @@ def example_1d(b, c, a, g_num, d_num, q, path):
     print("Result:", compare_naive)
 
 
-def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
+def example_2d_bind_iterate(init_data, build_data, d1_user, g1_user, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
-    d_sym1 = sy.Matrix(
-        c_len[0],
-        c_len[0],
-        sy.symbols(" ".join(f"d_{i}" for i in range(c_len[0] * c_len[1]))),
-    )
-    d_sym2 = sy.Matrix(
-        c_len[0],
-        c_len[0],
+    d1_sym = sy.Matrix(
+        c1.shape[0],
+        c2.shape[0],
         sy.symbols(
-            " ".join(f"\\delta_{{{i}}}" for i in range(c_len[0] * c_len[1]))
+            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
+    )
+
+    d2_sym = sy.Matrix(
+        c1.shape[0],
+        c2.shape[0],
+        sy.symbols(
+            " ".join(
+                f"\\delta_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0])
+            )
         ),
     )
     dd_sym = sy.Matrix(
-        c_len[0],
-        c_len[0],
-        sy.symbols(" ".join(f"D_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
-    )
-    g_sym1 = sy.Matrix(
-        b_len[0],
-        b_len[0],
-        sy.symbols(" ".join(f"g_{{{i}}}" for i in range(b_len[0] * b_len[1]))),
-    )
-    g_sym2 = sy.Matrix(
-        b_len[0],
-        c_len[0],
+        c1.shape[0],
+        c2.shape[0],
         sy.symbols(
-            " ".join(f"\\gamma_{{{i}}}" for i in range(b_len[0] * c_len[0]))
+            " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
+    )
+    g1_sym = sy.Matrix(
+        b1.shape[1],
+        b2.shape[1],
+        sy.symbols(
+            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+        ),
+    )
+    g2_sym = sy.Matrix(
+        b1.shape[1],
+        b2.shape[1],
+        sy.symbols(
+            " ".join(
+                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1])
+            )
         ),
     )
     gg_sym = sy.Matrix(
-        c_len[0],
-        c_len[0],
-        sy.symbols(" ".join(f"G_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
-    )
-    ss_sym2 = sy.Matrix(
-        c_len[0],
-        c_len[0],
-        sy.symbols(" ".join(f"S_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
-    )
-    ss_sym1 = sy.Matrix(
-        c_len[0],
-        a_len[0],
+        c1.shape[0],
+        c2.shape[0],
         sy.symbols(
-            " ".join(f"\\sigma_{{{i}}}" for i in range(c_len[0] * a_len[0]))
+            " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
+    )
+    ss2_sym = sy.Matrix(
+        c1.shape[1],
+        c2.shape[1],
+        sy.symbols(
+            " ".join(f"S_{{{i}}}" for i in range(c1.shape[1] * c2.shape[1]))
+        ),
+    )
+
+    ss1_sym = sy.Matrix(
+        c1.shape[1],
+        a1.T.shape[0],
+        sy.symbols(
+            " ".join(
+                f"\\sigma_{{{i}}}" for i in range(c1.shape[1] * a1.T.shape[0])
+            )
         ),
     )
     s_sym = sy.Matrix(
-        a_len[0],
-        a_len[0],
-        sy.symbols(" ".join(f"s_{{{i}}}" for i in range(a_len[0] * a_len[0]))),
+        a1.T.shape[0],
+        a2.T.shape[0],
+        sy.symbols(
+            " ".join(f"s_{{{i}}}" for i in range(a1.T.shape[0] * a2.T.shape[0]))
+        ),
     )
 
     doc = tex.Document()
@@ -763,30 +811,30 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
         )
     )
     doc.append(
-        tex.Math(data=["d =", syt(d_sym1), "=", syt(d_num1)], escape=False)
+        tex.Math(data=["d =", syt(d1_sym), "=", syt(d1_user)], escape=False)
     )
     doc.append(
-        tex.Math(data=["g =", syt(g_sym1), "=", syt(g_num1)], escape=False)
+        tex.Math(data=["g =", syt(g1_sym), "=", syt(g1_user)], escape=False)
     )
     doc.append(
         tex.Math(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g_num2 = sy.Matrix(g_num1) * (sy.diag(*q1) * b1).T
+    g_num2 = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(
             escape=False,
             data=[
-                syt(g_sym2),
+                syt(g2_sym),
                 "=",
                 syt(g_num2),
                 "=",
-                syt(g_sym1),
+                syt(g1_sym),
                 r"\odot",
                 syt((sy.diag(*q1) * b1).T),
                 "=",
-                syt(g_sym1),
+                syt(g1_sym),
                 r"\left(",
                 syt(q1),
                 r"\odot",
@@ -807,30 +855,30 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g_sym2),
+                syt(g2_sym),
                 r"= \left(",
                 syt(q2),
                 r"\odot",
                 syt(b2),
                 r"\right)",
-                syt(g_sym2),
+                syt(g2_sym),
             ],
         )
     )
 
     doc.append(tex.Math(data=[r"D = c_1^t d c_2"], escape=False))
-    d_num2 = d_num1 * c2
+    d_num2 = d1_user * c2
     doc.append(
         tex.Math(
             data=[
-                syt(d_sym2),
+                syt(d2_sym),
                 "=",
                 syt(d_num2),
                 "=",
-                syt(d_num1),
+                syt(d1_user),
                 syt(c2),
                 "=",
-                syt(d_sym1),
+                syt(d1_sym),
                 syt(c2),
             ],
             escape=False,
@@ -839,7 +887,7 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     dd_num = c1.T * d_num2
     doc.append(
         tex.Math(
-            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d_sym2)],
+            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d2_sym)],
             escape=False,
         )
     )
@@ -849,7 +897,7 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(
             data=[
-                syt(ss_sym2),
+                syt(ss2_sym),
                 "=",
                 syt(ss_num2),
                 "=",
@@ -865,14 +913,14 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     doc.append(
         tex.Math(
             data=[
-                syt(ss_sym1),
+                syt(ss1_sym),
                 "=",
                 syt(ss_num1),
                 "=",
                 syt(ss_num2),
                 syt(a2),
                 "=",
-                syt(ss_sym2),
+                syt(ss2_sym),
                 syt(a2),
             ],
             escape=False,
@@ -890,7 +938,7 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
                 syt(ss_num1),
                 "=",
                 syt(a1.T),
-                syt(ss_sym1),
+                syt(ss1_sym),
             ],
             escape=False,
         )
@@ -900,14 +948,14 @@ def example_2d_bind_iterate(init_data, build_data, d_num1, g_num1, path):
     except Exception as e:
         click.echo(e)
 
-    output_default = default_convolve(d_num1, g_num1)
+    output_default = default_convolve(d1_user, g1_user)
     compare_naive = np.all(
         output_default.reshape(-1) == np.array(s_num).reshape(-1)
     )
     print("Result:", compare_naive)
 
 
-def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
+def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -930,14 +978,14 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
             " ".join(f"C_{i}" for i in range(cc_shape[0] * cc_shape[1]))
         ),
     )
-    g_sym1 = sy.Matrix(
+    g1_sym = sy.Matrix(
         b1.shape[1],
         b2.shape[1],
         sy.symbols(
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    g_sym2 = sy.Matrix(
+    g2_sym = sy.Matrix(
         b1.shape[1],
         b1.shape[0],
         sy.symbols(
@@ -961,10 +1009,10 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
         ),
     )
     dd_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        c1.T.shape[0],
+        c2.T.shape[0],
         sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+            " ".join(f"D_{{{i}}}" for i in range(c1.T.shape[0] * c2.T.shape[0]))
         ),
     )
     ss_sym = sy.Matrix(
@@ -1000,36 +1048,30 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
         )
     )
     doc.append(
-        tex.Math(data=["d =", syt(d_sym), "=", syt(d_num1)], escape=False)
+        tex.Math(data=["d =", syt(d_sym), "=", syt(d1_user)], escape=False)
     )
     doc.append(
-        tex.Math(data=["g =", syt(g_sym1), "=", syt(g_num1)], escape=False)
+        tex.Math(data=["g =", syt(g1_sym), "=", syt(g1_user)], escape=False)
     )
     doc.append(
         tex.Math(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g_num2 = sy.Matrix(g_num1) * (sy.diag(*q1) * b1).T
+    g2_num = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(
             escape=False,
             data=[
-                syt(g_sym2),
+                syt(g2_sym),
                 "=",
-                syt(g_num2),
+                syt(g2_num),
                 "=",
-                syt(g_num1),
+                syt(g1_user),
                 r"\odot",
                 syt((sy.diag(*q1) * b1).T),
                 "=",
-                syt(g_num1),
-                r"\left(",
-                syt(q1),
-                r"\odot",
-                syt(b1),
-                r"\right)^t" "=",
-                syt(g_sym1),
+                syt(g1_sym),
                 r"\left(",
                 syt(q1),
                 r"\odot",
@@ -1038,8 +1080,7 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
             ],
         )
     )
-
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g_num2)
+    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_num)
     doc.append(
         tex.Math(
             escape=False,
@@ -1050,25 +1091,16 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g_num2),
-                "=",
-                r"\left(",
+                syt(g2_num),
+                r"= \left(",
                 syt(q2),
                 r"\odot",
                 syt(b2),
                 r"\right)",
-                syt(g_num2),
-                "=",
-                r"\left(",
-                syt(q2),
-                r"\odot",
-                syt(b2),
-                r"\right)",
-                syt(g_sym2),
+                syt(g2_sym),
             ],
         )
     )
-
     doc.append(tex.Math(data=[r"C = c_1^t \otimes c_2^t"], escape=False))
     cc_num = TensorProduct(c1.T, c2.T)
     doc.append(
@@ -1086,7 +1118,7 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
         )
     )
     doc.append(tex.Math(data=[r"D = Cd"], escape=False))
-    dd_num = cc_num * d_num1.reshape(d_num1.shape[0] * d_num1.shape[1], 1)
+    dd_num = cc_num * d1_user.reshape(cc_num.shape[1], 1)
     doc.append(
         tex.Math(
             data=[
@@ -1095,9 +1127,7 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
                 syt(dd_num),
                 "=",
                 syt(cc_num),
-                syt(d_num1.reshape(d_num1.shape[0] * d_num1.shape[1], 1)),
-                "= C",
-                syt(d_sym.reshape(d_sym.shape[0] * d_sym.shape[1], 1)),
+                syt(d1_user.reshape(cc_num.shape[1], 1)),
             ]
         )
     )
@@ -1130,8 +1160,6 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
                 "=",
                 syt(aa_num),
                 syt(ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1)),
-                "= A",
-                syt(ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1)),
             ]
         )
     )
@@ -1150,7 +1178,7 @@ def example_2d_bind_nest(init_data, build_data, d_num1, g_num1, path):
     except Exception as e:
         click.echo(e)
 
-    output_default = signal.convolve(d_num1, g_num1[::-1, ::-1], mode="valid")
+    output_default = signal.convolve(d1_user, g1_user[::-1, ::-1], mode="valid")
     compare_naive = np.all(
         output_default.reshape(-1) == np.array(s_num).reshape(-1)
     )

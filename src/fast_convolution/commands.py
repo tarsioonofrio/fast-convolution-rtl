@@ -490,7 +490,7 @@ def cmd_build2d_bind_iterate(repo):
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     matmul_c2 = utils.c_matmul_shift_noloop_iter(
-        c2, "c2", c2.shape, c2.shape, True
+        c2, "c2", c2.T.shape, c2.shape, True
     )
     matmul_c1t = utils.c_matmul_shift_noloop_iter(
         c1.T, "c1t", c1.T.shape, c1.T.shape
