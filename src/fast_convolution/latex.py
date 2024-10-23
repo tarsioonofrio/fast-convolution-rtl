@@ -297,8 +297,9 @@ def build_2d_bind_iterated(init_data, build_data, path):
 
 
 def build_2d_bind_nest(init_data, build_data, path):
-    dim, c_len, b_len, a_len = init_data
+    # dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+    # breakpoint()
 
     aa_shape = (
         a1.shape[0] * a2.shape[0],
@@ -311,7 +312,6 @@ def build_2d_bind_nest(init_data, build_data, path):
             " ".join(f"A_{i}" for i in range(aa_shape[0] * aa_shape[1]))
         ),
     )
-
     cc_shape = c1.shape[0] * c2.shape[0], c1.shape[1] * c2.shape[1]
     cc_sym = sy.Matrix(
         cc_shape[0],
@@ -320,43 +320,56 @@ def build_2d_bind_nest(init_data, build_data, path):
             " ".join(f"C_{i}" for i in range(cc_shape[0] * cc_shape[1]))
         ),
     )
-
     g_num1 = sy.Matrix(
-        b_len[0],
-        b_len[1],
-        sy.symbols(" ".join(f"g_{{{i}}}" for i in range(b_len[0] * b_len[1]))),
+        b1.shape[1],
+        b2.shape[1],
+        sy.symbols(
+            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+        ),
     )
     g_sym2 = sy.Matrix(
-        b_len[0],
-        c_len[0],
+        b1.shape[1],
+        b1.shape[0],
         sy.symbols(
-            " ".join(f"\\gamma_{{{i}}}" for i in range(b_len[0] * c_len[0]))
+            " ".join(
+                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b1.shape[0])
+            )
         ),
     )
     gg_sym = sy.Matrix(
-        c_len[0],
-        c_len[1],
-        sy.symbols(" ".join(f"G_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
+        c1.shape[0],
+        c2.shape[0],
+        sy.symbols(
+            " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
     )
     d_sym = sy.Matrix(
-        c_len[0],
-        c_len[1],
-        sy.symbols(" ".join(f"d_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
+        c1.shape[0],
+        c2.shape[0],
+        sy.symbols(
+            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
     )
     dd_sym = sy.Matrix(
-        c_len[0],
-        c_len[1],
-        sy.symbols(" ".join(f"D_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
+        c1.shape[0],
+        c2.shape[0],
+        sy.symbols(
+            " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
     )
     ss_sym = sy.Matrix(
-        c_len[0],
-        c_len[1],
-        sy.symbols(" ".join(f"S_{{{i}}}" for i in range(c_len[0] * c_len[1]))),
+        c1.shape[1],
+        c2.shape[1],
+        sy.symbols(
+            " ".join(f"S_{{{i}}}" for i in range(c1.shape[1] * c2.shape[1]))
+        ),
     )
     s_sym = sy.Matrix(
-        a_len[0],
-        a_len[1],
-        sy.symbols(" ".join(f"s_{{{i}}}" for i in range(a_len[0] * a_len[1]))),
+        a1.T.shape[0],
+        a2.T.shape[0],
+        sy.symbols(
+            " ".join(f"s_{{{i}}}" for i in range(a1.T.shape[0] * a2.T.shape[0]))
+        ),
     )
 
     doc = tex.Document()

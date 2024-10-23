@@ -219,7 +219,7 @@ def cmd_build_toom_cook1d(repo, points):
     build1d(repo, list_points, a, b, c, q, b_len, c_len)
 
 
-def cmd_build_manual_factorization(repo):
+def cmd_build_manual_factorization1d(repo):
     dim, c_len, b_len, a_len = read_init(repo)
     list_points = [1]
     c, q, b, a = fast.conv_manual_factorization()
@@ -227,6 +227,7 @@ def cmd_build_manual_factorization(repo):
 
 
 def build1d(repo, list_points, a, b, c, q, b_len, c_len):
+    breakpoint()
     d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)
@@ -338,11 +339,66 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len):
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
     dim, c_len, b_len, a_len = read_init(repo)
-    # at_len = ct_len + b_len - 1
     list_points1d = [np.inf if p == "inf" else int(p) for p in points1d]
     list_points2d = [np.inf if p == "inf" else int(p) for p in points2d]
-
     c1, q1, b1, a1 = fast.toom_cook(a_len[0], b_len[0], list_points1d)
+    c2, q2, b2, a2 = fast.toom_cook(a_len[1], b_len[1], list_points2d)
+    build2d(
+        repo,
+        list_points2d,
+        list_points1d,
+        a1,
+        b1,
+        c1,
+        q1,
+        a2,
+        b2,
+        c2,
+        q2,
+        b_len,
+        c_len,
+    )
+
+
+def cmd_build_manual_factorization2d(repo):
+    dim, c_len, b_len, a_len = read_init(repo)
+    # at_len = ct_len + b_len - 1
+    list_points1d = [1]
+    list_points2d = [1]
+    c1, q1, b1, a1 = fast.conv_manual_factorization()
+    c2, q2, b2, a2 = fast.conv_manual_factorization()
+    build2d(
+        repo,
+        list_points2d,
+        list_points1d,
+        a1,
+        b1,
+        c1,
+        q1,
+        a2,
+        b2,
+        c2,
+        q2,
+        b_len,
+        c_len,
+    )
+
+
+def build2d(
+    repo,
+    list_points2d,
+    list_points1d,
+    a1,
+    b1,
+    c1,
+    q1,
+    a2,
+    b2,
+    c2,
+    q2,
+    b_len,
+    c_len,
+):
     di1 = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len[0]))))
     g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[0]))))
     # bg1 = fast.g_to_bg(q1, b1, g1)
@@ -350,8 +406,6 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
         [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
         for i in q1
     ]
-
-    c2, q2, b2, a2 = fast.toom_cook(a_len[1], b_len[1], list_points2d)
     di2 = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len[1]))))
     g2 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[1]))))
     # bg2 = fast.g_to_bg(q2, b2, g2)
@@ -359,7 +413,6 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
         [int(i.p), int(i.q)] if isinstance(i, sy.Rational) else [int(i), 1]
         for i in q2
     ]
-
     data = {
         "p": [list_points1d, list_points2d],
         "c": [
@@ -378,13 +431,11 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
     }
     with open(repo.file_build, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
-
     repo.dir_build.mkdir(parents=True, exist_ok=True)
     path1 = repo.dir_build / "convolution-axis1"
     latex.build_1d(b1, c1, a1, g1, di1, q1, path1)
     path2 = repo.dir_build / "convolution-axis2"
     latex.build_1d(b2, c2, a2, g2, di2, q2, path2)
-
     a1_sum = fast.count_sums(a1)
     a2_sum = fast.count_sums(a2)
     c1_sum = fast.count_sums(c1)
@@ -415,7 +466,6 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "build.h", arr, {})
-
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     arr = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})

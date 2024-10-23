@@ -143,14 +143,14 @@ def toom_cook1d(ctx, points):
     click.echo("Build 1D Toom Cook")
 
 
-@build_d1.command
+@build_d1.command(name="manual", help="6 multiplications")
 @click.pass_context
-def manual(ctx):
+def manual1d(ctx):
     # TODO break if user was trying to use for 2D
-    from .commands import cmd_build_manual_factorization
+    from .commands import cmd_build_manual_factorization1d
 
     repo = ctx.obj
-    cmd_build_manual_factorization(repo)
+    cmd_build_manual_factorization1d(repo)
     click.echo("Build 1D manual factorization")
 
 
@@ -208,6 +208,17 @@ def toom_cook2d(ctx, points_1d, points_2d):
     points_2d_ = points_2d if points_2d is not None else default2
     cmd_build_toom_cook2d(repo, points_1d_, points_2d_)
     click.echo("Build 2D Toom Cook dimension.")
+
+
+@build_d2.command(name="manual", help="6x6 multiplications")
+@click.pass_context
+def manual2d(ctx):
+    # TODO break if user was trying to use for 2D
+    from .commands import cmd_build_manual_factorization2d
+
+    repo = ctx.obj
+    cmd_build_manual_factorization2d(repo)
+    click.echo("Build 2D manual factorization")
 
 
 # @build_d2.command()
