@@ -120,7 +120,7 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
         click.echo(e)
 
 
-def build_2d_bind_iterated(init_data, build_data, path):
+def build_2d_bind_nest(init_data, build_data, path):
     # dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -199,7 +199,7 @@ def build_2d_bind_iterated(init_data, build_data, path):
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a1paper"))
     doc.preamble.append(
-        tex.Command("title", "Symbolic iterated 2D Convolution")
+        tex.Command("title", "Symbolic Nested 2D Convolution")
     )
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
@@ -309,14 +309,14 @@ def build_2d_bind_iterated(init_data, build_data, path):
         )
     )
     try:
-        doc.generate_pdf(path / "bind-iterated", clean_tex=False)
+        doc.generate_pdf(path / "bind-nest", clean_tex=False)
     except Exception as e:
         click.echo(e)
 
-    # TODO add operations count like in bind_nest function
+    # TODO add operations count like in bind_kron function
 
 
-def build_2d_bind_nest(init_data, build_data, path):
+def build_2d_bind_kron(init_data, build_data, path):
     # dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -408,7 +408,7 @@ def build_2d_bind_nest(init_data, build_data, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a0paper"))
-    doc.preamble.append(tex.Command("title", "Symbolic 2D Nested Convolution"))
+    doc.preamble.append(tex.Command("title", "Symbolic 2D Kronecker Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -542,7 +542,7 @@ def build_2d_bind_nest(init_data, build_data, path):
         tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num))], escape=False)
     )
     try:
-        doc.generate_pdf(path / "bind-nest", clean_tex=False)
+        doc.generate_pdf(path / "bind-kron", clean_tex=False)
     except Exception as e:
         click.echo(e)
 
@@ -718,7 +718,7 @@ def example_1d(b, c, a, g_num, d_num, q, path):
     print("Result:", compare_naive)
 
 
-def example_2d_bind_iterate(init_data, build_data, d1_user, g1_user, path):
+def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -796,7 +796,7 @@ def example_2d_bind_iterate(init_data, build_data, d1_user, g1_user, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a1paper"))
-    doc.preamble.append(tex.Command("title", "Numeric iterated 2D Convolution"))
+    doc.preamble.append(tex.Command("title", "Numeric Nested 2D Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -955,7 +955,7 @@ def example_2d_bind_iterate(init_data, build_data, d1_user, g1_user, path):
     print("Result:", compare_naive)
 
 
-def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
+def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -1032,7 +1032,7 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a0paper"))
-    doc.preamble.append(tex.Command("title", "Symbolic 2D Nested Convolution"))
+    doc.preamble.append(tex.Command("title", "Symbolic 2D Kronecker Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )

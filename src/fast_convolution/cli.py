@@ -234,22 +234,22 @@ def bind():
     pass
 
 
-@bind.command(name="iter", help="Iterated multidimensional bind")
-@click.pass_context
-def iterate(ctx):
-    from .commands import cmd_build2d_bind_iterate
-
-    repo = ctx.obj
-    cmd_build2d_bind_iterate(repo)
-
-
-@bind.command(help="Nested multidimensional bind")
+@bind.command(name="nest", help="Nestedted multidimensional bind")
 @click.pass_context
 def nest(ctx):
     from .commands import cmd_build2d_bind_nest
 
     repo = ctx.obj
     cmd_build2d_bind_nest(repo)
+
+
+@bind.command(help="Kronecker multidimensional bind")
+@click.pass_context
+def kron(ctx):
+    from .commands import cmd_build2d_bind_kron
+
+    repo = ctx.obj
+    cmd_build2d_bind_kron(repo)
 
 
 @main.group(help="Quantization")

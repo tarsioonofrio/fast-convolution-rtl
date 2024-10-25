@@ -471,38 +471,38 @@ def build2d(
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
 
-def cmd_build2d_bind_iterate(repo):
-    path = repo.dir_build / "bind-iterated"
+def cmd_build2d_bind_nest(repo):
+    path = repo.dir_build / "bind-nest"
     path.mkdir(parents=True, exist_ok=True)
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
-    write_bind(repo, "iterate")
-    latex.build_2d_bind_iterated(init_data, build_data, path)
+    write_bind(repo, "nest")
+    latex.build_2d_bind_nest(init_data, build_data, path)
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
         package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter2d-iter.c",
-        repo.dir_clib_main / "filter2d-iter.c",
+        package_clib() / "src/int/filter2d-nest.c",
+        repo.dir_clib_main / "filter2d-nest.c",
     )
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-    matmul_c2 = utils.c_matmul_shift_noloop_iter(
+    matmul_c2 = utils.c_matmul_shift_noloop_nest(
         c2, "c2", c2.T.shape, c2.shape, True
     )
-    matmul_c1t = utils.c_matmul_shift_noloop_iter(
+    matmul_c1t = utils.c_matmul_shift_noloop_nest(
         c1.T, "c1t", c1.T.shape, c1.T.shape
     )
-    matmul_a2 = utils.c_matmul_shift_noloop_iter(
+    matmul_a2 = utils.c_matmul_shift_noloop_nest(
         a2, "a2", c1.shape, a2.shape, True
     )
-    matmul_a1t = utils.c_matmul_shift_noloop_iter(
+    matmul_a1t = utils.c_matmul_shift_noloop_nest(
         a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
     )
     hadamart = utils.c_hadamart_product_nollop(
-        a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_iter"
+        a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_nest"
     )
 
     c_fun = (
@@ -524,7 +524,7 @@ def cmd_build2d_bind_iterate(repo):
         '#endif //C_OPTIM_H'
     )
 
-    lib_opt = "filter2d-iter-opt"
+    lib_opt = "filter2d-nest-opt"
     dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
     dir_lib_opt.mkdir(parents=True, exist_ok=True)
     dir_lib_opt_inc = dir_lib_opt / "include"
@@ -537,8 +537,8 @@ def cmd_build2d_bind_iterate(repo):
 
     target_opt = [
         ["standard", None, 0],
-        ["filter2d-iter", None, 0],
-        ["filter2d-iter", lib_opt, 3],
+        ["filter2d-nest", None, 0],
+        ["filter2d-nest", lib_opt, 3],
     ]
 
     for target, name, opt in target_opt:
@@ -552,27 +552,27 @@ def cmd_build2d_bind_iterate(repo):
             f.write(makefile_str)
 
 
-def cmd_build2d_bind_nest(repo):
-    path = repo.dir_build / "bind-nest"
+def cmd_build2d_bind_kron(repo):
+    path = repo.dir_build / "bind-kron"
     path.mkdir(parents=True, exist_ok=True)
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
-    write_bind(repo, "nest")
-    latex.build_2d_bind_nest(init_data, build_data, path)
+    write_bind(repo, "kron")
+    latex.build_2d_bind_kron(init_data, build_data, path)
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     a = np.kron(a1, a2)
     c = np.kron(c1, c2)
 
-    # TODO export bind_nest_float.h with data in float
+    # TODO export bind_kron_float.h with data in float
     csa_config = fast.csa_config(a, c)
     fast.write_csa_config(csa_config, path / "csa")
     csa_parcels = fast.csa_parcels(a, c)
     fast.write_csa_parcels(csa_parcels, path / "csa")
 
     list_array = [
-        {"name": "ma_nest", "value": a.T},
-        {"name": "mc_nest", "value": c.T},
+        {"name": "ma_kron", "value": a.T},
+        {"name": "mc_kron", "value": c.T},
     ]
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     arr = [{**r, "type": "int"} for r in list_array]
@@ -583,22 +583,22 @@ def cmd_build2d_bind_nest(repo):
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
 
     list_array = [
-        {"name": "ma_nest", "value": a.T},
-        {"name": "mc_nest", "value": c.T},
+        {"name": "ma_kron", "value": a.T},
+        {"name": "mc_kron", "value": c.T},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    utils.c_header(repo.dir_clib_data / "bind_nest.h", arr, {})
+    utils.c_header(repo.dir_clib_data / "bind_kron.h", arr, {})
 
     arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "bind_nest_float.h", arr, {})
+    utils.c_header(repo.dir_clib_data_float / "bind_kron_float.h", arr, {})
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
         package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
     )
     shutil.copy(
-        package_clib() / "src/int/filter2d-nest.c",
-        repo.dir_clib_main / "filter2d-nest.c",
+        package_clib() / "src/int/filter2d-kron.c",
+        repo.dir_clib_main / "filter2d-kron.c",
     )
 
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
@@ -620,7 +620,7 @@ def cmd_build2d_bind_nest(repo):
         '#endif //C_OPTIM_H'
     )
 
-    lib_opt = "filter2d-nest-opt"
+    lib_opt = "filter2d-kron-opt"
     dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
     dir_lib_opt.mkdir(parents=True, exist_ok=True)
     dir_lib_opt_inc = dir_lib_opt / "include"
@@ -633,8 +633,8 @@ def cmd_build2d_bind_nest(repo):
 
     target_opt = [
         ["standard", None, 0],
-        ["filter2d-nest", None, 0],
-        ["filter2d-nest", lib_opt, 1],
+        ["filter2d-kron", None, 0],
+        ["filter2d-kron", lib_opt, 1],
     ]
 
     for target, name, opt in target_opt:
@@ -749,8 +749,8 @@ def cmd_sim_file(repo, feature, weight, suffix):
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
 
-        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_iter * len(points) * len(fast_conv)
+        count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_nest * len(points) * len(fast_conv)
 
     elif dim == 2:
         points, c, b, a, q = read_build_2d(repo)
@@ -765,8 +765,8 @@ def cmd_sim_file(repo, feature, weight, suffix):
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
-        count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_iter * len(points[0]) * len(points[1])
+        count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_nest * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
         if len(quant_data) == 0:
             bg_quant = bg
@@ -793,7 +793,7 @@ def cmd_sim_file(repo, feature, weight, suffix):
         f"Multiplications: {size * 9}\n"
         f"Additions: {size * 8}\n"
         "Fast\n"
-        f"Convolutions: {count_iter}\n"
+        f"Convolutions: {count_nest}\n"
         f"Multiplications: {count_mult}\n"
     )
     if len(suffix) > 0:
@@ -942,8 +942,8 @@ def cmd_sim_random(
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
 
-        count_iter = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_iter * len(points) * len(fast_conv)
+        count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_nest * len(points) * len(fast_conv)
     elif dim == 2:
         points, c, b, a, q = read_build_2d(repo)
         conv_func = (
@@ -957,8 +957,8 @@ def cmd_sim_random(
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
-        count_iter = fast.filter2d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_iter * len(points[0]) * len(points[1])
+        count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_nest * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
         if len(quant_data) == 0:
             bg_quant = bg
@@ -986,7 +986,7 @@ def cmd_sim_random(
         f"Multiplications: {size * 9}\n"
         f"Additions: {size * 8}\n"
         "Fast\n"
-        f"Convolutions: {count_iter}\n"
+        f"Convolutions: {count_nest}\n"
         f"Multiplications: {count_mult}\n"
     )
 
@@ -1080,10 +1080,10 @@ def cmd_example_random(repo, feature, weight, suffix):
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
 
-        if data_bind["func"] == "iterate":
-            latex.example_2d_bind_iterate(init_data, build_data, d, g, name)
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(init_data, build_data, d, g, name)
+        if data_bind["func"] == "kron":
+            latex.example_2d_bind_kron(init_data, build_data, d, g, name)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
@@ -1144,10 +1144,10 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         data_bind = read_bind_if_exists(repo)
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
-        if data_bind["func"] == "iterate":
-            latex.example_2d_bind_iterate(init_data, build_data, d, g, name)
         if data_bind["func"] == "nest":
             latex.example_2d_bind_nest(init_data, build_data, d, g, name)
+        if data_bind["func"] == "kron":
+            latex.example_2d_bind_kron(init_data, build_data, d, g, name)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
