@@ -227,7 +227,6 @@ def cmd_build_manual_factorization1d(repo):
 
 
 def build1d(repo, list_points, a, b, c, q, b_len, c_len):
-    breakpoint()
     d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)

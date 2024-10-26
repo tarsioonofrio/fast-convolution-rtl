@@ -9,11 +9,11 @@
     #include <riscv-csr.h>
 #endif
 
-#if OPTIM == D1 || OPTIM == D2_NEST
+#if OPTIM == D1 || OPTIM == D2_KRON
     #include "optim.h"
 #endif
 
-#if OPTIM == D2_ITER
+#if OPTIM == D2_NEST
     #include "optim.h"
 #endif
 
@@ -116,7 +116,7 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
         hadamart_product(mss, mdd, mgg, c_size);
         // s=S*a
         matrix_mul(ms, ma, mss, a_size, c_size, 1);
-    #elif OPTIM == D1 || OPTIM == D2_NEST
+    #elif OPTIM == D1 || OPTIM == D2_KRON
         // printf("******* OI *******\n");
         matrix_mul_shift_noloop_c(mdd, md);
         hadamart_product_noloop(mss, mdd, mgg);
@@ -130,9 +130,9 @@ void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int 
 }
 
 
-void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
-               const int *ma2, const int *mc2, const int *md,
-               int a1_size, int a2_size, int c1_size, int c2_size) {
+void fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
+                    const int *ma2, const int *mc2, const int *md,
+                    int a1_size, int a2_size, int c1_size, int c2_size) {
 
     int *mss = (int *) malloc((c1_size * c2_size) * sizeof(int));
     int *mss2 = (int *) malloc((a1_size * c1_size) * sizeof(int));
@@ -160,10 +160,10 @@ void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
         hadamart_product(mss, mdd, mgg, c1_size * c2_size);
         matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
         matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
-    #elif OPTIM == D2_ITER
+    #elif OPTIM == D2_NEST
         matrix_mul_shift_noloop_c2(md2, md);
         matrix_mul_shift_noloop_c1t(mdd, md2);
-        hadamart_product_noloop_iter(mss, mdd, mgg);
+        hadamart_product_noloop_nest(mss, mdd, mgg);
         matrix_mul_shift_noloop_a2(mss2, mss);
         matrix_mul_shift_noloop_a1t(ms, mss2);
     #endif
@@ -233,11 +233,11 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
                     }
                 }
             }
-            if (type_conv == NEST) {
+            if (type_conv == KRON) {
                 fast_conv(ms, params->ma, params->mgg, params->mc, md,
                           a1_size * a2_size, c1_size * c2_size);
-            } else if (type_conv == ITER) {
-                fast_conv_iter(ms, params->ma1, params->mc1, params->mgg, params->ma2,
+            } else if (type_conv == NEST) {
+                fast_conv_nest(ms, params->ma1, params->mc1, params->mgg, params->ma2,
                                params->mc2, md, a1_size, a2_size, c1_size, c2_size);
             }
             for (rd = 0; rd < a1_size; rd++) {
