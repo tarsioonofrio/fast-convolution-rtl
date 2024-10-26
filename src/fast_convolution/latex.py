@@ -14,6 +14,11 @@ def syt(expr):
     return tex.NoEscape(sy.latex(expr))
 
 
+def doc_append(doc, lst):
+    data = [syt(d) if isinstance(d, sy.Matrix) else d for d in lst]
+    doc.append(tex.Math(data=data, escape=False))
+
+
 def build_1d(b, c, a, g_sym, d_sym, q, path):
     gg_sym = sy.Matrix(
         sy.symbols(" ".join(f"G_{i}" for i in range(b.shape[0])))
@@ -198,9 +203,7 @@ def build_2d_bind_nest(init_data, build_data, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a1paper"))
-    doc.preamble.append(
-        tex.Command("title", "Symbolic Nested 2D Convolution")
-    )
+    doc.preamble.append(tex.Command("title", "Symbolic Nested 2D Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -408,7 +411,9 @@ def build_2d_bind_kron(init_data, build_data, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a0paper"))
-    doc.preamble.append(tex.Command("title", "Symbolic 2D Kronecker Convolution"))
+    doc.preamble.append(
+        tex.Command("title", "Symbolic 2D Kronecker Convolution")
+    )
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -1032,7 +1037,9 @@ def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a0paper"))
-    doc.preamble.append(tex.Command("title", "Symbolic 2D Kronecker Convolution"))
+    doc.preamble.append(
+        tex.Command("title", "Symbolic 2D Kronecker Convolution")
+    )
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
