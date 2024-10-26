@@ -32,9 +32,9 @@ set(LIB_INT src/int/lib/convolution.c src/int/lib/util.c)
 #set(LIB_INT src/int/lib/convolution.c src/int/lib/util.c src/int/lib/opt_fast_conv.c src/int/lib/filter1dim.c)
 #set(LIB_INT src/int/lib/convolution.c src/int/lib/util.c src/int/lib/opt_fast_conv.c src/int/lib/filter2dim_kron.c)
 #set(LIB_INT src/int/lib/convolution.c src/int/lib/util.c src/int/lib/opt_fast_conv_nest.c src/int/lib/filter2dim_nest.c)
-set(TEST_LIB_OPT1 ${TEST_PATH}/${PRJ1D}/clib/src/lib/optim.c)
-set(TEST_LIB_OPT2_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/lib/optim.c)
-set(TEST_LIB_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/lib/optim.c)
+set(TEST_LIB_OPT1 ${TEST_PATH}/${PRJ1D}/clib/make/filter1d-opt/lib/optim.c)
+set(TEST_LIB_OPT2_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/make/filter2d-kron-opt/lib/optim.c)
+set(TEST_LIB_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/make/filter2d-nest-opt/lib/optim.c)
 
 
 
