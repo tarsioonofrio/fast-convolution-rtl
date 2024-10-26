@@ -86,7 +86,7 @@ void matrix_mul_shift_noloop_a1t(int *m_out, const int *m_in){
 	m_out[8] =  + m_in[5] + m_in[8] + (m_in[11] << 2) + m_in[14];
 }
 
-void hadamart_product_noloop_iter(int *out, const int *in1, const int *in2){
+void hadamart_product_noloop_nest(int *out, const int *in1, const int *in2){
 	out[0] = in1[0] * in2[0];
 	out[1] = in1[1] * in2[1];
 	out[2] = in1[2] * in2[2];

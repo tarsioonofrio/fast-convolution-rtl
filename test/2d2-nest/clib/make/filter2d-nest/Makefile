@@ -1,4 +1,4 @@
-TARGET   ?= filter2d-iter
+TARGET   ?= filter2d-nest
 OPTIM    ?= 0
 GCCOPT   ?= O2
 ARCH     ?= rv32im_zicsr
