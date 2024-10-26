@@ -5,8 +5,8 @@
 #ifndef C_CONVOLUTION_FLOAT_H
 #define C_CONVOLUTION_FLOAT_H
 
-#define NESTED 0
-#define ITERATED 1
+#define KRON 0
+#define NEST 1
 
 typedef struct {
     const float *mgg;
@@ -33,7 +33,7 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
 void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
                      int c_size);
 
-void fast_conv_iter_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg,
+void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg,
                           const float *ma2t, const float *mc2t, const float *md,
                           int a1_size, int a2_size, int c1_size, int c2_size);
 

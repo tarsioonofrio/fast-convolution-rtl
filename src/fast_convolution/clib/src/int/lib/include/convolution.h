@@ -5,12 +5,12 @@
 #ifndef C_CONVOLUTION_H
 #define C_CONVOLUTION_H
 
-#define NEST 0
-#define ITER 1
+#define KRON 0
+#define NEST 1
 
 #define D1 1
-#define D2_NEST 2
-#define D2_ITER 3
+#define D2_KRON 2
+#define D2_NEST 3
 
 typedef struct {
     const int *mgg;
@@ -39,9 +39,9 @@ void init_array(int *array, int size);
 
 void right_shift_array(int *array, int shift, int size);
 
-void fast_conv_iter(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
-               const int *ma2, const int *mc2, const int *md,
-               int a1_size, int a2_size, int c1_size, int c2_size);
+void fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg,
+                    const int *ma2, const int *mc2, const int *md,
+                    int a1_size, int a2_size, int c1_size, int c2_size);
 
 void fast_conv(int *ms, const int *ma, const int *mgg, const int *mc, const int *md, int a_size, int c_size);
 
