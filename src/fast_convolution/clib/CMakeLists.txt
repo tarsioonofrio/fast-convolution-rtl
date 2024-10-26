@@ -18,9 +18,10 @@ set(TEST_DATA1 ${TEST_PATH}/${PRJ1D}/clib/data)
 set(TEST_DATA2 ${TEST_PATH}/${PRJ2D_KRON}/clib/data)
 set(TEST_DATA1_FLOAT ${TEST_PATH}/${PRJ1D}/clib/data_float)
 set(TEST_DATA2_FLOAT ${TEST_PATH}/${PRJ2D_KRON}/clib/data_float)
-set(TEST_INC_OPT1 ${TEST_PATH}/${PRJ1D}/clib/lib/include)
-set(TEST_INC_OPT2_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/lib/include)
-set(TEST_INC_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/lib/include)
+set(TEST_INC_OPT1 ${TEST_PATH}/${PRJ1D}/clib/make/filter1d-opt/lib/include)
+set(TEST_INC_OPT2_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/make/filter2d-kron-opt/lib/include)
+set(TEST_INC_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/make/filter2d-nest-opt/lib/include)
+message("**** TEST_INC_OPT2_KRON ${TEST_INC_OPT2_KRON}")
 
 # set libs paths
 set(LIB_FLOAT src/float/lib/convolution_float.c src/float/lib/util_float.c)
