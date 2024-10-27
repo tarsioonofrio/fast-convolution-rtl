@@ -5,9 +5,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_STANDARD 90)
 
-set(PRJ1D 1d3)
-set(PRJ2D_KRON 2d3-kron)
-set(PRJ2D_NEST 2d3-nest)
+set(PRJ1D 1d-manual)
+set(PRJ2D_KRON 2d-manual-kron)
+set(PRJ2D_NEST 2d-manual-nest)
+#set(PRJ2D_KRON 2d3-kron)
+#set(PRJ2D_NEST 2d3-nest)
 
 set(TEST_PATH ../../../test)
 
@@ -43,11 +45,11 @@ set(TEST_LIB_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/make/filter2d-nest-opt/li
 # float
 add_executable(float-fast-conv1d src/float/fast-conv1d-float.c ${LIB_FLOAT})
 add_executable(float-fast-conv2d-kron src/float/fast-conv2d-kron-float.c ${LIB_FLOAT})
-add_executable(float-fast-conv2d-nest src/float/fast-conv2d-kron-float.c ${LIB_FLOAT})
+add_executable(float-fast-conv2d-nest src/float/fast-conv2d-nest-float.c ${LIB_FLOAT})
 
 add_executable(float-filter1d src/float/filter1d-float.c ${LIB_FLOAT})
 add_executable(float-filter2d-kron src/float/filter2d-kron-float.c ${LIB_FLOAT})
-add_executable(float-filter2d-nest src/float/filter2d-kron-float.c ${LIB_FLOAT})
+add_executable(float-filter2d-nest src/float/filter2d-nest-float.c ${LIB_FLOAT})
 
 # int
 add_executable(standard src/int/standard.c ${LIB_INT})
@@ -55,12 +57,12 @@ add_executable(matrix-mult src/int/matrix-mult.c ${LIB_INT})
 
 add_executable(filter1d src/int/filter1d.c ${LIB_INT})
 add_executable(filter2d-kron src/int/filter2d-kron.c ${LIB_INT})
-add_executable(filter2d-nest src/int/filter2d-kron.c ${LIB_INT})
+add_executable(filter2d-nest src/int/filter2d-nest.c ${LIB_INT})
 
 # opt
 add_executable(filter1d-opt src/int/filter1d.c ${LIB_INT} ${TEST_LIB_OPT1})
 add_executable(filter2d-kron-opt src/int/filter2d-kron.c ${LIB_INT} ${TEST_LIB_OPT2_KRON})
-add_executable(filter2d-nest-opt src/int/filter2d-kron.c ${LIB_INT} ${TEST_LIB_OPT2_NEST})
+add_executable(filter2d-nest-opt src/int/filter2d-nest.c ${LIB_INT} ${TEST_LIB_OPT2_NEST})
 
 
 

@@ -19,12 +19,15 @@ def doc_append(doc, lst):
     doc.append(tex.Math(data=data, escape=False))
 
 
-def build_1d(b, c, a, g_sym, d_sym, q, path):
+def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
+    name = "Symbolic" if symbolic else "Numeric"
+    g_sym = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b.shape[1]))))
     gg_sym = sy.Matrix(
-        sy.symbols(" ".join(f"G_{i}" for i in range(b.shape[0])))
+        sy.symbols(" ".join(f"G_{i}" for i in range(q.shape[0])))
     )
+    d_sym = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c.shape[0]))))
     dd_sym = sy.Matrix(
-        sy.symbols(" ".join(f"D_{i}" for i in range(c.T.shape[1])))
+        sy.symbols(" ".join(f"D_{i}" for i in range(q.shape[0])))
     )
     ss_sym = sy.Matrix(
         sy.symbols(" ".join(f"S_{i}" for i in range(a.T.shape[1])))
@@ -34,8 +37,8 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
     )
 
     doc = tex.Document()
-    doc.preamble.append(tex.Package("geometry", "a3paper"))
-    doc.preamble.append(tex.Command("title", "Symbolic 1D Convolution"))
+    doc.preamble.append(tex.Package("geometry", "landscape"))
+    doc.preamble.append(tex.Command("title", f"{name} 1D Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -47,8 +50,8 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
             escape=False, data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"]
         )
     )
-    doc.append(tex.Math(data=["d =", syt(d_sym)], escape=False))
-    doc.append(tex.Math(data=["g =", syt(g_sym)], escape=False))
+    doc.append(tex.Math(data=["d =", syt(d_user)], escape=False))
+    doc.append(tex.Math(data=["g =", syt(g_user)], escape=False))
     doc.append(
         tex.Math(
             escape=False,
@@ -60,16 +63,16 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
                 syt(q),
                 r"\odot \left(",
                 syt(b),
-                syt(g_sym),
+                syt(g_user),
                 r"\right) \right]",
                 r"\odot \left(",
                 syt(c.T),
-                syt(d_sym),
+                syt(d_user),
                 r"\right) \right\}",
             ],
         )
     )
-    gg_num = sy.hadamard_product(q, b * g_sym)
+    gg_num = sy.hadamard_product(q, b * g_user)
     doc.append(
         tex.Math(
             escape=False,
@@ -80,32 +83,50 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
                 "=",
                 syt(q),
                 r"\odot",
-                syt(b * g_sym),
+                syt(b * g_user),
                 "=",
                 syt(q),
                 r"\odot \left(",
                 syt(b),
-                syt(g_sym),
+                syt(g_user),
                 r"\right)",
             ],
         )
     )
-    dd_num = c.T * d_sym
+    dd_num = c.T * d_user
     doc.append(
         tex.Math(
-            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c.T), syt(d_sym)]
+            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c.T), syt(d_user)]
         )
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
+    ss_num = sy.hadamard_product(gg_num, dd_num)
+    ss_user = ss_sym if symbolic else ss_num
+    gg_user = gg_sym if symbolic else gg_num
+    dd_user = dd_sym if symbolic else dd_num
+    doc.append(
+        tex.Math(
+            escape=False,
+            data=[
+                syt(ss_user),
+                "=",
+                syt(gg_user),
+                r"\odot",
+                syt(dd_user),
+            ],
+        )
+    )
+    s_num = a.T * ss_num
+    s_user = s_sym if symbolic else s_num
     doc.append(
         tex.Math(
             data=[
-                syt(s_sym),
+                syt(s_user),
                 "=",
-                syt(a.T * ss_sym),
+                syt(a.T * ss_user),
                 "=",
                 syt(a.T),
-                syt(ss_sym),
+                syt(ss_user),
             ]
         )
     )
@@ -123,6 +144,15 @@ def build_1d(b, c, a, g_sym, d_sym, q, path):
         doc.generate_pdf(path, clean_tex=False)
     except Exception as e:
         click.echo(e)
+
+    if symbolic is False:
+        output_default = signal.convolve(
+            d_user, g_user[::-1, ::-1], mode="valid"
+        )
+        compare_naive = np.all(
+            output_default.reshape(-1) == np.array(s_num).reshape(-1)
+        )
+        print("Result:", compare_naive)
 
 
 def build_2d_bind_nest(init_data, build_data, path):
@@ -562,165 +592,6 @@ def build_2d_bind_kron(init_data, build_data, path):
     )
     with open(path / "info.txt", "w") as f:
         f.write(text)
-
-
-def example_1d(b, c, a, g_num, d_num, q, path):
-    g_sym = sy.Matrix(
-        sy.symbols(" ".join(f"g_{i}" for i in range(g_num.shape[0])))
-    )
-    d_sym = sy.Matrix(
-        sy.symbols(" ".join(f"d_{i}" for i in range(c.T.shape[0])))
-    )
-    gg_sym = sy.Matrix(
-        sy.symbols(" ".join(f"G_{i}" for i in range(b.shape[0])))
-    )
-    dd_sym = sy.Matrix(
-        sy.symbols(" ".join(f"D_{i}" for i in range(d_num.shape[0])))
-    )
-    ss_sym = sy.Matrix(
-        sy.symbols(" ".join(f"S_{i}" for i in range(a.T.shape[1])))
-    )
-    s_sym = sy.Matrix(
-        sy.symbols(" ".join(f"s_{i}" for i in range(a.T.shape[0])))
-    )
-
-    doc = tex.Document()
-    doc.preamble.append(tex.Package("geometry", "a3paper"))
-    doc.preamble.append(tex.Command("title", "Numeric 1D Convolution"))
-    doc.preamble.append(
-        tex.Command("author", "Fast-Convolution Python Library")
-    )
-    doc.preamble.append(tex.Command("date", tex.NoEscape(r"\today")))
-    doc.append(tex.NoEscape(r"\maketitle"))
-
-    doc.append(
-        tex.Math(
-            escape=False, data=[r"s = a^t \{[q \odot (bg)] \odot (c^t d)\}"]
-        )
-    )
-    doc.append(
-        tex.Math(data=["d =", syt(d_sym), "=", syt(d_num)], escape=False)
-    )
-    doc.append(
-        tex.Math(data=["g =", syt(g_sym), "=", syt(g_num)], escape=False)
-    )
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[
-                syt(s_sym),
-                "=",
-                syt(a.T),
-                r"\left\{ \left[",
-                syt(q),
-                r"\odot \left(",
-                syt(b),
-                syt(g_num),
-                r"\right) \right]",
-                r"\odot \left(",
-                syt(c.T),
-                syt(d_num),
-                r"\right) \right\}",
-            ],
-        )
-    )
-    gg_num = sy.hadamard_product(q, b * g_num)
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[
-                syt(gg_sym),
-                "=",
-                syt(gg_num),
-                "=",
-                syt(q),
-                r"\odot",
-                syt(b * g_num),
-                "=",
-                syt(q),
-                r"\odot \left(",
-                syt(b),
-                syt(g_num),
-                r"\right)",
-                "=",
-                syt(q),
-                r"\odot \left(",
-                syt(b),
-                syt(g_sym),
-                r"\right)",
-            ],
-        )
-    )
-    dd_num = c.T * d_num
-    doc.append(
-        tex.Math(
-            data=[
-                syt(dd_sym),
-                "=",
-                syt(dd_num),
-                "=",
-                syt(c.T),
-                syt(d_num),
-                "=",
-                syt(c.T),
-                syt(d_sym),
-            ]
-        )
-    )
-    ss_num = sy.hadamard_product(gg_num, dd_num)
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[
-                syt(ss_sym),
-                "=",
-                syt(ss_num),
-                "=",
-                syt(gg_num),
-                r"\odot",
-                syt(dd_num),
-                "=",
-                syt(gg_sym),
-                r"\odot",
-                syt(dd_sym),
-            ],
-        )
-    )
-    s_num = a.T * ss_num
-    doc.append(
-        tex.Math(
-            data=[
-                syt(s_sym),
-                "=",
-                syt(s_num),
-                "=",
-                syt(a.T),
-                syt(ss_num),
-                "=",
-                syt(a.T),
-                syt(ss_sym),
-            ]
-        )
-    )
-    doc.append(
-        tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"b =", syt(fast.matrix_to_log2(b))], escape=False)
-    )
-    doc.append(
-        tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
-    )
-    try:
-        doc.generate_pdf(path, clean_tex=False)
-    except Exception as e:
-        click.echo(e)
-
-    output_default = signal.convolve(d_num, g_num[::-1, ::-1], mode="valid")
-    compare_naive = np.all(
-        output_default.reshape(-1) == np.array(s_num).reshape(-1)
-    )
-    print("Result:", compare_naive)
 
 
 def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):

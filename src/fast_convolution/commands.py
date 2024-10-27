@@ -121,6 +121,31 @@ def read_bind_if_exists(repo):
     return data
 
 
+def header_init(repo, dimensions, a, b, c, m):
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    init_path = repo.dir_clib_data / "init.h"
+    if dimensions == 1:
+        dict_defs = {
+            "A_SIZE": a,
+            "B_SIZE": b,
+            "C_SIZE": c,
+            "M_SIZE": m,
+        }
+        utils.c_header(init_path, [], dict_defs)
+    elif dimensions == 2:
+        dict_defs = {
+            "A1_SIZE": a,
+            "B1_SIZE": b,
+            "C1_SIZE": c,
+            "M1_SIZE": m,
+            "A2_SIZE": a,
+            "B2_SIZE": b,
+            "C2_SIZE": c,
+            "M2_SIZE": m,
+        }
+        utils.c_header(init_path, [], dict_defs)
+
+
 def cmd_init(repo, dimensions, in_len, out_len, w):
     if repo.file_init.exists():
         return "init.json existis, fconv model already initialized"
@@ -161,25 +186,6 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
     with open(repo.file_init, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    init_path = repo.dir_clib_data / "init.h"
-    if dimensions == 1:
-        dict_defs = {
-            "A_SIZE": a,
-            "B_SIZE": b,
-            "C_SIZE": c,
-        }
-        utils.c_header(init_path, [], dict_defs)
-    elif dimensions == 2:
-        dict_defs = {
-            "A1_SIZE": a,
-            "B1_SIZE": b,
-            "C1_SIZE": c,
-            "A2_SIZE": a,
-            "B2_SIZE": b,
-            "C2_SIZE": c,
-        }
-        utils.c_header(init_path, [], dict_defs)
 
     # # shutil.copytree(package_clib(), dir_clib, dirs_exist_ok=True)
     # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
@@ -217,6 +223,7 @@ def cmd_build_toom_cook1d(repo, points):
     list_points = [np.inf if p == "inf" else int(p) for p in points]
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
     build1d(repo, list_points, a, b, c, q, b_len, c_len)
+    header_init(repo, dim, a_len, b_len, c_len, len(list_points))
 
 
 def cmd_build_manual_factorization1d(repo):
@@ -224,6 +231,7 @@ def cmd_build_manual_factorization1d(repo):
     list_points = [1]
     c, q, b, a = fast.conv_manual_factorization()
     build1d(repo, list_points, a, b, c, q, b_len, c_len)
+    header_init(repo, dim, a_len, b_len, c_len, 6)
 
 
 def build1d(repo, list_points, a, b, c, q, b_len, c_len):
@@ -245,7 +253,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len):
         json.dump(data, f, ensure_ascii=False, indent=4)
     repo.dir_build.mkdir(parents=True, exist_ok=True)
     path = repo.dir_build / "convolution"
-    latex.build_1d(b, c, a, g, d, sy.Matrix(q), path)
+    latex.latex_1d(c, b, a, sy.Matrix(q), path, d, g, True)
     a_sum = fast.count_sums(a)
     c_sum = fast.count_sums(c)
     text = (
@@ -357,6 +365,7 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
         b_len,
         c_len,
     )
+    header_init(repo, dim, a_len[0], b_len[0], c_len[0], len(list_points1d))
 
 
 def cmd_build_manual_factorization2d(repo):
@@ -381,6 +390,7 @@ def cmd_build_manual_factorization2d(repo):
         b_len,
         c_len,
     )
+    header_init(repo, dim, a_len[0], b_len[0], c_len[0], 6)
 
 
 def build2d(
@@ -432,9 +442,9 @@ def build2d(
         json.dump(data, f, ensure_ascii=False, indent=4)
     repo.dir_build.mkdir(parents=True, exist_ok=True)
     path1 = repo.dir_build / "convolution-axis1"
-    latex.build_1d(b1, c1, a1, g1, di1, q1, path1)
+    latex.latex_1d(c1, b1, a1, q1, path1, True)
     path2 = repo.dir_build / "convolution-axis2"
-    latex.build_1d(b2, c2, a2, g2, di2, q2, path2)
+    latex.latex_1d(c2, b2, a2, q2, path2, True)
     a1_sum = fast.count_sums(a1)
     a2_sum = fast.count_sums(a2)
     c1_sum = fast.count_sums(c1)
@@ -1060,7 +1070,7 @@ def cmd_example_random(repo, feature, weight, suffix):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        latex.example_1d(b, c, a, g, d, q, name)
+        latex.latex_1d(c, b, a, q, name, d, g, False)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -1124,7 +1134,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        latex.example_1d(b, c, a, g, d, q, name)
+        latex.latex_1d(c, b, a, q, name, d, g, False)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [

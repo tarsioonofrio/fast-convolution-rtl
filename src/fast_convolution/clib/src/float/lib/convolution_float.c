@@ -3,6 +3,7 @@
 //
 
 #include <stdlib.h>
+#include <init.h>
 #include "include/convolution_float.h"
 #include "include/util_float.h"
 
@@ -33,34 +34,35 @@ void hadamart_product_float(float *out, const float *in1, const float *in2, int 
     }
 }
 
-void fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
-                     int c_size) {
-    float *mss = (float *) malloc((c_size) * sizeof(float));
-    float *mdd = (float *) malloc((c_size) * sizeof(float));
+void
+fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size,
+                int c_size, int m_size) {
+    float *mss = (float *) malloc((m_size) * sizeof(float));
+    float *mdd = (float *) malloc((m_size) * sizeof(float));
 
-    init_array_float(mss, c_size);
-    init_array_float(mdd, c_size);
+    init_array_float(mss, m_size);
+    init_array_float(mdd, m_size);
     init_array_float(ms, a_size);
 
     // D=ct*d
-    matrix_mul_float(mdd, mc, md, c_size, c_size, 1);
+    matrix_mul_float(mdd, mc, md, m_size, c_size, 1);
     // S=D.G
-    hadamart_product_float(mss, mdd, mgg, c_size);
+    hadamart_product_float(mss, mdd, mgg, m_size);
     // s=S*a
-    matrix_mul_float(ms, ma, mss, a_size, c_size, 1);
+    matrix_mul_float(ms, ma, mss, a_size, m_size, 1);
     free(mss);
     free(mdd);
 }
 
-void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg,
-                          const float *ma2t, const float *mc2t, const float *md,
-                          int a1_size, int a2_size, int c1_size, int c2_size) {
+void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg, const float *ma2t,
+                          const float *mc2t, const float *md, int a1_size, int a2_size, int c1_size, int c2_size,
+                          int m1_size, int m2_size) {
 
-    float *mss = (float *) malloc((c1_size * c2_size) * sizeof(float));
-    float *mss2 = (float *) malloc((a1_size * c1_size) * sizeof(float));
-    float *mdd = (float *) malloc((c1_size * c2_size) * sizeof(float));
-    float *ma2 = (float *) malloc((a2_size * c2_size) * sizeof(float));
-    float *mc2 = (float *) malloc((c2_size * c2_size) * sizeof(float));
+    float *mss = (float *) malloc((m1_size * m2_size) * sizeof(float));
+    float *mss2 = (float *) malloc((a1_size * m1_size) * sizeof(float));
+    float *mdd = (float *) malloc((m1_size * m2_size) * sizeof(float));
+    float *ma2 = (float *) malloc((a2_size * m2_size) * sizeof(float));
+    float *mc2 = (float *) malloc((c2_size * m2_size) * sizeof(float));
     float *md2 = (float *) malloc((c1_size * c2_size) * sizeof(float));
 
     init_array_float(ms, a1_size * a2_size);
@@ -112,7 +114,7 @@ void to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_
 }
 
 void filter1d_float(float *feature_out, const float *feature_in, int index, const float *mc, const float *ma,
-                    const float *mgg, int a_size, int c_size, int fin_size, int fout_size) {
+                    const float *mgg, int a_size, int c_size, int m_size, int fin_size, int fout_size) {
     int r, c, i;
     float *ms = (float *) malloc((a_size) * sizeof(float));
     float *md = (float *) malloc((c_size) * sizeof(float));
@@ -126,7 +128,7 @@ void filter1d_float(float *feature_out, const float *feature_in, int index, cons
                     md[i] = 0;
                 }
             }
-            fast_conv_float(ms, ma, mgg, mc, md, a_size, c_size);
+            fast_conv_float(ms, ma, mgg, mc, md, a_size, c_size, m_size);
             for (i = 0; i < a_size; i++) {
                 if (c + i < fout_size) {
                     feature_out[(r - index) * fout_size + c + i] += ms[i];
@@ -144,6 +146,8 @@ void filter2d(float *feature_out, const float *feature_in, int fin_size, int fou
     int a2_size = params->a2_size;
     int c1_size = params->c1_size;
     int c2_size = params->c2_size;
+    int m1_size = params->m1_size;
+    int m2_size = params->m2_size;
     float *ms = (float *) malloc((a1_size * a2_size) * sizeof(float));
     float *md = (float *) malloc((c1_size * c2_size) * sizeof(float));
 
@@ -161,10 +165,10 @@ void filter2d(float *feature_out, const float *feature_in, int fin_size, int fou
 //            print_array2d_float_int(md, c1_size, c2_size, "D: ");
             if (type_conv == KRON) {
                 fast_conv_float(ms, params->ma, params->mgg, params->mc, md,
-                                a1_size * a2_size, c1_size * c2_size);
+                                a1_size * a2_size, c1_size * c2_size, m1_size * m2_size);
             } else if (type_conv == NEST){
                 fast_conv_nest_float(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2,
-                                     md, a1_size, a2_size, c1_size, c2_size);
+                                     md, a1_size, a2_size, c1_size, c2_size, M1_SIZE, M2_SIZE);
             }
             for (rd = 0; rd < a1_size; rd++) {
                 for (cd = 0; cd < a2_size; cd++) {
