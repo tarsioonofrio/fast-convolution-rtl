@@ -186,7 +186,6 @@ def cmd_init(repo, dimensions, in_len, out_len, w):
     with open(repo.file_init, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-
     # # shutil.copytree(package_clib(), dir_clib, dirs_exist_ok=True)
     # shutil.copy(package_clib() / "Makefile", dir_clib / "Makefile")
     repo.dir_clib.mkdir(parents=True, exist_ok=True)
@@ -502,7 +501,9 @@ def cmd_build2d_bind_nest(repo):
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    latex.build_2d_bind_nest(init_data, build_data, d1_sym, g1_sym, path, True)
+    latex.latex_2d_bind_nest(
+        init_data, build_data, d1_sym, g1_sym, path / "bind-nest", True
+    )
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
@@ -1067,9 +1068,9 @@ def cmd_example_random(repo, feature, weight, suffix):
     repo.dir_example.mkdir(parents=True, exist_ok=True)
 
     if len(suffix) > 0:
-        name = repo.dir_example / f"example-random-{suffix}"
+        path = repo.dir_example / f"example-random-{suffix}"
     else:
-        name = repo.dir_example / "example-random"
+        path = repo.dir_example / "example-random"
 
     if dim == 1:
         f = np.random.randint(feature[0], feature[1], size=c_len)
@@ -1086,7 +1087,7 @@ def cmd_example_random(repo, feature, weight, suffix):
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        latex.latex_1d(c, b, a, q, name, d, g, False)
+        latex.latex_1d(c, b, a, q, path, d, g, False)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -1106,9 +1107,9 @@ def cmd_example_random(repo, feature, weight, suffix):
         build_data = read_build_2d(repo)
 
         if data_bind["func"] == "nest":
-            latex.example_2d_bind_nest(init_data, build_data, d, g, name)
+            latex.latex_2d_bind_nest(init_data, build_data, d, g, path, False)
         if data_bind["func"] == "kron":
-            latex.example_2d_bind_kron(init_data, build_data, d, g, name)
+            latex.example_2d_bind_kron(init_data, build_data, d, g, path)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
@@ -1129,6 +1130,7 @@ def cmd_example_random(repo, feature, weight, suffix):
 def cmd_example_sequential(repo, feature, weight, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     repo.dir_example.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     if len(suffix) > 0:
         name = repo.dir_example / f"example-seq-{suffix}"
     else:
@@ -1170,7 +1172,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
         if data_bind["func"] == "nest":
-            latex.example_2d_bind_nest(init_data, build_data, d, g, name)
+            latex.latex_2d_bind_nest(init_data, build_data, d, g, name, False)
         if data_bind["func"] == "kron":
             latex.example_2d_bind_kron(init_data, build_data, d, g, name)
 

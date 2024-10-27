@@ -151,7 +151,7 @@ def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
         print("Result:", compare_naive)
 
 
-def build_2d_bind_nest(
+def latex_2d_bind_nest(
     init_data, build_data, d1_user, g1_user, path, symbolic=True
 ):
     name = "Symbolic" if symbolic else "Numeric"
@@ -174,11 +174,11 @@ def build_2d_bind_nest(
     # )
 
     d2_sym = sy.Matrix(
-        c1.shape[1],
-        c2.shape[0],
+        c1.shape[0],
+        c2.shape[1],
         sy.symbols(
             " ".join(
-                f"\\delta_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0])
+                f"\\delta_{{{i}}}" for i in range(c1.shape[0] * c2.shape[1])
             )
         ),
     )
@@ -335,40 +335,46 @@ def build_2d_bind_nest(
 
     doc.append(tex.Math(data=[r"s = a_1^t S a_2"], escape=False))
     ss1_num = ss2_num * a2
-    ss1_user = ss1_sym if symbolic else ss1_num
+    ss1_user = ss2_sym * a2 if symbolic else ss1_num
     doc.append(
         tex.Math(
             data=[
+                syt(ss1_sym),
+                "=",
                 syt(ss1_user),
                 "=",
-                syt(ss2_sym * a2),
-                "=",
-                syt(ss2_sym),
+                syt(ss_user),
                 syt(a2),
             ],
             escape=False,
         )
     )
-    s_num = a1.T * ss1_num
+    s_user = a1.T * ss1_sym if symbolic else a1.T * ss1_num
+    ss1_user = ss1_sym if symbolic else ss1_num
     doc.append(
         tex.Math(
             data=[
                 syt(s_sym),
                 "=",
-                syt(a1.T * ss1_sym),
+                syt(s_user),
                 "=",
                 syt(a1.T),
-                syt(ss1_sym),
+                syt(ss1_user),
             ],
             escape=False,
         )
     )
     try:
-        doc.generate_pdf(path / "bind-nest", clean_tex=False)
+        doc.generate_pdf(path, clean_tex=False)
     except Exception as e:
         click.echo(e)
-
     # TODO add operations count like in bind_kron function
+    if symbolic is False:
+        output_default = default_convolve(d1_user, g1_user)
+        compare_naive = np.all(
+            output_default.reshape(-1) == np.array(s_user).reshape(-1)
+        )
+        print("Result:", compare_naive)
 
 
 def build_2d_bind_kron(init_data, build_data, path):
@@ -799,32 +805,31 @@ def example_2d_bind_nest(
     )
     doc.append(tex.Math(data=[r"s = a_1^t S a_2"], escape=False))
     ss1_num = ss2_num * a2
-    ss1_user = ss1_sym if symbolic else ss1_num
+    ss1_user = ss2_sym * a2 if symbolic else ss1_num
     doc.append(
         tex.Math(
             data=[
+                syt(ss1_sym),
+                "=",
                 syt(ss1_user),
                 "=",
-                syt(ss2_num),
-                syt(a2),
-                "=",
-                syt(ss2_sym),
+                syt(ss_user),
                 syt(a2),
             ],
             escape=False,
         )
     )
-    s_num = a1.T * ss1_num
+    s_user = a1.T * ss1_sym if symbolic else a1.T * ss1_num
+    ss1_user = ss1_sym if symbolic else ss1_num
     doc.append(
         tex.Math(
             data=[
-                syt(s_num),
+                syt(s_sym),
+                "=",
+                syt(s_user),
                 "=",
                 syt(a1.T),
-                syt(ss1_num),
-                "=",
-                syt(a1.T),
-                syt(ss1_sym),
+                syt(ss1_user),
             ],
             escape=False,
         )
@@ -833,12 +838,13 @@ def example_2d_bind_nest(
         doc.generate_pdf(path, clean_tex=False)
     except Exception as e:
         click.echo(e)
-
-    output_default = default_convolve(d1_user, g1_user)
-    compare_naive = np.all(
-        output_default.reshape(-1) == np.array(s_num).reshape(-1)
-    )
-    print("Result:", compare_naive)
+    # TODO add operations count like in bind_kron function
+    if symbolic is False:
+        output_default = default_convolve(d1_user, g1_user)
+        compare_naive = np.all(
+            output_default.reshape(-1) == np.array(s_user).reshape(-1)
+        )
+        print("Result:", compare_naive)
 
 
 def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
