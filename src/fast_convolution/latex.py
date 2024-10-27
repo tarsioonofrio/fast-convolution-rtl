@@ -235,14 +235,14 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g_num2 = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
+    g2_num = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(
             escape=False,
             data=[
                 syt(g2_sym),
                 "=",
-                syt(g_num2),
+                syt(g2_num),
                 "=",
                 syt(g1_user),
                 r"\odot",
@@ -359,24 +359,9 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
         print("Result:", compare_naive)
 
 
-def build_2d_bind_kron(init_data, build_data, path):
-    # dim, c_len, b_len, a_len = init_data
+def build_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic=True):
+    name = "Symbolic" if symbolic else "Numeric"
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-
-    d1_user = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
-        sy.symbols(
-            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
-        ),
-    )
-    g1_user = sy.Matrix(
-        b1.shape[1],
-        b2.shape[1],
-        sy.symbols(
-            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
-        ),
-    )
 
     aa_shape = (
         a1.shape[0] * a2.shape[0],
@@ -414,10 +399,10 @@ def build_2d_bind_kron(init_data, build_data, path):
         ),
     )
     gg_sym = sy.Matrix(
-        c1.T.shape[0],
-        c2.T.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"G_{{{i}}}" for i in range(c1.T.shape[0] * c2.T.shape[0]))
+            " ".join(f"G_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     d_sym = sy.Matrix(
@@ -428,10 +413,10 @@ def build_2d_bind_kron(init_data, build_data, path):
         ),
     )
     dd_sym = sy.Matrix(
-        c1.T.shape[0],
-        c2.T.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(c1.T.shape[0] * c2.T.shape[0]))
+            " ".join(f"D_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     ss_sym = sy.Matrix(
@@ -469,6 +454,12 @@ def build_2d_bind_kron(init_data, build_data, path):
         )
     )
     doc.append(
+        tex.Math(data=["d =", syt(d_sym), "=", syt(d1_user)], escape=False)
+    )
+    doc.append(
+        tex.Math(data=["g =", syt(g1_sym), "=", syt(g1_user)], escape=False)
+    )
+    doc.append(
         tex.Math(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
@@ -497,6 +488,7 @@ def build_2d_bind_kron(init_data, build_data, path):
     )
 
     gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_sym)
+    g2_user = g2_sym if symbolic else g2_num
     doc.append(
         tex.Math(
             escape=False,
@@ -507,7 +499,7 @@ def build_2d_bind_kron(init_data, build_data, path):
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g2_sym),
+                syt(g2_user),
                 r"= \left(",
                 syt(q2),
                 r"\odot",
@@ -538,7 +530,7 @@ def build_2d_bind_kron(init_data, build_data, path):
     doc.append(
         tex.Math(
             data=[
-                syt(dd_sym.reshape(dd_sym.shape[0] * dd_sym.shape[1], 1)),
+                syt(dd_sym.reshape(dd_num.shape[0] * dd_num.shape[1], 1)),
                 "=",
                 syt(dd_num),
                 "=",
@@ -604,10 +596,9 @@ def build_2d_bind_kron(init_data, build_data, path):
         f.write(text)
 
 
-def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
-    dim, c_len, b_len, a_len = init_data
+def example_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
+    name = "Symbolic" if symbolic else "Numeric"
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-
     aa_shape = (
         a1.shape[0] * a2.shape[0],
         a1.shape[1] * a2.shape[1],
@@ -644,10 +635,10 @@ def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
         ),
     )
     gg_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+            " ".join(f"G_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     d_sym = sy.Matrix(
@@ -658,10 +649,10 @@ def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
         ),
     )
     dd_sym = sy.Matrix(
-        c1.T.shape[0],
-        c2.T.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(c1.T.shape[0] * c2.T.shape[0]))
+            " ".join(f"D_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     ss_sym = sy.Matrix(
@@ -732,6 +723,7 @@ def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
         )
     )
     gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_num)
+    g2_user = g2_sym if symbolic else g2_num
     doc.append(
         tex.Math(
             escape=False,
@@ -742,7 +734,7 @@ def example_2d_bind_kron(init_data, build_data, d1_user, g1_user, path):
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g2_num),
+                syt(g2_user),
                 r"= \left(",
                 syt(q2),
                 r"\odot",
