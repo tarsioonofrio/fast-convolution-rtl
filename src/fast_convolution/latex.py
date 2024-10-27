@@ -21,20 +21,16 @@ def doc_append(doc, lst):
 
 def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
     name = "Symbolic" if symbolic else "Numeric"
-    g_sym = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b.shape[1]))))
     gg_sym = sy.Matrix(
         sy.symbols(" ".join(f"G_{i}" for i in range(q.shape[0])))
     )
-    d_sym = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c.shape[0]))))
     dd_sym = sy.Matrix(
         sy.symbols(" ".join(f"D_{i}" for i in range(q.shape[0])))
     )
     ss_sym = sy.Matrix(
-        sy.symbols(" ".join(f"S_{i}" for i in range(a.T.shape[1])))
+        sy.symbols(" ".join(f"S_{i}" for i in range(a.shape[0])))
     )
-    s_sym = sy.Matrix(
-        sy.symbols(" ".join(f"s_{i}" for i in range(a.T.shape[0])))
-    )
+    s_sym = sy.Matrix(sy.symbols(" ".join(f"s_{i}" for i in range(a.shape[1]))))
 
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "landscape"))
@@ -155,20 +151,30 @@ def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
         print("Result:", compare_naive)
 
 
-def build_2d_bind_nest(init_data, build_data, path):
-    # dim, c_len, b_len, a_len = init_data
+def build_2d_bind_nest(
+    init_data, build_data, d1_user, g1_user, path, symbolic=True
+):
+    name = "Symbolic" if symbolic else "Numeric"
+    dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
-    d1_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
-        sy.symbols(
-            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
-        ),
-    )
+    # d1_sym = sy.Matrix(
+    #     c1.shape[0],
+    #     c2.shape[0],
+    #     sy.symbols(
+    #         " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+    #     ),
+    # )
+    # g1_sym = sy.Matrix(
+    #     b1.shape[1],
+    #     b2.shape[1],
+    #     sy.symbols(
+    #         " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+    #     ),
+    # )
 
     d2_sym = sy.Matrix(
-        c1.shape[0],
+        c1.shape[1],
         c2.shape[0],
         sy.symbols(
             " ".join(
@@ -177,33 +183,26 @@ def build_2d_bind_nest(init_data, build_data, path):
         ),
     )
     dd_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
-        ),
-    )
-    g1_sym = sy.Matrix(
-        b1.shape[1],
-        b2.shape[1],
-        sy.symbols(
-            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+            " ".join(f"D_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     g2_sym = sy.Matrix(
         b1.shape[1],
-        b2.shape[1],
+        b2.shape[0],
         sy.symbols(
             " ".join(
-                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1])
+                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b2.shape[0])
             )
         ),
     )
     gg_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+            " ".join(f"G_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     ss2_sym = sy.Matrix(
@@ -232,8 +231,8 @@ def build_2d_bind_nest(init_data, build_data, path):
     )
 
     doc = tex.Document()
-    doc.preamble.append(tex.Package("geometry", "a1paper"))
-    doc.preamble.append(tex.Command("title", "Symbolic Nested 2D Convolution"))
+    doc.preamble.append(tex.Package("geometry", ["a3paper", "landscape"]))
+    doc.preamble.append(tex.Command("title", f"{name} Nested 2D Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -247,12 +246,14 @@ def build_2d_bind_nest(init_data, build_data, path):
             ],
         )
     )
+    doc.append(tex.Math(data=["d =", syt(d1_user)], escape=False))
+    doc.append(tex.Math(data=["g =", syt(g1_user)], escape=False))
     doc.append(
         tex.Math(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g_num2 = sy.Matrix(g1_sym) * (sy.diag(*q1) * b1).T
+    g_num2 = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
     doc.append(
         tex.Math(
             escape=False,
@@ -261,11 +262,11 @@ def build_2d_bind_nest(init_data, build_data, path):
                 "=",
                 syt(g_num2),
                 "=",
-                syt(g1_sym),
+                syt(g1_user),
                 r"\odot",
                 syt((sy.diag(*q1) * b1).T),
                 "=",
-                syt(g1_sym),
+                syt(g1_user),
                 r"\left(",
                 syt(q1),
                 r"\odot",
@@ -298,27 +299,47 @@ def build_2d_bind_nest(init_data, build_data, path):
     )
 
     doc.append(tex.Math(data=[r"D = c_1^t d c_2"], escape=False))
-    d_num2 = d1_sym * c2
+    d2_num = d1_user * c2
     doc.append(
         tex.Math(
-            data=[syt(d2_sym), "=", syt(d_num2), "=", syt(d1_sym), syt(c2)],
+            data=[syt(d2_sym), "=", syt(d2_num), "=", syt(d1_user), syt(c2)],
             escape=False,
         )
     )
-    dd_num = c1.T * d2_sym
+    d2_user = d2_sym if symbolic else d2_num
+    dd_num = c1.T * d2_user
     doc.append(
         tex.Math(
-            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d2_sym)],
+            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d2_user)],
+            escape=False,
+        )
+    )
+    doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
+    ss2_num = sy.hadamard_product(gg_num, dd_num)
+    ss_user = ss2_sym if symbolic else ss2_num
+    gg_user = gg_sym if symbolic else gg_num
+    dd_user = dd_sym if symbolic else dd_num
+
+    doc.append(
+        tex.Math(
+            data=[
+                syt(ss_user),
+                "=",
+                syt(gg_user),
+                r"\odot",
+                syt(dd_user),
+            ],
             escape=False,
         )
     )
 
-    doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
     doc.append(tex.Math(data=[r"s = a_1^t S a_2"], escape=False))
+    ss1_num = ss2_num * a2
+    ss1_user = ss1_sym if symbolic else ss1_num
     doc.append(
         tex.Math(
             data=[
-                syt(ss1_sym),
+                syt(ss1_user),
                 "=",
                 syt(ss2_sym * a2),
                 "=",
@@ -328,6 +349,7 @@ def build_2d_bind_nest(init_data, build_data, path):
             escape=False,
         )
     )
+    s_num = a1.T * ss1_num
     doc.append(
         tex.Math(
             data=[
@@ -594,20 +616,30 @@ def build_2d_bind_kron(init_data, build_data, path):
         f.write(text)
 
 
-def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
+def example_2d_bind_nest(
+    init_data, build_data, d1_user, g1_user, path, symbolic=False
+):
+    name = "Symbolic" if symbolic else "Numeric"
     dim, c_len, b_len, a_len = init_data
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
-    d1_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
-        sy.symbols(
-            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
-        ),
-    )
+    # d1_sym = sy.Matrix(
+    #     c1.shape[0],
+    #     c2.shape[0],
+    #     sy.symbols(
+    #         " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+    #     ),
+    # )
+    # g1_sym = sy.Matrix(
+    #     b1.shape[1],
+    #     b2.shape[1],
+    #     sy.symbols(
+    #         " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+    #     ),
+    # )
 
     d2_sym = sy.Matrix(
-        c1.shape[0],
+        c1.shape[1],
         c2.shape[0],
         sy.symbols(
             " ".join(
@@ -616,33 +648,26 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
         ),
     )
     dd_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
-        ),
-    )
-    g1_sym = sy.Matrix(
-        b1.shape[1],
-        b2.shape[1],
-        sy.symbols(
-            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+            " ".join(f"D_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     g2_sym = sy.Matrix(
         b1.shape[1],
-        b2.shape[1],
+        b2.shape[0],
         sy.symbols(
             " ".join(
-                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1])
+                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b2.shape[0])
             )
         ),
     )
     gg_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
+        q1.shape[0],
+        q2.shape[0],
         sy.symbols(
-            " ".join(f"G_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+            " ".join(f"G_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
         ),
     )
     ss2_sym = sy.Matrix(
@@ -671,8 +696,8 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
     )
 
     doc = tex.Document()
-    doc.preamble.append(tex.Package("geometry", "a1paper"))
-    doc.preamble.append(tex.Command("title", "Numeric Nested 2D Convolution"))
+    doc.preamble.append(tex.Package("geometry", ["a3paper", "landscape"]))
+    doc.preamble.append(tex.Command("title", f"{name} Nested 2D Convolution"))
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
     )
@@ -686,12 +711,8 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
             ],
         )
     )
-    doc.append(
-        tex.Math(data=["d =", syt(d1_sym), "=", syt(d1_user)], escape=False)
-    )
-    doc.append(
-        tex.Math(data=["g =", syt(g1_sym), "=", syt(g1_user)], escape=False)
-    )
+    doc.append(tex.Math(data=["d =", syt(d1_user)], escape=False))
+    doc.append(tex.Math(data=["g =", syt(g1_user)], escape=False))
     doc.append(
         tex.Math(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
@@ -706,11 +727,11 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
                 "=",
                 syt(g_num2),
                 "=",
-                syt(g1_sym),
+                syt(g1_user),
                 r"\odot",
                 syt((sy.diag(*q1) * b1).T),
                 "=",
-                syt(g1_sym),
+                syt(g1_user),
                 r"\left(",
                 syt(q1),
                 r"\odot",
@@ -743,57 +764,48 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
     )
 
     doc.append(tex.Math(data=[r"D = c_1^t d c_2"], escape=False))
-    d_num2 = d1_user * c2
+    d2_num = d1_user * c2
     doc.append(
         tex.Math(
-            data=[
-                syt(d2_sym),
-                "=",
-                syt(d_num2),
-                "=",
-                syt(d1_user),
-                syt(c2),
-                "=",
-                syt(d1_sym),
-                syt(c2),
-            ],
+            data=[syt(d2_sym), "=", syt(d2_num), "=", syt(d1_user), syt(c2)],
             escape=False,
         )
     )
-    dd_num = c1.T * d_num2
+    d2_user = d2_sym if symbolic else d2_num
+    dd_num = c1.T * d2_user
     doc.append(
         tex.Math(
-            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d2_sym)],
+            data=[syt(dd_sym), "=", syt(dd_num), "=", syt(c1.T), syt(d2_user)],
             escape=False,
         )
     )
-
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
-    ss_num2 = sy.hadamard_product(gg_num, dd_num)
+    ss2_num = sy.hadamard_product(gg_num, dd_num)
+    ss_user = ss2_sym if symbolic else ss2_num
+    gg_user = gg_sym if symbolic else gg_num
+    dd_user = dd_sym if symbolic else dd_num
+
     doc.append(
         tex.Math(
             data=[
-                syt(ss2_sym),
+                syt(ss_user),
                 "=",
-                syt(ss_num2),
-                "=",
-                syt(gg_num),
+                syt(gg_user),
                 r"\odot",
-                syt(dd_num),
+                syt(dd_user),
             ],
             escape=False,
         )
     )
     doc.append(tex.Math(data=[r"s = a_1^t S a_2"], escape=False))
-    ss_num1 = ss_num2 * a2
+    ss1_num = ss2_num * a2
+    ss1_user = ss1_sym if symbolic else ss1_num
     doc.append(
         tex.Math(
             data=[
-                syt(ss1_sym),
+                syt(ss1_user),
                 "=",
-                syt(ss_num1),
-                "=",
-                syt(ss_num2),
+                syt(ss2_num),
                 syt(a2),
                 "=",
                 syt(ss2_sym),
@@ -802,16 +814,14 @@ def example_2d_bind_nest(init_data, build_data, d1_user, g1_user, path):
             escape=False,
         )
     )
-    s_num = a1.T * ss_num1
+    s_num = a1.T * ss1_num
     doc.append(
         tex.Math(
             data=[
-                syt(s_sym),
-                "=",
                 syt(s_num),
                 "=",
                 syt(a1.T),
-                syt(ss_num1),
+                syt(ss1_num),
                 "=",
                 syt(a1.T),
                 syt(ss1_sym),

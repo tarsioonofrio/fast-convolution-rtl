@@ -442,9 +442,9 @@ def build2d(
         json.dump(data, f, ensure_ascii=False, indent=4)
     repo.dir_build.mkdir(parents=True, exist_ok=True)
     path1 = repo.dir_build / "convolution-axis1"
-    latex.latex_1d(c1, b1, a1, q1, path1, True)
+    latex.latex_1d(c1, b1, a1, q1, path1, di1, g1, True)
     path2 = repo.dir_build / "convolution-axis2"
-    latex.latex_1d(c2, b2, a2, q2, path2, True)
+    latex.latex_1d(c2, b2, a2, q2, path2, di2, g2, True)
     a1_sum = fast.count_sums(a1)
     a2_sum = fast.count_sums(a2)
     c1_sum = fast.count_sums(c1)
@@ -486,7 +486,23 @@ def cmd_build2d_bind_nest(repo):
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
     write_bind(repo, "nest")
-    latex.build_2d_bind_nest(init_data, build_data, path)
+
+    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+    d1_sym = sy.Matrix(
+        c1.shape[0],
+        c2.shape[0],
+        sy.symbols(
+            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
+        ),
+    )
+    g1_sym = sy.Matrix(
+        b1.shape[1],
+        b2.shape[1],
+        sy.symbols(
+            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
+        ),
+    )
+    latex.build_2d_bind_nest(init_data, build_data, d1_sym, g1_sym, path, True)
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
