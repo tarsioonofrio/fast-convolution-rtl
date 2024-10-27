@@ -501,9 +501,7 @@ def cmd_build2d_bind_nest(repo):
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    latex.latex_2d_bind_nest(
-        init_data, build_data, d1_sym, g1_sym, path / "bind-nest", True
-    )
+    latex.latex_2d_bind_nest(build_data, d1_sym, g1_sym, path / "bind-nest", True)
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
@@ -1107,7 +1105,7 @@ def cmd_example_random(repo, feature, weight, suffix):
         build_data = read_build_2d(repo)
 
         if data_bind["func"] == "nest":
-            latex.latex_2d_bind_nest(init_data, build_data, d, g, path, False)
+            latex.latex_2d_bind_nest(build_data, d, g, path, False)
         if data_bind["func"] == "kron":
             latex.example_2d_bind_kron(init_data, build_data, d, g, path)
 
@@ -1172,7 +1170,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
         if data_bind["func"] == "nest":
-            latex.latex_2d_bind_nest(init_data, build_data, d, g, name, False)
+            latex.latex_2d_bind_nest(build_data, d, g, name, False)
         if data_bind["func"] == "kron":
             latex.example_2d_bind_kron(init_data, build_data, d, g, name)
 
