@@ -17,13 +17,15 @@ set(TEST_PATH ../../../test)
 set(INC_FLOAT src/float/lib/include)
 set(INC_INT src/int/lib/include)
 set(TEST_DATA1 ${TEST_PATH}/${PRJ1D}/clib/data)
-set(TEST_DATA2 ${TEST_PATH}/${PRJ2D_KRON}/clib/data)
+set(TEST_DATA2_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/data)
+set(TEST_DATA2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/data)
 set(TEST_DATA1_FLOAT ${TEST_PATH}/${PRJ1D}/clib/data_float)
-set(TEST_DATA2_FLOAT ${TEST_PATH}/${PRJ2D_KRON}/clib/data_float)
+set(TEST_DATA2_FLOAT_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/data_float)
+set(TEST_DATA2_FLOAT_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/data_float)
 set(TEST_INC_OPT1 ${TEST_PATH}/${PRJ1D}/clib/make/filter1d-opt/lib/include)
 set(TEST_INC_OPT2_KRON ${TEST_PATH}/${PRJ2D_KRON}/clib/make/filter2d-kron-opt/lib/include)
 set(TEST_INC_OPT2_NEST ${TEST_PATH}/${PRJ2D_NEST}/clib/make/filter2d-nest-opt/lib/include)
-message("**** TEST_INC_OPT2_KRON ${TEST_INC_OPT2_KRON}")
+#message("**** TEST_INC_OPT2_KRON ${TEST_INC_OPT2_KRON}")
 
 # set libs paths
 set(LIB_FLOAT src/float/lib/convolution_float.c src/float/lib/util_float.c)
@@ -92,25 +94,25 @@ target_include_directories(filter2d-nest-opt PRIVATE ${INC_INT} ${TEST_INC_OPT2_
 # include data
 # float
 target_include_directories(float-fast-conv1d PRIVATE  ${TEST_DATA1} ${TEST_DATA1_FLOAT})
-target_include_directories(float-fast-conv2d-kron PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
-target_include_directories(float-fast-conv2d-nest PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
+target_include_directories(float-fast-conv2d-kron PRIVATE ${TEST_DATA2_KRON} ${TEST_DATA2_FLOAT_KRON})
+target_include_directories(float-fast-conv2d-nest PRIVATE ${TEST_DATA2_NEST} ${TEST_DATA2_FLOAT_NEST})
 
 target_include_directories(float-filter1d PRIVATE ${TEST_DATA1} ${TEST_DATA1_FLOAT})
-target_include_directories(float-filter2d-kron PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
-target_include_directories(float-filter2d-nest PRIVATE ${TEST_DATA2} ${TEST_DATA2_FLOAT})
+target_include_directories(float-filter2d-kron PRIVATE ${TEST_DATA2_KRON} ${TEST_DATA2_FLOAT_KRON})
+target_include_directories(float-filter2d-nest PRIVATE ${TEST_DATA2_NEST} ${TEST_DATA2_FLOAT_NEST})
 
 # int
 target_include_directories(matrix-mult PRIVATE ${TEST_DATA1})
 target_include_directories(standard PRIVATE ${TEST_DATA1})
 
 target_include_directories(filter1d PRIVATE ${TEST_DATA1})
-target_include_directories(filter2d-kron PRIVATE ${TEST_DATA2})
-target_include_directories(filter2d-nest PRIVATE ${TEST_DATA2})
+target_include_directories(filter2d-kron PRIVATE ${TEST_DATA2_KRON})
+target_include_directories(filter2d-nest PRIVATE ${TEST_DATA2_NEST})
 
 # opt
 target_include_directories(filter1d-opt PRIVATE ${TEST_DATA1})
-target_include_directories(filter2d-kron-opt PRIVATE ${TEST_DATA2})
-target_include_directories(filter2d-nest-opt PRIVATE ${TEST_DATA2})
+target_include_directories(filter2d-kron-opt PRIVATE ${TEST_DATA2_KRON})
+target_include_directories(filter2d-nest-opt PRIVATE ${TEST_DATA2_NEST})
 
 # directives
 target_compile_definitions(filter1d-opt PUBLIC OPTIM=1)

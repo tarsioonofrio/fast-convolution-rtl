@@ -63,13 +63,13 @@ void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const
     float *mdd = (float *) malloc((m1_size * m2_size) * sizeof(float));
     float *ma2 = (float *) malloc((a2_size * m2_size) * sizeof(float));
     float *mc2 = (float *) malloc((c2_size * m2_size) * sizeof(float));
-    float *md2 = (float *) malloc((c1_size * c2_size) * sizeof(float));
+    float *md2 = (float *) malloc((c1_size * m2_size) * sizeof(float));
 
     init_array_float(ms, a1_size * a2_size);
-    init_array_float(mss, c1_size * c2_size);
-    init_array_float(mss2, a1_size * c1_size);
-    init_array_float(mdd, c1_size * c2_size);
-    init_array_float(ma2, a2_size * c2_size);
+    init_array_float(mss, m1_size * m2_size);
+    init_array_float(mss2, a1_size * m1_size);
+    init_array_float(mdd, m1_size * m2_size);
+    init_array_float(ma2, a2_size * m2_size);
     init_array_float(mc2, c2_size * c2_size);
     init_array_float(md2, c1_size * c2_size);
 
