@@ -527,7 +527,7 @@ def cmd_build2d_bind_nest(repo):
         a2, "a2", (q1.shape[0], q2.shape[0]), (q1.shape[0], a2.shape[0]), True
     )
     matmul_a1t = utils.c_matmul_shift_noloop_nest(
-        a1.T, "a1t", (q1.shape[0], a1.shape[0]), (a1.T.shape[0], a1.T.shape[0])
+        a1.T, "a1t", (q1.shape[0], a1.T.shape[0]), (a1.T.shape[0], a1.T.shape[0])
     )
 
     c_fun = (
