@@ -54,40 +54,35 @@ fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, c
     free(mdd);
 }
 
-void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg, const float *ma2t,
-                          const float *mc2t, const float *md, int a1_size, int a2_size, int c1_size, int c2_size,
+void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg, const float *ma2,
+                          const float *mc2, const float *md, int a1_size, int a2_size, int c1_size, int c2_size,
                           int m1_size, int m2_size) {
 
+    float *md2 = (float *) malloc((c1_size * m2_size) * sizeof(float));
+    float *mdd = (float *) malloc((m1_size * m2_size) * sizeof(float));
     float *mss = (float *) malloc((m1_size * m2_size) * sizeof(float));
     float *mss2 = (float *) malloc((a1_size * m1_size) * sizeof(float));
-    float *mdd = (float *) malloc((m1_size * m2_size) * sizeof(float));
-    float *ma2 = (float *) malloc((a2_size * m2_size) * sizeof(float));
-    float *mc2 = (float *) malloc((c2_size * m2_size) * sizeof(float));
-    float *md2 = (float *) malloc((c1_size * m2_size) * sizeof(float));
 
-    init_array_float(ms, a1_size * a2_size);
-    init_array_float(mss, m1_size * m2_size);
+    init_array_float(md2, c1_size * m1_size);
+    init_array_float(mdd, m1_size * m1_size);
+    init_array_float(mss, m1_size * m1_size);
     init_array_float(mss2, a1_size * m1_size);
-    init_array_float(mdd, m1_size * m2_size);
-    init_array_float(ma2, a2_size * m2_size);
-    init_array_float(mc2, c2_size * c2_size);
-    init_array_float(md2, c1_size * c2_size);
+    init_array_float(ms, a1_size * a2_size);
 
 
-    matrix_transpose_float(mc2, mc2t, c1_size, c2_size);
-    matrix_transpose_float(ma2, ma2t, a2_size, c2_size);
-    matrix_mul_float(md2, md, mc2, c1_size, c2_size, c2_size);
-    matrix_mul_float(mdd, mc1t, md2, c1_size, c2_size, c2_size);
-    hadamart_product_float(mss, mdd, mgg, c1_size * c2_size);
-    matrix_mul_float(mss2, mss, ma2, c1_size, c2_size, a2_size);
-    matrix_mul_float(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+    matrix_mul_float(md2, md, mc2, c1_size, c2_size, m2_size);
+    print_array2d_float(md2, c1_size, m2_size, "d2: ");
+    // d2 is ok
+    matrix_mul_float(mdd, mc1t, md2, m1_size, c2_size, m2_size);
+    print_array2d_float(mdd, m2_size, m2_size, "D: ");
+    hadamart_product_float(mss, mdd, mgg, m1_size * m2_size);
+    matrix_mul_float(mss2, mss, ma2, m1_size, m2_size, a2_size);
+    matrix_mul_float(ms, ma1t, mss2, a1_size, m2_size, a2_size);
 
+    free(mdd);
+    free(md2);
     free(mss);
     free(mss2);
-    free(mdd);
-    free(ma2);
-    free(mc2);
-    free(md2);
 }
 
 

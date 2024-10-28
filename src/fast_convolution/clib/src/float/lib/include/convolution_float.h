@@ -36,8 +36,8 @@ void
 fast_conv_float(float *ms, const float *ma, const float *mgg, const float *mc, const float *md, int a_size, int c_size,
                 int m_size);
 
-void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg, const float *ma2t,
-                          const float *mc2t, const float *md, int a1_size, int a2_size, int c1_size, int c2_size,
+void fast_conv_nest_float(float *ms, const float *ma1t, const float *mc1t, const float *mgg, const float *ma2,
+                          const float *mc2, const float *md, int a1_size, int a2_size, int c1_size, int c2_size,
                           int m1_size, int m2_size);
 
 void to_bg(float *mgg, const float *mq, const float *mb, const float *mg, int b_size, int c_size);
