@@ -34,66 +34,42 @@ void matrix_mul_shift_noloop_c2(int *m_out, const int *m_in){
 }
 
 void matrix_mul_shift_noloop_c1t(int *m_out, const int *m_in){
-	m_out[0] =  + m_in[0] - m_in[5] - m_in[10];
-	m_out[1] =  + m_in[1] - m_in[6] - m_in[11];
-	m_out[2] =  + m_in[2] - m_in[7] - m_in[12];
-	m_out[3] =  + m_in[3] - m_in[8] - m_in[13];
-	m_out[4] =  + m_in[4] - m_in[9] - m_in[14];
-	m_out[5] =  - m_in[5] + m_in[10] - m_in[15];
-	m_out[6] =  - m_in[6] + m_in[11] - m_in[16];
-	m_out[7] =  - m_in[7] + m_in[12] - m_in[17];
-	m_out[8] =  - m_in[8] + m_in[13] - m_in[18];
-	m_out[9] =  - m_in[9] + m_in[14] - m_in[19];
-	m_out[10] =  - m_in[10] - m_in[15] + m_in[20];
-	m_out[11] =  - m_in[11] - m_in[16] + m_in[21];
-	m_out[12] =  - m_in[12] - m_in[17] + m_in[22];
-	m_out[13] =  - m_in[13] - m_in[18] + m_in[23];
-	m_out[14] =  - m_in[14] - m_in[19] + m_in[24];
-	m_out[15] =  + m_in[5];
-	m_out[16] =  + m_in[6];
-	m_out[17] =  + m_in[7];
-	m_out[18] =  + m_in[8];
-	m_out[19] =  + m_in[9];
-	m_out[20] =  + m_in[10];
-	m_out[21] =  + m_in[11];
-	m_out[22] =  + m_in[12];
-	m_out[23] =  + m_in[13];
-	m_out[24] =  + m_in[14];
-	m_out[25] =  + m_in[15];
-	m_out[26] =  + m_in[16];
-	m_out[27] =  + m_in[17];
-	m_out[28] =  + m_in[18];
-	m_out[29] =  + m_in[19];
-}
-
-void matrix_mul_shift_noloop_a2(int *m_out, const int *m_in){
-	m_out[0] =  + m_in[0] + m_in[3] + m_in[4];
-	m_out[1] =  + m_in[1] + m_in[3] + m_in[5];
-	m_out[2] =  + m_in[2] + m_in[4] + m_in[5];
-	m_out[3] =  + m_in[6] + m_in[9] + m_in[10];
-	m_out[4] =  + m_in[7] + m_in[9] + m_in[11];
-	m_out[5] =  + m_in[8] + m_in[10] + m_in[11];
-	m_out[6] =  + m_in[12] + m_in[15] + m_in[16];
-	m_out[7] =  + m_in[13] + m_in[15] + m_in[17];
-	m_out[8] =  + m_in[14] + m_in[16] + m_in[17];
-	m_out[9] =  + m_in[18] + m_in[21] + m_in[22];
-	m_out[10] =  + m_in[19] + m_in[21] + m_in[23];
-	m_out[11] =  + m_in[20] + m_in[22] + m_in[23];
-	m_out[12] =  + m_in[24] + m_in[27] + m_in[28];
-	m_out[13] =  + m_in[25] + m_in[27] + m_in[29];
-	m_out[14] =  + m_in[26] + m_in[28] + m_in[29];
-}
-
-void matrix_mul_shift_noloop_a1t(int *m_out, const int *m_in){
-	m_out[0] =  + m_in[0] + m_in[9] + m_in[12];
-	m_out[1] =  + m_in[1] + m_in[10] + m_in[13];
-	m_out[2] =  + m_in[2] + m_in[11] + m_in[14];
-	m_out[3] =  + m_in[3] + m_in[9] + m_in[15];
-	m_out[4] =  + m_in[4] + m_in[10] + m_in[16];
-	m_out[5] =  + m_in[5] + m_in[11] + m_in[17];
-	m_out[6] =  + m_in[6] + m_in[12] + m_in[15];
-	m_out[7] =  + m_in[7] + m_in[13] + m_in[16];
-	m_out[8] =  + m_in[8] + m_in[14] + m_in[17];
+	m_out[0] =  + m_in[0] - m_in[6] - m_in[12];
+	m_out[1] =  + m_in[1] - m_in[7] - m_in[13];
+	m_out[2] =  + m_in[2] - m_in[8] - m_in[14];
+	m_out[3] =  + m_in[3] - m_in[9] - m_in[15];
+	m_out[4] =  + m_in[4] - m_in[10] - m_in[16];
+	m_out[5] =  + m_in[5] - m_in[11] - m_in[17];
+	m_out[6] =  - m_in[6] + m_in[12] - m_in[18];
+	m_out[7] =  - m_in[7] + m_in[13] - m_in[19];
+	m_out[8] =  - m_in[8] + m_in[14] - m_in[20];
+	m_out[9] =  - m_in[9] + m_in[15] - m_in[21];
+	m_out[10] =  - m_in[10] + m_in[16] - m_in[22];
+	m_out[11] =  - m_in[11] + m_in[17] - m_in[23];
+	m_out[12] =  - m_in[12] - m_in[18] + m_in[24];
+	m_out[13] =  - m_in[13] - m_in[19] + m_in[25];
+	m_out[14] =  - m_in[14] - m_in[20] + m_in[26];
+	m_out[15] =  - m_in[15] - m_in[21] + m_in[27];
+	m_out[16] =  - m_in[16] - m_in[22] + m_in[28];
+	m_out[17] =  - m_in[17] - m_in[23] + m_in[29];
+	m_out[18] =  + m_in[6];
+	m_out[19] =  + m_in[7];
+	m_out[20] =  + m_in[8];
+	m_out[21] =  + m_in[9];
+	m_out[22] =  + m_in[10];
+	m_out[23] =  + m_in[11];
+	m_out[24] =  + m_in[12];
+	m_out[25] =  + m_in[13];
+	m_out[26] =  + m_in[14];
+	m_out[27] =  + m_in[15];
+	m_out[28] =  + m_in[16];
+	m_out[29] =  + m_in[17];
+	m_out[30] =  + m_in[18];
+	m_out[31] =  + m_in[19];
+	m_out[32] =  + m_in[20];
+	m_out[33] =  + m_in[21];
+	m_out[34] =  + m_in[22];
+	m_out[35] =  + m_in[23];
 }
 
 void hadamart_product_noloop_nest(int *out, const int *in1, const int *in2){
@@ -133,5 +109,38 @@ void hadamart_product_noloop_nest(int *out, const int *in1, const int *in2){
 	out[33] = in1[33] * in2[33];
 	out[34] = in1[34] * in2[34];
 	out[35] = in1[35] * in2[35];
+}
+
+void matrix_mul_shift_noloop_a2(int *m_out, const int *m_in){
+	m_out[0] =  + m_in[0] + m_in[3] + m_in[4];
+	m_out[1] =  + m_in[1] + m_in[3] + m_in[5];
+	m_out[2] =  + m_in[2] + m_in[4] + m_in[5];
+	m_out[3] =  + m_in[6] + m_in[9] + m_in[10];
+	m_out[4] =  + m_in[7] + m_in[9] + m_in[11];
+	m_out[5] =  + m_in[8] + m_in[10] + m_in[11];
+	m_out[6] =  + m_in[12] + m_in[15] + m_in[16];
+	m_out[7] =  + m_in[13] + m_in[15] + m_in[17];
+	m_out[8] =  + m_in[14] + m_in[16] + m_in[17];
+	m_out[9] =  + m_in[18] + m_in[21] + m_in[22];
+	m_out[10] =  + m_in[19] + m_in[21] + m_in[23];
+	m_out[11] =  + m_in[20] + m_in[22] + m_in[23];
+	m_out[12] =  + m_in[24] + m_in[27] + m_in[28];
+	m_out[13] =  + m_in[25] + m_in[27] + m_in[29];
+	m_out[14] =  + m_in[26] + m_in[28] + m_in[29];
+	m_out[15] =  + m_in[30] + m_in[33] + m_in[34];
+	m_out[16] =  + m_in[31] + m_in[33] + m_in[35];
+	m_out[17] =  + m_in[32] + m_in[34] + m_in[35];
+}
+
+void matrix_mul_shift_noloop_a1t(int *m_out, const int *m_in){
+	m_out[0] =  + m_in[0] + m_in[9] + m_in[12];
+	m_out[1] =  + m_in[1] + m_in[10] + m_in[13];
+	m_out[2] =  + m_in[2] + m_in[11] + m_in[14];
+	m_out[3] =  + m_in[3] + m_in[9] + m_in[15];
+	m_out[4] =  + m_in[4] + m_in[10] + m_in[16];
+	m_out[5] =  + m_in[5] + m_in[11] + m_in[17];
+	m_out[6] =  + m_in[6] + m_in[12] + m_in[15];
+	m_out[7] =  + m_in[7] + m_in[13] + m_in[16];
+	m_out[8] =  + m_in[8] + m_in[14] + m_in[17];
 }
 

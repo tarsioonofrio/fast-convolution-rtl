@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <init.h>
 #include "convolution.h"
+#include "util.h"
 
 #ifdef __riscv
     #include <riscv-csr.h>
@@ -158,16 +159,21 @@ fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg, const 
     // matrix_transpose(ma2, ma2t, a2_size, c2_size);
     #if OPTIM == 0
         matrix_mul(md2, md, mc2, c1_size, c2_size, m2_size);
-        matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
+        matrix_mul(mdd, mc1t, md2, m1_size, c2_size, m2_size);
         hadamart_product(mss, mdd, mgg, m1_size * m2_size);
-        matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
-        matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+        matrix_mul(mss2, mss, ma2, m1_size, m2_size, a2_size);
+        matrix_mul(ms, ma1t, mss2, a1_size, m2_size, a2_size);
     #elif OPTIM == D2_NEST
         matrix_mul_shift_noloop_c2(md2, md);
+        print_array2d(md2, c1_size, m2_size, "d2");
         matrix_mul_shift_noloop_c1t(mdd, md2);
+        print_array2d(mdd, m2_size, m2_size, "D");
         hadamart_product_noloop_nest(mss, mdd, mgg);
+        print_array2d(mss, m2_size, m2_size, "S");
         matrix_mul_shift_noloop_a2(mss2, mss);
+        print_array2d(mss2, a1_size, m2_size, "s2");
         matrix_mul_shift_noloop_a1t(ms, mss2);
+        print_array2d(ms, a1_size, a1_size, "s");
     #endif
 
     inhibit_all();
