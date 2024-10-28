@@ -258,18 +258,19 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
         )
     )
 
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_sym)
+    gg_user = sy.diag(*q2) * b2 * sy.Matrix(g2_sym if symbolic else g2_num)
+    g2_user = g2_sym if symbolic else g2_num
     doc.append(
         tex.Math(
             escape=False,
             data=[
                 syt(gg_sym),
                 "=",
-                syt(gg_num),
+                syt(gg_user),
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
-                syt(g2_sym),
+                syt(g2_user),
                 r"= \left(",
                 syt(q2),
                 r"\odot",
@@ -297,9 +298,9 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
         )
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
-    ss2_num = sy.hadamard_product(gg_num, dd_num)
+    ss2_num = sy.hadamard_product(gg_user, dd_num)
     ss_user = ss2_sym if symbolic else ss2_num
-    gg_user = gg_sym if symbolic else gg_num
+    gg_user = gg_sym if symbolic else gg_user
     dd_user = dd_sym if symbolic else dd_num
 
     doc.append(
@@ -435,7 +436,7 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
     )
 
     doc = tex.Document()
-    doc.preamble.append(tex.Package("geometry", "a0paper"))
+    doc.preamble.append(tex.Package("geometry", ["a3paper", "landscape"]))
     doc.preamble.append(
         tex.Command("title", f"{name} 2D Kronecker Convolution")
     )
@@ -487,7 +488,7 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
         )
     )
 
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_sym)
+    gg_user = sy.diag(*q2) * b2 * sy.Matrix(g2_sym if symbolic else g2_num)
     g2_user = g2_sym if symbolic else g2_num
     doc.append(
         tex.Math(
@@ -495,7 +496,7 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
             data=[
                 syt(gg_sym),
                 "=",
-                syt(gg_num),
+                syt(gg_user),
                 "=",
                 syt(sy.diag(*q2) * b2),
                 r"\odot",
@@ -541,11 +542,15 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
     ss_num = sy.hadamard_product(
-        gg_num, dd_num.reshape(gg_num.shape[0], gg_num.shape[1])
+        gg_user, dd_num.reshape(gg_user.shape[0], gg_user.shape[1])
     )
     ss_user = ss_sym if symbolic else ss_num
-    gg_user = gg_sym if symbolic else gg_num
-    dd_user = dd_sym if symbolic else dd_num
+    gg_user = gg_sym if symbolic else gg_user
+    dd_user = (
+        dd_sym
+        if symbolic
+        else dd_num.reshape(gg_user.shape[0], gg_user.shape[1])
+    )
     doc.append(
         tex.Math(
             data=[
@@ -588,7 +593,7 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
         a_sum = fast.count_sums(aa_num)
         c_sum = fast.count_sums(cc_num)
         text = (
-            f"Total multiplications: {len(gg_num)}\n"
+            f"Total multiplications: {len(gg_user)}\n"
             f"Sums:\n"
             f"A: {a_sum}\n"
             f"C: {c_sum}\n"
@@ -597,7 +602,9 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
         with open(path.parent / "info.txt", "w") as f:
             f.write(text)
     else:
-        output_default = signal.convolve(d1_user, g1_user[::-1, ::-1], mode="valid")
+        output_default = signal.convolve(
+            d1_user, g1_user[::-1, ::-1], mode="valid"
+        )
         compare_naive = np.all(
             output_default.reshape(-1) == np.array(s_num).reshape(-1)
         )

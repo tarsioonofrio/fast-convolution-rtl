@@ -136,9 +136,9 @@ void
 fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg, const int *ma2, const int *mc2, const int *md,
                int a1_size, int a2_size, int c1_size, int c2_size, int m1_size, int m2_size) {
 
-    int *md2 = (int *) malloc((c1_size * m2_size) * sizeof(int));
-    int *mdd = (int *) malloc((m1_size * m2_size) * sizeof(int));
-    int *mss = (int *) malloc((m1_size * m2_size) * sizeof(int));
+    int *md2 = (int *) malloc((c1_size * m1_size) * sizeof(int));
+    int *mdd = (int *) malloc((m1_size * m1_size) * sizeof(int));
+    int *mss = (int *) malloc((m1_size * m1_size) * sizeof(int));
     int *mss2 = (int *) malloc((a1_size * m1_size) * sizeof(int));
     // int *ma2 = (int *) malloc((a2_size * c2_size) * sizeof(int));
     // int *mc2 = (int *) malloc((c2_size * c2_size) * sizeof(int));
@@ -146,9 +146,9 @@ fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg, const 
     // mallocs are inhibited, becase it increasy the number of multiplcations
     inhibit_none();
 
-    init_array(md2, c1_size * m2_size);
-    init_array(mdd, m1_size * m2_size);
-    init_array(mss, m1_size * m2_size);
+    init_array(md2, c1_size * m1_size);
+    init_array(mdd, m1_size * m1_size);
+    init_array(mss, m1_size * m1_size);
     init_array(mss2, a1_size * m1_size);
     init_array(ms, a1_size * a2_size);
     // init_array(ma2, a2_size * c2_size);
