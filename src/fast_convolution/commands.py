@@ -597,7 +597,7 @@ def cmd_build2d_bind_kron(repo):
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    latex.build_2d_bind_kron(build_data, d1_user, g1_user, path)
+    latex.latex_2d_bind_kron(build_data, d1_user, g1_user, path / "bind-kron", True)
     a = np.kron(a1, a2)
     c = np.kron(c1, c2)
 
@@ -1120,7 +1120,7 @@ def cmd_example_random(repo, feature, weight, suffix):
         if data_bind["func"] == "nest":
             latex.latex_2d_bind_nest(build_data, d, g, path, False)
         if data_bind["func"] == "kron":
-            latex.example_2d_bind_kron(build_data, d, g, path)
+            latex.latex_2d_bind_kron(build_data, d, g, path, False)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
@@ -1185,7 +1185,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         if data_bind["func"] == "nest":
             latex.latex_2d_bind_nest(build_data, d, g, name, False)
         if data_bind["func"] == "kron":
-            latex.example_2d_bind_kron(build_data, d, g, name)
+            latex.latex_2d_bind_kron(build_data, d, g, name, False)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)

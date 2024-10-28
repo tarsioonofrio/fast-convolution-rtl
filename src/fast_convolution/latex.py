@@ -359,7 +359,7 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
         print("Result:", compare_naive)
 
 
-def build_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic=True):
+def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
     name = "Symbolic" if symbolic else "Numeric"
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -437,7 +437,7 @@ def build_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic=True):
     doc = tex.Document()
     doc.preamble.append(tex.Package("geometry", "a0paper"))
     doc.preamble.append(
-        tex.Command("title", "Symbolic 2D Kronecker Convolution")
+        tex.Command("title", f"{name} 2D Kronecker Convolution")
     )
     doc.preamble.append(
         tex.Command("author", "Fast-Convolution Python Library")
@@ -541,24 +541,25 @@ def build_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic=True):
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
     ss_num = sy.hadamard_product(
-        gg_sym, dd_sym.reshape(gg_num.shape[0], gg_num.shape[1])
+        gg_num, dd_num.reshape(gg_num.shape[0], gg_num.shape[1])
     )
+    ss_user = ss_sym if symbolic else ss_num
+    gg_user = gg_sym if symbolic else gg_num
+    dd_user = dd_sym if symbolic else dd_num
     doc.append(
         tex.Math(
             data=[
-                syt(ss_sym),
+                syt(ss_user),
                 "=",
-                syt(ss_num),
-                "=",
-                syt(gg_sym),
+                syt(gg_user),
                 r"\odot",
-                syt(dd_sym),
+                syt(dd_user),
             ],
             escape=False,
         )
     )
     doc.append(tex.Math(data=[r"s = AS"], escape=False))
-    s_num = aa_num * ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1)
+    s_num = aa_num * ss_user.reshape(ss_user.shape[0] * ss_user.shape[1], 1)
     doc.append(
         tex.Math(
             data=[
@@ -567,7 +568,7 @@ def build_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic=True):
                 syt(s_num),
                 "=",
                 syt(aa_num),
-                syt(ss_sym.reshape(ss_sym.shape[0] * ss_sym.shape[1], 1)),
+                syt(ss_user.reshape(ss_user.shape[0] * ss_user.shape[1], 1)),
             ]
         )
     )
@@ -579,250 +580,25 @@ def build_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic=True):
         tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num))], escape=False)
     )
     try:
-        doc.generate_pdf(path / "bind-kron", clean_tex=False)
-    except Exception as e:
-        click.echo(e)
-
-    a_sum = fast.count_sums(aa_num)
-    c_sum = fast.count_sums(cc_num)
-    text = (
-        f"Total multiplications: {len(gg_num)}\n"
-        f"Sums:\n"
-        f"A: {a_sum}\n"
-        f"C: {c_sum}\n"
-        f"Total: {a_sum + c_sum}\n"
-    )
-    with open(path / "info.txt", "w") as f:
-        f.write(text)
-
-
-def example_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
-    name = "Symbolic" if symbolic else "Numeric"
-    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-    aa_shape = (
-        a1.shape[0] * a2.shape[0],
-        a1.shape[1] * a2.shape[1],
-    )
-    aa_sym = sy.Matrix(
-        aa_shape[0],
-        aa_shape[1],
-        sy.symbols(
-            " ".join(f"A_{i}" for i in range(aa_shape[0] * aa_shape[1]))
-        ),
-    )
-    cc_shape = c1.shape[0] * c2.shape[0], c1.shape[1] * c2.shape[1]
-    cc_sym = sy.Matrix(
-        cc_shape[0],
-        cc_shape[1],
-        sy.symbols(
-            " ".join(f"C_{i}" for i in range(cc_shape[0] * cc_shape[1]))
-        ),
-    )
-    g1_sym = sy.Matrix(
-        b1.shape[1],
-        b2.shape[1],
-        sy.symbols(
-            " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
-        ),
-    )
-    g2_sym = sy.Matrix(
-        b1.shape[1],
-        b1.shape[0],
-        sy.symbols(
-            " ".join(
-                f"\\gamma_{{{i}}}" for i in range(b1.shape[1] * b1.shape[0])
-            )
-        ),
-    )
-    gg_sym = sy.Matrix(
-        q1.shape[0],
-        q2.shape[0],
-        sy.symbols(
-            " ".join(f"G_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
-        ),
-    )
-    d_sym = sy.Matrix(
-        c1.shape[0],
-        c2.shape[0],
-        sy.symbols(
-            " ".join(f"d_{{{i}}}" for i in range(c1.shape[0] * c2.shape[0]))
-        ),
-    )
-    dd_sym = sy.Matrix(
-        q1.shape[0],
-        q2.shape[0],
-        sy.symbols(
-            " ".join(f"D_{{{i}}}" for i in range(q1.shape[0] * q2.shape[0]))
-        ),
-    )
-    ss_sym = sy.Matrix(
-        c1.shape[1],
-        c2.shape[1],
-        sy.symbols(
-            " ".join(f"S_{{{i}}}" for i in range(c1.shape[1] * c2.shape[1]))
-        ),
-    )
-    s_sym = sy.Matrix(
-        a1.T.shape[0],
-        a2.T.shape[0],
-        sy.symbols(
-            " ".join(f"s_{{{i}}}" for i in range(a1.T.shape[0] * a2.T.shape[0]))
-        ),
-    )
-
-    doc = tex.Document()
-    doc.preamble.append(tex.Package("geometry", "a0paper"))
-    doc.preamble.append(
-        tex.Command("title", "Symbolic 2D Kronecker Convolution")
-    )
-    doc.preamble.append(
-        tex.Command("author", "Fast-Convolution Python Library")
-    )
-    doc.preamble.append(tex.Command("date", tex.NoEscape(r"\today")))
-    doc.append(tex.NoEscape(r"\maketitle"))
-
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[
-                r"s=(a_1^t \otimes a_2^t) \{[(q_1 \odot b_1) g (q_2 \odot b_2)^t] \odot (c_1^t \otimes c_2^t)\} d"
-            ],
-        )
-    )
-    doc.append(
-        tex.Math(data=["d =", syt(d_sym), "=", syt(d1_user)], escape=False)
-    )
-    doc.append(
-        tex.Math(data=["g =", syt(g1_sym), "=", syt(g1_user)], escape=False)
-    )
-    doc.append(
-        tex.Math(
-            data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
-        )
-    )
-    g2_num = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[
-                syt(g2_sym),
-                "=",
-                syt(g2_num),
-                "=",
-                syt(g1_user),
-                r"\odot",
-                syt((sy.diag(*q1) * b1).T),
-                "=",
-                syt(g1_sym),
-                r"\left(",
-                syt(q1),
-                r"\odot",
-                syt(b1),
-                r"\right)^t",
-            ],
-        )
-    )
-    gg_num = sy.diag(*q2) * b2 * sy.Matrix(g2_num)
-    g2_user = g2_sym if symbolic else g2_num
-    doc.append(
-        tex.Math(
-            escape=False,
-            data=[
-                syt(gg_sym),
-                "=",
-                syt(gg_num),
-                "=",
-                syt(sy.diag(*q2) * b2),
-                r"\odot",
-                syt(g2_user),
-                r"= \left(",
-                syt(q2),
-                r"\odot",
-                syt(b2),
-                r"\right)",
-                syt(g2_sym),
-            ],
-        )
-    )
-    doc.append(tex.Math(data=[r"C = c_1^t \otimes c_2^t"], escape=False))
-    cc_num = TensorProduct(c1.T, c2.T)
-    doc.append(
-        tex.Math(
-            data=["C =", syt(cc_num), "=", syt(c1.T), r"\otimes", syt(c2.T)],
-            escape=False,
-        )
-    )
-    doc.append(tex.Math(data=[r"A = a_1^t \otimes a_2^t"], escape=False))
-    aa_num = TensorProduct(a1.T, a2.T)
-    doc.append(
-        tex.Math(
-            data=["A =", syt(aa_num), "=", syt(a1.T), r"\otimes", syt(a2.T)],
-            escape=False,
-        )
-    )
-    doc.append(tex.Math(data=[r"D = Cd"], escape=False))
-    dd_num = cc_num * d1_user.reshape(cc_num.shape[1], 1)
-    doc.append(
-        tex.Math(
-            data=[
-                syt(dd_sym.reshape(dd_num.shape[0] * dd_num.shape[1], 1)),
-                "=",
-                syt(dd_num),
-                "=",
-                syt(cc_num),
-                syt(d1_user.reshape(cc_num.shape[1], 1)),
-            ]
-        )
-    )
-    doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
-    ss_num = sy.hadamard_product(
-        gg_num, dd_num.reshape(gg_num.shape[0], gg_num.shape[1])
-    )
-    doc.append(
-        tex.Math(
-            data=[
-                syt(ss_sym),
-                "=",
-                syt(ss_num),
-                "=",
-                syt(gg_num),
-                r"\odot",
-                syt(dd_num.reshape(gg_num.shape[0], gg_num.shape[1])),
-            ],
-            escape=False,
-        )
-    )
-    doc.append(tex.Math(data=[r"s = AS"], escape=False))
-    s_num = aa_num * ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1)
-    doc.append(
-        tex.Math(
-            data=[
-                syt(s_sym.reshape(s_num.shape[0] * s_num.shape[1], 1)),
-                "=",
-                syt(s_num),
-                "=",
-                syt(aa_num),
-                syt(ss_num.reshape(ss_num.shape[0] * ss_num.shape[1], 1)),
-            ]
-        )
-    )
-
-    doc.append(
-        tex.Math(data=[r"A =", syt(fast.matrix_to_log2(aa_num))], escape=False)
-    )
-    doc.append(
-        tex.Math(
-            data=[r"C =", syt(fast.matrix_to_log2(cc_num.T))], escape=False
-        )
-    )
-
-    try:
         doc.generate_pdf(path, clean_tex=False)
     except Exception as e:
         click.echo(e)
 
-    output_default = signal.convolve(d1_user, g1_user[::-1, ::-1], mode="valid")
-    compare_naive = np.all(
-        output_default.reshape(-1) == np.array(s_num).reshape(-1)
-    )
-    print("Result:", compare_naive)
+    if symbolic:
+        a_sum = fast.count_sums(aa_num)
+        c_sum = fast.count_sums(cc_num)
+        text = (
+            f"Total multiplications: {len(gg_num)}\n"
+            f"Sums:\n"
+            f"A: {a_sum}\n"
+            f"C: {c_sum}\n"
+            f"Total: {a_sum + c_sum}\n"
+        )
+        with open(path.parent / "info.txt", "w") as f:
+            f.write(text)
+    else:
+        output_default = signal.convolve(d1_user, g1_user[::-1, ::-1], mode="valid")
+        compare_naive = np.all(
+            output_default.reshape(-1) == np.array(s_num).reshape(-1)
+        )
+        print("Result:", compare_naive)
