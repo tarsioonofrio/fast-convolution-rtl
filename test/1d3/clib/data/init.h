@@ -4,6 +4,7 @@
 #define A_SIZE 3
 #define B_SIZE 3
 #define C_SIZE 5
+#define M_SIZE 5
 
 
 #endif //C_INIT_H

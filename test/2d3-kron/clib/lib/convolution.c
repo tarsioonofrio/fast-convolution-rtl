@@ -136,30 +136,30 @@ void
 fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg, const int *ma2, const int *mc2, const int *md,
                int a1_size, int a2_size, int c1_size, int c2_size, int m1_size, int m2_size) {
 
-    int *mss = (int *) malloc((c1_size * c2_size) * sizeof(int));
-    int *mss2 = (int *) malloc((a1_size * c1_size) * sizeof(int));
-    int *mdd = (int *) malloc((c1_size * c2_size) * sizeof(int));
-    int *md2 = (int *) malloc((c1_size * c2_size) * sizeof(int));
+    int *md2 = (int *) malloc((c1_size * m2_size) * sizeof(int));
+    int *mdd = (int *) malloc((m1_size * m2_size) * sizeof(int));
+    int *mss = (int *) malloc((m1_size * m2_size) * sizeof(int));
+    int *mss2 = (int *) malloc((a1_size * m1_size) * sizeof(int));
     // int *ma2 = (int *) malloc((a2_size * c2_size) * sizeof(int));
     // int *mc2 = (int *) malloc((c2_size * c2_size) * sizeof(int));
 
     // mallocs are inhibited, becase it increasy the number of multiplcations
     inhibit_none();
 
+    init_array(md2, c1_size * m2_size);
+    init_array(mdd, m1_size * m2_size);
+    init_array(mss, m1_size * m2_size);
+    init_array(mss2, a1_size * m1_size);
     init_array(ms, a1_size * a2_size);
-    init_array(mss, c1_size * c2_size);
-    init_array(mss2, a1_size * c1_size);
-    init_array(mdd, c1_size * c2_size);
-    init_array(md2, c1_size * c2_size);
     // init_array(ma2, a2_size * c2_size);
     // init_array(mc2, c2_size * c2_size);
 
     // matrix_transpose(mc2, mc2t, c1_size, c2_size);
     // matrix_transpose(ma2, ma2t, a2_size, c2_size);
     #if OPTIM == 0
-        matrix_mul(md2, md, mc2, c1_size, c2_size, c2_size);
+        matrix_mul(md2, md, mc2, c1_size, c2_size, m2_size);
         matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
-        hadamart_product(mss, mdd, mgg, c1_size * c2_size);
+        hadamart_product(mss, mdd, mgg, m1_size * m2_size);
         matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
         matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
     #elif OPTIM == D2_NEST
@@ -172,10 +172,10 @@ fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg, const 
 
     inhibit_all();
 
-    free(mss);
-    free(mss2);
     free(mdd);
     free(md2);
+    free(mss);
+    free(mss2);
 }
 
 void
@@ -240,7 +240,7 @@ void filter2d(int *feature_out, const int *feature_in, int fin_size, int fout_si
             }
             if (type_conv == KRON) {
                 fast_conv(ms, params->ma, params->mgg, params->mc, md,
-                          a1_size * a2_size, c1_size * c2_size, M_SIZE);
+                          a1_size * a2_size, c1_size * c2_size, m2_size * m1_size);
             } else if (type_conv == NEST) {
                 fast_conv_nest(ms, params->ma1, params->mc1, params->mgg, params->ma2,
                                params->mc2, md, a1_size, a2_size, c1_size, c2_size, m1_size, m2_size);
