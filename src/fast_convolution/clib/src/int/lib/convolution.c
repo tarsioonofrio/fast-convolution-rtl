@@ -158,10 +158,10 @@ fast_conv_nest(int *ms, const int *ma1t, const int *mc1t, const int *mgg, const 
     // matrix_transpose(ma2, ma2t, a2_size, c2_size);
     #if OPTIM == 0
         matrix_mul(md2, md, mc2, c1_size, c2_size, m2_size);
-        matrix_mul(mdd, mc1t, md2, c1_size, c2_size, c2_size);
+        matrix_mul(mdd, mc1t, md2, m1_size, c2_size, m2_size);
         hadamart_product(mss, mdd, mgg, m1_size * m2_size);
-        matrix_mul(mss2, mss, ma2, c1_size, c2_size, a2_size);
-        matrix_mul(ms, ma1t, mss2, a1_size, c2_size, a2_size);
+        matrix_mul(mss2, mss, ma2, m1_size, m2_size, a2_size);
+        matrix_mul(ms, ma1t, mss2, a1_size, m2_size, a2_size);
     #elif OPTIM == D2_NEST
         matrix_mul_shift_noloop_c2(md2, md);
         matrix_mul_shift_noloop_c1t(mdd, md2);
