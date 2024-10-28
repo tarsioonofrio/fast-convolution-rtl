@@ -303,7 +303,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len):
     )
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
-    hadamart = utils.c_hadamart_product_nollop(c.T.shape[0], c.T)
+    hadamart = utils.c_hadamart_product_nollop(c.T.shape[0])
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_a['function']}\n"
@@ -501,7 +501,9 @@ def cmd_build2d_bind_nest(repo):
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    latex.latex_2d_bind_nest(build_data, d1_sym, g1_sym, path / "bind-nest", True)
+    latex.latex_2d_bind_nest(
+        build_data, d1_sym, g1_sym, path / "bind-nest", True
+    )
 
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
@@ -511,40 +513,39 @@ def cmd_build2d_bind_nest(repo):
         package_clib() / "src/int/filter2d-nest.c",
         repo.dir_clib_main / "filter2d-nest.c",
     )
-
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     matmul_c2 = utils.c_matmul_shift_noloop_nest(
-        c2, "c2", c2.T.shape, c2.shape, True
+        c2, "c2", c2.T.shape, (c2.shape[0], q1.shape[0]), True
     )
     matmul_c1t = utils.c_matmul_shift_noloop_nest(
-        c1.T, "c1t", c1.T.shape, c1.T.shape
-    )
-    matmul_a2 = utils.c_matmul_shift_noloop_nest(
-        a2, "a2", c1.shape, a2.shape, True
-    )
-    matmul_a1t = utils.c_matmul_shift_noloop_nest(
-        a1.T, "a1t", a2.shape, (a1.T.shape[0], a1.T.shape[0])
+        c1.T, "c1t", (c1.shape[0], q1.shape[0]), (q2.shape[0], q1.shape[0])
     )
     hadamart = utils.c_hadamart_product_nollop(
-        a1.shape[0] * a2.shape[0], np.kron(c1, c2), "_nest"
+        q1.shape[0] * q2.shape[0], "_nest"
+    )
+    matmul_a2 = utils.c_matmul_shift_noloop_nest(
+        a2, "a2", (q1.shape[0], q2.shape[0]), (q1.shape[0], a2.shape[0]), True
+    )
+    matmul_a1t = utils.c_matmul_shift_noloop_nest(
+        a1.T, "a1t", (q1.shape[0], a1.shape[0]), (a1.T.shape[0], a1.T.shape[0])
     )
 
     c_fun = (
         '#include "optim.h"\n\n'
         f"{matmul_c2['function']}\n"
         f"{matmul_c1t['function']}\n"
+        f"{hadamart['function']}\n"
         f"{matmul_a2['function']}\n"
         f"{matmul_a1t['function']}\n"
-        f"{hadamart['function']}\n"
     )
     c_head = (
         '#ifndef C_OPTIM_H\n'
         '#define C_OPTIM_H\n\n'
         f"{matmul_c2['header']}\n"
         f"{matmul_c1t['header']}\n"
+        f"{hadamart['header']}\n"
         f"{matmul_a2['header']}\n"
         f"{matmul_a1t['header']}\n"
-        f"{hadamart['header']}\n"
         '#endif //C_OPTIM_H'
     )
 
@@ -597,7 +598,9 @@ def cmd_build2d_bind_kron(repo):
             " ".join(f"g_{{{i}}}" for i in range(b1.shape[1] * b2.shape[1]))
         ),
     )
-    latex.latex_2d_bind_kron(build_data, d1_user, g1_user, path / "bind-kron", True)
+    latex.latex_2d_bind_kron(
+        build_data, d1_user, g1_user, path / "bind-kron", True
+    )
     a = np.kron(a1, a2)
     c = np.kron(c1, c2)
 
@@ -640,7 +643,7 @@ def cmd_build2d_bind_kron(repo):
 
     matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
     matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
-    hadamart = utils.c_hadamart_product_nollop(a.shape[0], c.T)
+    hadamart = utils.c_hadamart_product_nollop(a.shape[0])
 
     c_fun = (
         '#include "optim.h"\n\n'

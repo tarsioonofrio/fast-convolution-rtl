@@ -163,7 +163,7 @@ void filter2d(float *feature_out, const float *feature_in, int fin_size, int fou
                                 a1_size * a2_size, c1_size * c2_size, m1_size * m2_size);
             } else if (type_conv == NEST){
                 fast_conv_nest_float(ms, params->ma1, params->mc1, params->mgg, params->ma2, params->mc2,
-                                     md, a1_size, a2_size, c1_size, c2_size, M1_SIZE, M2_SIZE);
+                                     md, a1_size, a2_size, c1_size, c2_size, m1_size, m2_size);
             }
             for (rd = 0; rd < a1_size; rd++) {
                 for (cd = 0; cd < a2_size; cd++) {
