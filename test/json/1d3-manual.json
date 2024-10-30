@@ -1,0 +1,4 @@
+{
+  "init": ["init", "1d", "-o", "3"],
+  "build": ["build", "1d", "manual"]
+}
