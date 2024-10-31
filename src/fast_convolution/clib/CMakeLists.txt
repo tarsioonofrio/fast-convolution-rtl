@@ -5,9 +5,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_STANDARD 90)
 
-set(PRJ1D 1d-manual)
-# set(PRJ2D_KRON 2d-manual-kron)
-# set(PRJ2D_NEST 2d-manual-nest)
+#set(PRJ1D 1d3-manual)
+#set(PRJ2D_KRON 2d3-manual-kron)
+#set(PRJ2D_NEST 2d3-manual-nest)
+set(PRJ1D 1d3)
 set(PRJ2D_KRON 2d3-kron)
 set(PRJ2D_NEST 2d3-nest)
 
