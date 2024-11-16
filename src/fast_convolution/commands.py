@@ -9,7 +9,7 @@ from PIL import Image
 from scipy import signal
 from sklearn.metrics import r2_score
 
-from . import fast, latex, quant, utils
+from . import fast, latex, quant, readme, utils
 from .makefile import makefile
 from .naive import naive_convolve
 
@@ -221,7 +221,7 @@ def cmd_build_toom_cook1d(repo, points):
     # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == "inf" else int(p) for p in points]
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
-    build1d(repo, list_points, a, b, c, q, b_len, c_len)
+    build1d(repo, list_points, a, b, c, q, b_len, c_len, readme.conv_toom_cook)
     header_init(repo, dim, a_len, b_len, c_len, len(list_points))
 
 
@@ -229,11 +229,13 @@ def cmd_build_manual_factorization1d(repo):
     dim, c_len, b_len, a_len = read_init(repo)
     list_points = [1]
     c, q, b, a = fast.conv_manual_factorization()
-    build1d(repo, list_points, a, b, c, q, b_len, c_len)
+    build1d(
+        repo, list_points, a, b, c, q, b_len, c_len, readme.conv_manual_fact
+    )
     header_init(repo, dim, a_len, b_len, c_len, 6)
 
 
-def build1d(repo, list_points, a, b, c, q, b_len, c_len):
+def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
     # bg = fast.g_to_bg(q, b, g)
@@ -264,6 +266,17 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len):
     )
     with open(f"{path}_info.txt", "w") as f:
         f.write(text)
+
+    readme_str = (
+        "# Fast Convolution\n"
+        "## Generator\n"
+        f"{readme_data}\n"
+        "## Operation count\n"
+        f"{text}"
+    )
+    with open(repo.dir_clib / "README.md", "w") as f:
+        f.write(readme_str)
+
     csa_config = fast.csa_config(a, c)
     fast.write_csa_config(csa_config, path / "csa")
     csa_parcels = fast.csa_parcels(a, c)
@@ -456,8 +469,6 @@ def build2d(
         f"Total: {a1_sum + a2_sum + c1_sum + c2_sum}\n"
     )
     path = repo.dir_build / "convolution-axis"
-    with open(f"{path}_info.txt", "w") as f:
-        f.write(text)
     # TODO export build_float.h with data in float
     list_array = [
         {"name": "mc1t", "value": c1.T},
@@ -485,6 +496,10 @@ def cmd_build2d_bind_nest(repo):
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
     write_bind(repo, "nest")
+
+    readme_str = "# Fast Convolution\n" "## Bind\n" f"{readme.bind_nested}\n"
+    with open(repo.dir_clib / "README.md", "w") as f:
+        f.write(readme_str)
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     d1_sym = sy.Matrix(
@@ -527,7 +542,10 @@ def cmd_build2d_bind_nest(repo):
         a2, "a2", (q1.shape[0], q2.shape[0]), (q1.shape[0], a2.shape[0]), True
     )
     matmul_a1t = utils.c_matmul_shift_noloop_nest(
-        a1.T, "a1t", (q1.shape[0], a1.T.shape[0]), (a1.T.shape[0], a1.T.shape[0])
+        a1.T,
+        "a1t",
+        (q1.shape[0], a1.T.shape[0]),
+        (a1.T.shape[0], a1.T.shape[0]),
     )
 
     c_fun = (
@@ -583,6 +601,10 @@ def cmd_build2d_bind_kron(repo):
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
     write_bind(repo, "kron")
+    readme_str = "# Fast Convolution\n" "## Bind\n" f"{readme.bind_kron}\n"
+    with open(repo.dir_clib / "README.md", "w") as f:
+        f.write(readme_str)
+
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     d1_user = sy.Matrix(
         c1.shape[0],
