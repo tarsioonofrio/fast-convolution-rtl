@@ -29,6 +29,7 @@ class Repo(object):
         self.dir_config = self.root / "config"
         self.file_init = self.dir_config / "init.json"
         self.file_build = self.dir_config / "build.json"
+        self.file_gen = self.dir_config / "gen.json"
         self.file_bind = self.dir_config / "bind.json"
         self.file_quant = self.dir_config / "quant.json"
         self.dir_build = self.root / "build"

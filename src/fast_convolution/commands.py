@@ -221,8 +221,10 @@ def cmd_build_toom_cook1d(repo, points):
     # at_len = ct_len + b_len - 1
     list_points = [np.inf if p == "inf" else int(p) for p in points]
     c, q, b, a = fast.toom_cook(a_len, b_len, list_points)
-    build1d(repo, list_points, a, b, c, q, b_len, c_len, readme.conv_toom_cook)
+    build1d(repo, list_points, a, b, c, q, b_len, c_len, readme.toom_cook)
     header_init(repo, dim, a_len, b_len, c_len, len(list_points))
+    with open(repo.file_gen, "w", encoding="utf-8") as f:
+        json.dump({"generator": "toom_cook"}, f, ensure_ascii=False, indent=4)
 
 
 def cmd_build_manual_factorization1d(repo):
@@ -230,9 +232,16 @@ def cmd_build_manual_factorization1d(repo):
     list_points = [1]
     c, q, b, a = fast.conv_manual_factorization()
     build1d(
-        repo, list_points, a, b, c, q, b_len, c_len, readme.conv_manual_fact
+        repo, list_points, a, b, c, q, b_len, c_len, readme.manual_factorization
     )
     header_init(repo, dim, a_len, b_len, c_len, 6)
+    with open(repo.file_gen, "w", encoding="utf-8") as f:
+        json.dump(
+            {"generator": "manual_factorization"},
+            f,
+            ensure_ascii=False,
+            indent=4,
+        )
 
 
 def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
@@ -271,7 +280,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         "# Fast Convolution\n"
         "## Generator\n"
         f"{readme_data}\n"
-        "## Operation count\n"
+        "## Operations\n"
         f"{text}"
     )
     with open(repo.dir_clib / "README.md", "w") as f:
@@ -378,6 +387,8 @@ def cmd_build_toom_cook2d(repo, points1d, points2d):
         c_len,
     )
     header_init(repo, dim, a_len[0], b_len[0], c_len[0], len(list_points1d))
+    with open(repo.file_gen, "w", encoding="utf-8") as f:
+        json.dump({"generator": "toom_cook"}, f, ensure_ascii=False, indent=4)
 
 
 def cmd_build_manual_factorization2d(repo):
@@ -403,6 +414,13 @@ def cmd_build_manual_factorization2d(repo):
         c_len,
     )
     header_init(repo, dim, a_len[0], b_len[0], c_len[0], 6)
+    with open(repo.file_gen, "w", encoding="utf-8") as f:
+        json.dump(
+            {"generator": "manual_factorization"},
+            f,
+            ensure_ascii=False,
+            indent=4,
+        )
 
 
 def build2d(
@@ -457,18 +475,6 @@ def build2d(
     latex.latex_1d(c1, b1, a1, q1, path1, di1, g1, True)
     path2 = repo.dir_build / "convolution-axis2"
     latex.latex_1d(c2, b2, a2, q2, path2, di2, g2, True)
-    a1_sum = fast.count_sums(a1)
-    a2_sum = fast.count_sums(a2)
-    c1_sum = fast.count_sums(c1)
-    c2_sum = fast.count_sums(c2)
-    text = (
-        f"Total multiplications: {b_len[0] * b_len[1]}\n"
-        f"Sums:\n"
-        f"A: {a1_sum + a2_sum}\n"
-        f"C: {c1_sum + c2_sum}\n"
-        f"Total: {a1_sum + a2_sum + c1_sum + c2_sum}\n"
-    )
-    path = repo.dir_build / "convolution-axis"
     # TODO export build_float.h with data in float
     list_array = [
         {"name": "mc1t", "value": c1.T},
@@ -495,13 +501,39 @@ def cmd_build2d_bind_nest(repo):
     path.mkdir(parents=True, exist_ok=True)
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
-    write_bind(repo, "nest")
+    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
-    readme_str = "# Fast Convolution\n" "## Bind\n" f"{readme.bind_nested}\n"
+    write_bind(repo, "nest")
+    with open(repo.file_gen) as f:
+        generator = json.load(f)
+    gen_text = vars(readme)[generator["generator"]]
+
+    a1_sum = fast.count_sums(a1)
+    a2_sum = fast.count_sums(a2)
+    c1_sum = fast.count_sums(c1)
+    c2_sum = fast.count_sums(c2)
+    text = (
+        f"Total multiplications: {len(q1) * len(q2)}\n"
+        f"Sums:\n"
+        f"A: {a1_sum + a2_sum}\n"
+        f"C: {c1_sum + c2_sum}\n"
+        f"Total: {a1_sum + a2_sum + c1_sum + c2_sum}\n"
+    )
+    with open(f"{path}_info.txt", "w") as f:
+        f.write(text)
+
+    readme_str = (
+        "# Fast Convolution\n"
+        "## Generator\n"
+        f"{gen_text}\n"
+        "## Bind\n"
+        f"{readme.bind_nested}\n"
+        "## Operations\n"
+        f"{text}"
+    )
     with open(repo.dir_clib / "README.md", "w") as f:
         f.write(readme_str)
 
-    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     d1_sym = sy.Matrix(
         c1.shape[0],
         c2.shape[0],
@@ -601,9 +633,6 @@ def cmd_build2d_bind_kron(repo):
     init_data = read_init(repo)
     build_data = read_build_2d(repo)
     write_bind(repo, "kron")
-    readme_str = "# Fast Convolution\n" "## Bind\n" f"{readme.bind_kron}\n"
-    with open(repo.dir_clib / "README.md", "w") as f:
-        f.write(readme_str)
 
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
     d1_user = sy.Matrix(
@@ -625,6 +654,34 @@ def cmd_build2d_bind_kron(repo):
     )
     a = np.kron(a1, a2)
     c = np.kron(c1, c2)
+
+    with open(repo.file_gen) as f:
+        generator = json.load(f)
+
+    gen_text = vars(readme)[generator["generator"]]
+    a_sum = fast.count_sums(a)
+    c_sum = fast.count_sums(c)
+    text = (
+        f"Total multiplications: {len(q1) * len(q2)}\n"
+        f"Sums:\n"
+        f"A: {a_sum}\n"
+        f"C: {c_sum}\n"
+        f"Total: {a_sum + c_sum}\n"
+    )
+    with open(f"{path}_info.txt", "w") as f:
+        f.write(text)
+
+    readme_str = (
+        "# Fast Convolution\n"
+        "## Generator\n"
+        f"{gen_text}\n"
+        "## Bind\n"
+        f"{readme.bind_kron}\n"
+        "## Operations\n"
+        f"{text}"
+    )
+    with open(repo.dir_clib / "README.md", "w") as f:
+        f.write(readme_str)
 
     # TODO export bind_kron_float.h with data in float
     csa_config = fast.csa_config(a, c)

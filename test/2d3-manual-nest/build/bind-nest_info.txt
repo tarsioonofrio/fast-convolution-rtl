@@ -1,4 +1,4 @@
-Total multiplications: 9
+Total multiplications: 36
 Sums:
 A: 18
 C: 24
