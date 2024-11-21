@@ -1,0 +1,4 @@
+{
+  "init": ["init", "1d", "-o", "4"],
+  "build": ["build", "1d", "toom-cook"]
+}
