@@ -355,6 +355,15 @@ def csa_config(a, c):
     return config
 
 
+def csa_config_nest(a1, a2, c1, c2):
+    config = {
+        (n, s): max_power(log2_lst(lst), positive=typ)
+        for lst, n in zip([a1.T, a2.T, c1.T, c2.T], ["a", "A", "c", "C"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+    return config
+
+
 def write_csa_config(config, path):
     path.mkdir(parents=True, exist_ok=True)
     with open(path / "config.txt", "w") as f:
@@ -366,6 +375,14 @@ def csa_parcels(a, c):
     return {
         (n, s): csa_lst(lst, positive=typ)
         for lst, n in zip([a.T, c.T], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+
+
+def csa_parcels_nest(a1, a2, c1, c2):
+    return {
+        (n, s): csa_lst(lst, positive=typ)
+        for lst, n in zip([a1.T, a2.T, c1.T, c2.T], ["a", "A", "c", "C"])
         for typ, s in zip([True, False], ["p", "n"])
     }
 

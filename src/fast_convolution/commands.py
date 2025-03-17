@@ -534,6 +534,12 @@ def cmd_build2d_bind_nest(repo):
     with open(repo.dir_clib / "README.md", "w") as f:
         f.write(readme_str)
 
+    # TODO export bind_kron_float.h with data in float
+    csa_config = fast.csa_config_nest(a1, a2, c1, c2)
+    fast.write_csa_config(csa_config, path / "csa")
+    csa_parcels = fast.csa_parcels_nest(a1, a2, c1, c2)
+    fast.write_csa_parcels(csa_parcels, path / "csa")
+
     d1_sym = sy.Matrix(
         c1.shape[0],
         c2.shape[0],

@@ -1,0 +1,8 @@
+5 a p
+1 a n
+5 A p
+1 A n
+5 c p
+3 c n
+5 C p
+3 C n
