@@ -1001,13 +1001,15 @@ def cmd_example_random(repo, feature, weight, suffix):
         d = sy.Matrix(f)
         w = np.random.randint(weight[0], weight[1], size=b_len)
         g = sy.Matrix(w)
-    elif dim == 2:
+        s = utils.default_convolve(d, g)
+    else:
         f0 = np.random.randint(feature[0], feature[1], size=c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
         d = sy.Matrix(f)
         w0 = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
         g = sy.Matrix(w)
+        s = utils.default_convolve(d, g)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
@@ -1018,18 +1020,16 @@ def cmd_example_random(repo, feature, weight, suffix):
             {"name": "md", "type": "int", "value": d},
             {"name": "mg", "value": g},
             {"name": "mgg", "value": bg},
+            {"name": "ms_gold", "value": s},
         ]
         arr = [{**r, "type": "int"} for r in list_array]
         utils.c_header(repo.dir_clib_data / "example.h", arr, {})
-
         arr = [{**r, "type": "float"} for r in list_array]
         utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
-
-    elif dim == 2:
+    else:
         data_bind = read_bind_if_exists(repo)
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
-
         if data_bind["func"] == "nest":
             latex.latex_2d_bind_nest(build_data, d, g, path, False)
         if data_bind["func"] == "kron":
@@ -1042,8 +1042,8 @@ def cmd_example_random(repo, feature, weight, suffix):
             {"name": "md", "value": d},
             {"name": "mg", "value": g},
             {"name": "mgg", "value": bg},
+            {"name": "ms_gold", "value": s},
         ]
-
         arr = [{**r, "type": "int"} for r in list_array]
         utils.c_header(repo.dir_clib_data / "example.h", arr, {})
 
@@ -1065,7 +1065,7 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         w = np.arange(weight, weight + b_len)
         g = sy.Matrix(w)
         s = utils.default_convolve(d, g)
-    elif dim == 2:
+    else:
         f0 = np.arange(feature, feature + c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
         d = sy.Matrix(f)
@@ -1087,11 +1087,9 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         ]
         arr = [{**r, "type": "int"} for r in list_array]
         utils.c_header(repo.dir_clib_data / "example.h", arr, {})
-
         arr = [{**r, "type": "float"} for r in list_array]
         utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
-
-    elif dim == 2:
+    else:
         data_bind = read_bind_if_exists(repo)
         init_data = read_init(repo)
         build_data = read_build_2d(repo)
