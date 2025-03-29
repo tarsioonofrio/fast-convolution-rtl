@@ -10,9 +10,9 @@ from . import fast
 
 
 def plot_pdf(
-    page,
-    crop_float=None,
-    dpi=200,
+        page,
+        crop_float=None,
+        dpi=200,
 ):
     """
     (upper, lower)
@@ -88,7 +88,7 @@ def symmetrical_cyclic_convolution(x, y):
     xx = np.tile(x_arr.reshape(-1), 2)
     yy = np.array(y).reshape(-1)
     out = np.convolve(xx, yy)
-    out_clip = out[size : 2 * size]
+    out_clip = out[size: 2 * size]
     out_mtx = sy.Matrix(out_clip)
     return out_mtx
 
@@ -155,6 +155,7 @@ def c_header(path, list_array, dict_defs):
     with open(path, "w") as f:
         f.write(source)
 
+
 def sv_pkg(path, list_array, dict_defs):
     name = path.stem.upper()
     source_str = (
@@ -178,12 +179,7 @@ def sv_pkg(path, list_array, dict_defs):
             np_arr = np.array(array["value"]).astype(typ)
             shape = np_arr.shape
             value = np_arr.tolist()
-            if typ == "float":
-                value_str = (",\n").join(
-                    ["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value]
-                )
-            else:
-                value_str = (",\n").join(["\t" + ", ".join(map(str, v)) for v in value])
+            value_str = ("},\n").join(["\t'{" + ", ".join(map(str, v)) for v in value])
             size = "*".join(map(str, shape))
             array = array_str.format(type=typ, name=name, value=value_str, size=size)
             list_data.append(array)

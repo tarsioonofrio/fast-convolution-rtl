@@ -927,6 +927,11 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
 
+        feat_list_sv = [
+            fast.sliding_window1d_2d(feat_arr, output_default.shape, i, c_len, a_len)
+            for i in range(0, wght_arr.shape[0])
+        ]
+        # feat_list_sv = feat_arr
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
     else:
@@ -942,6 +947,7 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
+        feat_list_sv = fast.sliding_window2d(feat_arr, output_default.shape, c_len, a_len)
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
@@ -1011,8 +1017,17 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
     arr_float = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def)
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
+    list_array = [
+        {"name": "weight", "value": wght_arr},
+        {"name": "weight_gg", "value": bg},
+        {"name": "weight_gg_quant", "value": bg_quant},
+        {"name": "feat_in", "value": feat_list_sv},
+        {"name": "gold", "value": output_default},
+        {"name": "gold_quant", "value": output_fast},
+    ]
+    arr = [{**r, "type": "int"} for r in list_array]
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
-    utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, dict_def)
+    utils.sv_pkg(repo.dir_sv / "sim.sv", arr, dict_def)
     return out_dict
 
 
@@ -1100,5 +1115,7 @@ def example(dim, f, path, repo, w):
         arr = [{**r, "type": "int"} for r in list_array]
         utils.c_header(repo.dir_clib_data / "example.h", arr, {})
 
-        arr = [{**r, "type": "float"} for r in list_array]
-        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
+        arr_float = [{**r, "type": "float"} for r in list_array]
+        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr_float, {})
+        repo.dir_sv.mkdir(parents=True, exist_ok=True)
+        utils.sv_pkg(repo.dir_sv / "example.sv", arr, {})
