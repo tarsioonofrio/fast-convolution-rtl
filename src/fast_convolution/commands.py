@@ -1004,53 +1004,7 @@ def cmd_example_random(repo, feature, weight, suffix):
         f = np.array(f0).reshape(c_len[0], c_len[1])
         w0 = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
-
-    if dim == 1:
-        d = sy.Matrix(f)
-        g = sy.Matrix(w)
-        s = utils.default_convolve(d, g)
-    else:
-        d = sy.Matrix(f)
-        g = sy.Matrix(w)
-        s = utils.default_convolve(d, g)
-
-    if dim == 1:
-        points, c, b, a, q = read_build_1d(repo)
-        latex.latex_1d(c, b, a, q, path, d, g, False)
-        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-        bg = fast.g_to_bg(q, b, g)
-        list_array = [
-            {"name": "md", "type": "int", "value": d},
-            {"name": "mg", "value": g},
-            {"name": "mgg", "value": bg},
-            {"name": "ms_gold", "value": s},
-        ]
-        arr = [{**r, "type": "int"} for r in list_array]
-        utils.c_header(repo.dir_clib_data / "example.h", arr, {})
-        arr = [{**r, "type": "float"} for r in list_array]
-        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
-    else:
-        data_bind = read_bind_if_exists(repo)
-        build_data = read_build_2d(repo)
-        if data_bind["func"] == "nest":
-            latex.latex_2d_bind_nest(build_data, d, g, path, False)
-        if data_bind["func"] == "kron":
-            latex.latex_2d_bind_kron(build_data, d, g, path, False)
-
-        (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
-        bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
-        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-        list_array = [
-            {"name": "md", "value": d},
-            {"name": "mg", "value": g},
-            {"name": "mgg", "value": bg},
-            {"name": "ms_gold", "value": s},
-        ]
-        arr = [{**r, "type": "int"} for r in list_array]
-        utils.c_header(repo.dir_clib_data / "example.h", arr, {})
-
-        arr = [{**r, "type": "float"} for r in list_array]
-        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
+    example(dim, f, path, repo, w)
 
 
 def cmd_example_sequential(repo, feature, weight, suffix):
@@ -1058,9 +1012,9 @@ def cmd_example_sequential(repo, feature, weight, suffix):
     repo.dir_example.mkdir(parents=True, exist_ok=True)
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     if len(suffix) > 0:
-        name = repo.dir_example / f"example-seq-{suffix}"
+        path = repo.dir_example / f"example-seq-{suffix}"
     else:
-        name = repo.dir_example / "example-seq"
+        path = repo.dir_example / "example-seq"
 
     if dim == 1:
         f = np.arange(feature, feature + c_len)
@@ -1070,20 +1024,17 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         f = np.array(f0).reshape(c_len[0], c_len[1])
         w0 = np.arange(weight, weight + b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
+    example(dim, f, path, repo, w)
 
+
+def example(dim, f, path, repo, w):
     if dim == 1:
-        f = np.arange(feature, feature + c_len)
-        d = sy.Matrix(f)
-        g = sy.Matrix(w)
-        s = utils.default_convolve(d, g)
-    else:
         d = sy.Matrix(f)
         g = sy.Matrix(w)
         s = utils.default_convolve(d, g)
 
-    if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        latex.latex_1d(c, b, a, q, name, d, g, False)
+        latex.latex_1d(c, b, a, q, path, d, g, False)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         bg = fast.g_to_bg(q, b, g)
         list_array = [
@@ -1097,12 +1048,16 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         arr = [{**r, "type": "float"} for r in list_array]
         utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
     else:
+        d = sy.Matrix(f)
+        g = sy.Matrix(w)
+        s = utils.default_convolve(d, g)
+
         data_bind = read_bind_if_exists(repo)
         build_data = read_build_2d(repo)
         if data_bind["func"] == "nest":
-            latex.latex_2d_bind_nest(build_data, d, g, name, False)
+            latex.latex_2d_bind_nest(build_data, d, g, path, False)
         if data_bind["func"] == "kron":
-            latex.latex_2d_bind_kron(build_data, d, g, name, False)
+            latex.latex_2d_bind_kron(build_data, d, g, path, False)
 
         (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
         bg = fast.g_to_bg2d(q1, b1, q2, b2, g)
