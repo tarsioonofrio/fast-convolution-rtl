@@ -155,6 +155,44 @@ def c_header(path, list_array, dict_defs):
     with open(path, "w") as f:
         f.write(source)
 
+def sv_pkg(path, list_array, dict_defs):
+    name = path.stem.upper()
+    source_str = (
+        f"package {name};\n"
+        "{code}\n"
+        f"endpackage\n"
+    )
+    array_str = "const {type} {name} = {{\n" "{value}\n" "}};\n"
+    def_str = "`define {key} {value}\n"
+    list_def = []
+    if len(dict_defs) > 0:
+        for k, v in dict_defs.items():
+            definition = def_str.format(key=k, value=v)
+            list_def.append(definition)
+
+    list_data = []
+    if len(list_array) > 0:
+        for array in list_array:
+            typ = array["type"]
+            name = array["name"]
+            np_arr = np.array(array["value"]).astype(typ)
+            shape = np_arr.shape
+            value = np_arr.tolist()
+            if typ == "float":
+                value_str = (",\n").join(
+                    ["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value]
+                )
+            else:
+                value_str = (",\n").join(["\t" + ", ".join(map(str, v)) for v in value])
+            size = "*".join(map(str, shape))
+            array = array_str.format(type=typ, name=name, value=value_str, size=size)
+            list_data.append(array)
+
+    list_def_data = list_def + ["\n"] + list_data
+    source = source_str.format(code="".join(list_def_data))
+    with open(path, "w") as f:
+        f.write(source)
+
 
 def c_shift(d, s, z):
     if s < 0:

@@ -314,8 +314,8 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "build.h", arr, {})
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
+    arr_float = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr_float, {})
     repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
     shutil.copy(
         package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
@@ -363,6 +363,9 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
             f.write(makefile_str)
+    repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
+
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -492,8 +495,10 @@ def build2d(
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "build.h", arr, {})
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
+    arr_float = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr_float, {})
+    repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
 
 
 def cmd_build2d_bind_nest(repo):
@@ -799,6 +804,28 @@ def cmd_sim_file(repo, feature_info, weight, suffix):
     return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
 
 
+def cmd_sim_seq(
+        repo, feature_info, weight, image_side, loop, suffix
+):
+    dim, c_len, b_len, a_len = read_init(repo)
+    quant_data = read_quant_if_exists(repo)
+    feat = np.arange(
+        feature_info, feature_info + image_side ** 2, size=image_side ** 2
+    )
+    feat_arr = feat.reshape(image_side, image_side)
+
+    if dim == 1:
+        wght = np.arange(
+            weight, weight + b_len ** 2, size=b_len ** 2
+        )
+        wght_arr = wght.reshape(b_len, b_len)
+    else:
+        wght = np.arange(
+            weight, weight + b_len ** 2, size=b_len[0] * b_len[1]
+        )
+        wght_arr = wght.reshape(b_len[0], b_len[1])
+    return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
+
 def cmd_sim_random(
         repo, feature_info, weight, image_side, loop, suffix
 ):
@@ -981,9 +1008,11 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
     # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr, dict_def)
+    arr_float = [{**r, "type": "float"} for r in list_array]
+    utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def)
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
+    repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, dict_def)
     return out_dict
 
 

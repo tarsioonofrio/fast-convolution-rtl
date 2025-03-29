@@ -37,6 +37,7 @@ class Repo(object):
         self.dir_example = self.root / "example"
         self.dir_sim = self.root / "sim"
         self.dir_clib = self.root / "clib"
+        self.dir_sv = self.root / "sv"
         self.dir_clib_make = self.dir_clib / "make"
         self.dir_clib_lib = self.dir_clib / "lib"
         self.dir_clib_main = self.dir_clib / "main"
@@ -333,6 +334,41 @@ def file(ctx, feature, weight, suffix):
 #     "--constant", "--const", "-c", type=int, default=1,
 #     help="Constant to multiply the weight.")
 # )
+@click.option(
+    "--image-side", "-s", default=32, help="Image side, must be a power of two."
+)
+@click.option(
+    "--loop", "-L", default=1, help="Total of execution loops. Not implemented"
+)
+@click.option(
+    "--feature",
+    "-f",
+    nargs=2,
+    default=[0, 256],
+    help="Minimal and maximal value of feature random data.",
+)
+@click.option(
+    "--weight",
+    "-w",
+    nargs=2,
+    default=[0, 1024],
+    help="Minimal and maximal value of weight random data.",
+)
+@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.pass_context
+def sim_rand(ctx, feature, weight, image_side, loop, suffix):
+    from .commands import cmd_sim_random
+
+    repo = ctx.obj
+    output = cmd_sim_random(repo, feature, weight, image_side, loop, suffix)
+    quant = output["quant"]
+    metric = output["metric"]
+    exit_code = 1 if quant == 0 and metric == 0 else 0
+    ctx.exit(exit_code)
+    click.echo(output["text"])
+
+
+@sim.command(name="seq", help="Simulation with sequential numbers")
 @click.option(
     "--image-side", "-s", default=32, help="Image side, must be a power of two."
 )

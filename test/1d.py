@@ -17,7 +17,7 @@ root = Path(__file__).parent.resolve()
 with open(root / "json/cmd_common.json") as f:
     cmd_common_dict = json.load(f)
 
-list_repo_path = [root / (Path(f).stem) for f in file_list1d]
+list_repo_path = [root / Path(f).stem for f in file_list1d]
 list_repo_opt = [["-p", f.as_posix()] for f in list_repo_path]
 
 list_cmd_dict = [
