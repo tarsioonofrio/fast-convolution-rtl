@@ -247,29 +247,35 @@ def toomcook_conv2d(d_size, g_size, points, g):
     return f
 
 
-def filter1d_slide2d(filt, in_arr, out_shape, index, in_size=5, out_size=3):
+def filter1d_slide2d(tap_filter, in_arr, out_shape, index, in_size=5, out_size=3):
     out_arr = np.zeros(out_shape, dtype=int)
     for r in range(index, out_shape[0] + index):
         for c in range(0, out_shape[1], out_size):
             f = in_arr[r, c : c + in_size]
             if len(f) == in_size:
-                out = filt(f).flat()
+                out = tap_filter(f).flat()
                 out_arr[r - index, c : c + out_size] = out
             else:
                 tmp_in_size = in_size - len(f)
                 zeros = tmp_in_size * [0]
-                out = filt(f.tolist() + zeros)
+                out = tap_filter(f.tolist() + zeros)
                 tmp_out_size = out_shape[0] - c
                 out_arr[r - index, c : c + tmp_out_size] = out[:tmp_out_size]
     return out_arr
 
 
-def sliding_window1d_2d(in_arr, out_shape, index, in_size=5, out_size=3):
+def sliding1d_window_2d(in_arr, out_shape, in_size=5, out_size=3):
     list_out = []
-    for r in range(index, out_shape[0] + index):
+    for r in range(0, out_shape[0]):
         for c in range(0, out_shape[1], out_size):
             f = in_arr[r, c: c + in_size]
-            list_out.append(f)
+            if len(f) == in_size:
+                list_out.append(f.reshape(-1))
+            else:
+                tmp_in_size = in_size - len(f)
+                zeros = tmp_in_size * [0]
+                f2 = np.array(f.tolist() + zeros)
+                list_out.append(f2.reshape(-1))
     return list_out
 
 
@@ -280,20 +286,20 @@ def filter1d_slide2d_count(out_shape, out_size):
     return count
 
 
-def filter2d_slide2d(filt, in_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
+def filter2d_slide2d(tap_filter, in_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
     out_arr = np.zeros(out_shape, dtype=int)
     for r in range(0, out_shape[0], out_size[0]):
         for c in range(0, out_shape[1], out_size[1]):
             feat = in_arr[r: r + in_size[0], c: c + in_size[1]]
             if tuple(feat.shape) == tuple(in_size):
-                out_tmp = filt(feat)
+                out_tmp = tap_filter(feat)
                 out_arr[r: r + out_size[0], c: c + out_size[1]] = out_tmp
             else:
                 row_in = feat.shape[0]
                 col_in = feat.shape[1]
                 new_feat = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new_feat[:row_in, :col_in] = feat
-                out_tmp = filt(new_feat)
+                out_tmp = tap_filter(new_feat)
                 row_out, col_out = out_arr[r: r + out_size[0], c: c + out_size[1]].shape
                 out_arr[r: r + row_out, c: c + col_out] = out_tmp[:row_out, :col_out]
     return out_arr
@@ -306,12 +312,19 @@ def filter2d_slide2d_count(out_shape, out_size):
     return count
 
 
-def sliding_window2d(in_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
+def sliding2d_window2d(in_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
     list_out = []
     for r in range(0, out_shape[0], out_size[0]):
         for c in range(0, out_shape[1], out_size[1]):
             feat = in_arr[r: r + in_size[0], c: c + in_size[1]]
-            list_out.append(feat.reshape(-1))
+            if tuple(feat.shape) == tuple(in_size):
+                list_out.append(feat.reshape(-1))
+            else:
+                row_in = feat.shape[0]
+                col_in = feat.shape[1]
+                new_feat = np.zeros((in_size[0], in_size[1]), dtype=int)
+                new_feat[:row_in, :col_in] = feat
+                list_out.append(new_feat.reshape(-1))
     return list_out
 
 
@@ -332,14 +345,10 @@ def csa_lst(mtx, positive=True):
     lst = log2_lst(mtx)
     signal = 1 if positive else -1
     max_pow = max_power(lst, signal)
-    max_lst = [
-        [
-            [
-                1 if len(c) > 0 and p in c["z"] and c["s"] == signal else 0
-                for c in r
-            ]
-            for r in lst
-        ]
+    max_lst = [[[
+        1 if len(c) > 0 and p in c["z"] and c["s"] == signal else 0
+        for c in r]
+        for r in lst]
         for p in range(max_pow + 1)
     ]
     return max_lst
@@ -347,15 +356,8 @@ def csa_lst(mtx, positive=True):
 
 def max_power(lst, positive=True):
     signal = 1 if positive else -1
-    max_pow = max(
-        [0]
-        + [
-            max(
-                [0]
-                + [max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal]
-            )
-            for r in lst
-        ]
+    max_pow = (
+        max([0] + [max([0] + [max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal]) for r in lst])
     )
     return max_pow
 

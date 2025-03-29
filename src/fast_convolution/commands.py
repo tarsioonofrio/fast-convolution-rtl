@@ -363,9 +363,8 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
             f.write(makefile_str)
-    repo.dir_sv.mkdir(parents=True, exist_ok=True)
-    utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
-
+    # repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -497,8 +496,8 @@ def build2d(
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     arr_float = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr_float, {})
-    repo.dir_sv.mkdir(parents=True, exist_ok=True)
-    utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
+    # repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
 
 
 def cmd_build2d_bind_nest(repo):
@@ -826,6 +825,7 @@ def cmd_sim_seq(
         wght_arr = wght.reshape(b_len[0], b_len[1])
     return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
 
+
 def cmd_sim_random(
         repo, feature_info, weight, image_side, loop, suffix
 ):
@@ -927,11 +927,11 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
             # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
 
-        feat_list_sv = [
-            fast.sliding_window1d_2d(feat_arr, output_default.shape, i, c_len, a_len)
-            for i in range(0, wght_arr.shape[0])
-        ]
-        # feat_list_sv = feat_arr
+        # feat_list_sv = [
+        #     fast.sliding1d_window_2d(feat_arr, output_default.shape, i, c_len, a_len)
+        #     for i in range(0, wght_arr.shape[0])
+        # ]
+        feat_list_sv = fast.sliding1d_window_2d(feat_arr, output_default.shape, c_len, a_len)
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
     else:
@@ -947,7 +947,8 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
-        feat_list_sv = fast.sliding_window2d(feat_arr, output_default.shape, c_len, a_len)
+        feat_list_sv = fast.sliding2d_window2d(feat_arr, output_default.shape, c_len, a_len)
+        # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0]
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
@@ -1018,9 +1019,9 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
     utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def)
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     list_array = [
-        {"name": "weight", "value": wght_arr},
-        {"name": "weight_gg", "value": bg},
-        {"name": "weight_gg_quant", "value": bg_quant},
+        {"name": "weight", "value": wght_arr.reshape(1, -1)},
+        {"name": "weight_gg", "value": np.array(bg).reshape(1, -1)},
+        {"name": "weight_gg_quant", "value": np.array(bg_quant).reshape(1, -1)},
         {"name": "feat_in", "value": feat_list_sv},
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
@@ -1118,4 +1119,11 @@ def example(dim, f, path, repo, w):
         arr_float = [{**r, "type": "float"} for r in list_array]
         utils.c_header(repo.dir_clib_data_float / "example_float.h", arr_float, {})
         repo.dir_sv.mkdir(parents=True, exist_ok=True)
+        list_array = [
+            {"name": "md", "value": np.array(d).reshape(1, -1)},
+            {"name": "mg", "value": np.array(g).reshape(1, -1)},
+            {"name": "mgg", "value": np.array(bg).reshape(1, -1)},
+            {"name": "ms_gold", "value": np.array(s).reshape(1, -1)},
+        ]
+        arr = [{**r, "type": "int"} for r in list_array]
         utils.sv_pkg(repo.dir_sv / "example.sv", arr, {})
