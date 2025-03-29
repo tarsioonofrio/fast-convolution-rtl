@@ -1,0 +1,8 @@
+14 a p
+4 a n
+14 A p
+4 A n
+12 c p
+12 c n
+12 C p
+12 C n

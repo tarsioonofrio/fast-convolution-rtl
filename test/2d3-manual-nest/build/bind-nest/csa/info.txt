@@ -1,0 +1,8 @@
+9 a p
+0 a n
+9 A p
+0 A n
+6 c p
+6 c n
+6 C p
+6 C n

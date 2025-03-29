@@ -1,5 +1,6 @@
 Feature: /home/tarsio/gaph/fast-convolution-rtl/images/karatsuba032.jpg
 Weights: /home/tarsio/gaph/fast-convolution-rtl/images/laplace.json
+Image side: 32
 Output default and naive are equals: True
 Output default and fast are equals: True
 Totals

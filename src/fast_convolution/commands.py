@@ -424,19 +424,19 @@ def cmd_build_manual_factorization2d(repo):
 
 
 def build2d(
-    repo,
-    list_points2d,
-    list_points1d,
-    a1,
-    b1,
-    c1,
-    q1,
-    a2,
-    b2,
-    c2,
-    q2,
-    b_len,
-    c_len,
+        repo,
+        list_points2d,
+        list_points1d,
+        a1,
+        b1,
+        c1,
+        q1,
+        a2,
+        b2,
+        c2,
+        q2,
+        b_len,
+        c_len,
 ):
     di1 = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len[0]))))
     g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[0]))))
@@ -783,26 +783,52 @@ def cmd_quant_shift(repo, bits):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def cmd_sim_file(repo, feature, weight, suffix):
+def cmd_sim_file(repo, feature_info, weight, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
-    with open(feature) as f:
-        image = Image.open(feature).convert("L")
+    with open(feature_info) as f:
+        image = Image.open(feature_info).convert("L")
         feat_arr = np.array(image)
+        image_side = feat_arr.shape[0]
     with open(weight) as f:
         w_arr = np.array(json.load(f))
         if dim == 1:
             wght_arr = w_arr.reshape(b_len, b_len)
-        elif dim == 2:
+        else:
             wght_arr = w_arr.reshape(b_len[0], b_len[1])
+    return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
 
+
+def cmd_sim_random(
+        repo, feature_info, weight, image_side, loop, suffix
+):
+    dim, c_len, b_len, a_len = read_init(repo)
+    quant_data = read_quant_if_exists(repo)
+    feat = np.random.randint(
+        feature_info[0], feature_info[1], size=image_side ** 2
+    )
+    feat_arr = feat.reshape(image_side, image_side)
+
+    if dim == 1:
+        wght = np.random.randint(
+            weight[0], weight[1], size=b_len ** 2
+        )
+        wght_arr = wght.reshape(b_len, b_len)
+    else:
+        wght = np.random.randint(
+            weight[0], weight[1], size=b_len[0] * b_len[1]
+        )
+        wght_arr = wght.reshape(b_len[0], b_len[1])
+    return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
+
+
+def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr):
     output_default = signal.convolve2d(
-        feat_arr, w_arr[::-1, ::-1], mode="valid"
+        feat_arr, wght_arr[::-1, ::-1], mode="valid"
     )
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
-
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
         # Corrected error in fast 1d conv
@@ -876,8 +902,7 @@ def cmd_sim_file(repo, feature, weight, suffix):
 
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
-
-    elif dim == 2:
+    else:
         points, c, b, a, q = read_build_2d(repo)
         conv_func = (
             fast.conv2d
@@ -898,18 +923,17 @@ def cmd_sim_file(repo, feature, weight, suffix):
         else:
             wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
-
     if len(quant_data) != 0:
         metric = r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = f"R2: {metric}\n"
+        text_metric = f"R2: {metric}%\n"
     else:
         metric = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {metric}\n"
-
     size = output_default.size
     text = (
-        f"Feature: {feature}\n"
+        f"Feature: {feature_info}\n"
         f"Weights: {weight}\n"
+        f"Image side: {image_side}\n"
         f"{text_equal}"
         f"{text_metric}"
         "Totals\n"
@@ -925,17 +949,14 @@ def cmd_sim_file(repo, feature, weight, suffix):
         path = repo.dir_sim / f"file-{suffix}"
     else:
         path = repo.dir_sim / "file"
-
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
-
     for arr, name in zip(
-        [feat_arr, wght_arr, output_default, output_fast],
-        ["d", "g", "s_default", "s"],
+            [feat_arr, wght_arr, output_default, output_fast],
+            ["d", "g", "s_default", "s"],
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
-
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_arr},
@@ -960,204 +981,8 @@ def cmd_sim_file(repo, feature, weight, suffix):
     # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
-
     arr = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr, dict_def)
-
-    out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
-    return out_dict
-
-
-def cmd_sim_random(
-    repo, feature_random, weight_random, image_side, loop, suffix
-):
-    dim, c_len, b_len, a_len = read_init(repo)
-    quant_data = read_quant_if_exists(repo)
-    feat = np.random.randint(
-        feature_random[0], feature_random[1], size=image_side**2
-    )
-    feat_arr = feat.reshape(image_side, image_side)
-
-    if dim == 1:
-        wght = np.random.randint(
-            weight_random[0], weight_random[1], size=b_len**2
-        )
-        wght_arr = wght.reshape(b_len, b_len)
-    elif dim == 2:
-        wght = np.random.randint(
-            weight_random[0], weight_random[1], size=b_len[0] * b_len[1]
-        )
-        wght_arr = wght.reshape(b_len[0], b_len[1])
-
-    output_default = signal.convolve2d(
-        feat_arr, wght_arr[::-1, ::-1], mode="valid"
-    )
-    output_naive = naive_convolve(feat_arr, wght_arr)
-    compare_naive = np.all(output_default == output_naive)
-    text_equal = f"Output default and naive are equals: {compare_naive}\n"
-
-    if dim == 1:
-        points, c, b, a, q = read_build_1d(repo)
-        # Corrected error in fast 1d conv
-        # between C and python in quantized data
-        # In python the data is right shifted and after that is summed
-        # In C the data is summed and after that is summed
-        # shift operator not is linear
-        # i believe is better change C to be like the python code
-        # data in right shifted and after that is summed
-        # TODO
-        # compose inverse quantization in filter like quant.select_conv2d
-
-        bg = (
-            np.array([fast.g_to_bg(q, b, wght_arr[i]) for i in range(b_len)])
-            .reshape(b_len, -1)
-            .tolist()
-        )
-        if len(quant_data) == 0:
-            fast_conv = [
-                fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)
-            ]
-            output_fast = np.sum(
-                axis=0,
-                a=[
-                    fast.filter1d_slide2d(
-                        fast_conv[i],
-                        feat_arr,
-                        output_default.shape,
-                        i,
-                        c_len,
-                        a_len,
-                    )
-                    for i in range(0, wght_arr.shape[0])
-                ],
-            )
-            bg_quant = bg
-        else:
-            weight_quant = np.left_shift(wght_arr, quant_data["params"]["bits"])
-            bg_q = [
-                fast.g_to_bg(q, b, weight_quant[i])
-                for i in range(0, weight_quant.shape[0])
-            ]
-            bg_quant_int = [
-                sy.Matrix(np.array(bg_q[i], dtype=int))
-                for i in range(0, weight_quant.shape[0])
-            ]
-            fast_conv = [
-                fast.wrap_convolution(c, bg_quant_int[i], a)
-                for i in range(0, weight_quant.shape[0])
-            ]
-
-            output_fast_ = np.sum(
-                axis=0,
-                a=[
-                    fast.filter1d_slide2d(
-                        fast_conv[i],
-                        feat_arr,
-                        output_default.shape,
-                        i,
-                        c_len,
-                        a_len,
-                    )
-                    for i in range(0, wght_arr.shape[0])
-                ],
-            )
-            output_fast = np.right_shift(
-                output_fast_, quant_data["params"]["bits"]
-            )
-            # wght_quant = quant.select_func(quant_data)(wght_arr)
-            bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
-
-        count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_nest * len(points) * len(fast_conv)
-    elif dim == 2:
-        points, c, b, a, q = read_build_2d(repo)
-        conv_func = (
-            fast.conv2d
-            if len(quant_data) == 0
-            else quant.select_conv2d(quant_data)
-        )
-        fast_conv = conv_func(
-            wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
-        )
-        output_fast = fast.filter2d_slide2d(
-            fast_conv, feat_arr, output_default.shape, c_len, a_len
-        )
-        count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_nest * len(points[0]) * len(points[1])
-        bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
-        if len(quant_data) == 0:
-            bg_quant = bg
-        else:
-            wght_quant = quant.select_func(quant_data)(wght_arr)
-            bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
-
-    if len(quant_data) != 0:
-        metric = r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = f"R2: {metric}%\n"
-    else:
-        metric = np.all(output_default == output_fast)
-        text_metric = f"Output default and fast are equals: {metric}\n"
-
-    size = output_default.size
-    text = (
-        f"Feature: {feature_random}\n"
-        f"Weights: {weight_random}\n"
-        f"Image side: {image_side}\n"
-        f"{text_equal}"
-        f"{text_metric}"
-        "Totals\n"
-        "Naive\n"
-        f"Convolutions: {size}\n"
-        f"Multiplications: {size * 9}\n"
-        f"Additions: {size * 8}\n"
-        "Fast\n"
-        f"Convolutions: {count_nest}\n"
-        f"Multiplications: {count_mult}\n"
-    )
-
-    if len(suffix) > 0:
-        path = repo.dir_sim / f"rand-{suffix}"
-    else:
-        path = repo.dir_sim / "rand"
-
-    path.mkdir(exist_ok=True, parents=True)
-    with open(path / "sim.txt", "w") as f:
-        f.write(text)
-
-    for arr, name in zip(
-        [feat_arr, wght_arr, output_default, output_fast],
-        ["d", "g", "s_default", "s"],
-    ):
-        np.savetxt(path / f"{name}.txt", arr, fmt="%d")
-
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    list_array = [
-        {"name": "weight", "value": wght_arr},
-        {"name": "weight_gg", "value": bg},
-        {"name": "weight_gg_quant", "value": bg_quant},
-        {"name": "feat_in", "value": feat_arr},
-        {"name": "gold", "value": output_default},
-        {"name": "gold_quant", "value": output_fast},
-    ]
-    quant_dict = (
-        {f"QUANT_{k}".upper(): v for k, v in quant_data["params"].items()}
-        if len(quant_data) > 0
-        else {}
-    )
-    dict_def = {
-        "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
-        **quant_dict,
-        "W_SIZE": wght_arr.shape[0],
-        "FIN_SIZE": feat_arr.shape[0],
-        "FOUT_SIZE": output_fast.shape[0],
-    }
-
-    arr = [{**r, "type": "int"} for r in list_array]
-    utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
-
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr, dict_def)
-
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     return out_dict
 
