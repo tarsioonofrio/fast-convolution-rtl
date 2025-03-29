@@ -998,16 +998,19 @@ def cmd_example_random(repo, feature, weight, suffix):
 
     if dim == 1:
         f = np.random.randint(feature[0], feature[1], size=c_len)
-        d = sy.Matrix(f)
         w = np.random.randint(weight[0], weight[1], size=b_len)
-        g = sy.Matrix(w)
-        s = utils.default_convolve(d, g)
     else:
         f0 = np.random.randint(feature[0], feature[1], size=c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
-        d = sy.Matrix(f)
         w0 = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
+
+    if dim == 1:
+        d = sy.Matrix(f)
+        g = sy.Matrix(w)
+        s = utils.default_convolve(d, g)
+    else:
+        d = sy.Matrix(f)
         g = sy.Matrix(w)
         s = utils.default_convolve(d, g)
 
@@ -1028,7 +1031,6 @@ def cmd_example_random(repo, feature, weight, suffix):
         utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
     else:
         data_bind = read_bind_if_exists(repo)
-        init_data = read_init(repo)
         build_data = read_build_2d(repo)
         if data_bind["func"] == "nest":
             latex.latex_2d_bind_nest(build_data, d, g, path, False)
@@ -1059,18 +1061,23 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         name = repo.dir_example / f"example-seq-{suffix}"
     else:
         name = repo.dir_example / "example-seq"
+
     if dim == 1:
         f = np.arange(feature, feature + c_len)
-        d = sy.Matrix(f)
         w = np.arange(weight, weight + b_len)
-        g = sy.Matrix(w)
-        s = utils.default_convolve(d, g)
     else:
         f0 = np.arange(feature, feature + c_len[0] * c_len[1])
         f = np.array(f0).reshape(c_len[0], c_len[1])
-        d = sy.Matrix(f)
         w0 = np.arange(weight, weight + b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
+
+    if dim == 1:
+        f = np.arange(feature, feature + c_len)
+        d = sy.Matrix(f)
+        g = sy.Matrix(w)
+        s = utils.default_convolve(d, g)
+    else:
+        d = sy.Matrix(f)
         g = sy.Matrix(w)
         s = utils.default_convolve(d, g)
 
@@ -1091,7 +1098,6 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         utils.c_header(repo.dir_clib_data_float / "example_float.h", arr, {})
     else:
         data_bind = read_bind_if_exists(repo)
-        init_data = read_init(repo)
         build_data = read_build_2d(repo)
         if data_bind["func"] == "nest":
             latex.latex_2d_bind_nest(build_data, d, g, name, False)
