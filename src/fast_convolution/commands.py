@@ -1028,7 +1028,7 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
     ]
     arr = [{**r, "type": "int"} for r in list_array]
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
-    utils.sv_pkg(path / "sim.sv", arr, dict_def)
+    utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
 
 
@@ -1127,4 +1127,4 @@ def example(dim, f, path, repo, w):
         ]
         arr = [{**r, "type": "int"} for r in list_array]
         path.mkdir(parents=True, exist_ok=True)
-        utils.sv_pkg(path / "example.sv", arr, {})
+        utils.sv_pkg(path / "data.sv", arr, {})
