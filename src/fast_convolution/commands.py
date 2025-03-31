@@ -426,19 +426,19 @@ def cmd_build_manual_factorization2d(repo):
 
 
 def build2d(
-        repo,
-        list_points2d,
-        list_points1d,
-        a1,
-        b1,
-        c1,
-        q1,
-        a2,
-        b2,
-        c2,
-        q2,
-        b_len,
-        c_len,
+    repo,
+    list_points2d,
+    list_points1d,
+    a1,
+    b1,
+    c1,
+    q1,
+    a2,
+    b2,
+    c2,
+    q2,
+    b_len,
+    c_len,
 ):
     di1 = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len[0]))))
     g1 = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len[0]))))
@@ -800,56 +800,96 @@ def cmd_sim_file(repo, feature_info, weight, suffix):
             wght_arr = w_arr.reshape(b_len, b_len)
         else:
             wght_arr = w_arr.reshape(b_len[0], b_len[1])
-    return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
+    return sim(
+        a_len,
+        b_len,
+        c_len,
+        dim,
+        feat_arr,
+        feature_info,
+        image_side,
+        quant_data,
+        repo,
+        suffix,
+        weight,
+        wght_arr,
+    )
 
 
-def cmd_sim_seq(
-        repo, feature_info, weight, image_side, loop, suffix
-):
+def cmd_sim_seq(repo, feature_info, weight, image_side, loop, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     feat = np.arange(
-        feature_info, feature_info + image_side ** 2, size=image_side ** 2
+        feature_info, feature_info + image_side**2, size=image_side**2
     )
     feat_arr = feat.reshape(image_side, image_side)
 
     if dim == 1:
-        wght = np.arange(
-            weight, weight + b_len ** 2, size=b_len ** 2
-        )
+        wght = np.arange(weight, weight + b_len**2, size=b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
     else:
-        wght = np.arange(
-            weight, weight + b_len ** 2, size=b_len[0] * b_len[1]
-        )
+        wght = np.arange(weight, weight + b_len**2, size=b_len[0] * b_len[1])
         wght_arr = wght.reshape(b_len[0], b_len[1])
-    return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
+    return sim(
+        a_len,
+        b_len,
+        c_len,
+        dim,
+        feat_arr,
+        feature_info,
+        image_side,
+        quant_data,
+        repo,
+        suffix,
+        weight,
+        wght_arr,
+    )
 
 
-def cmd_sim_random(
-        repo, feature_info, weight, image_side, loop, suffix
-):
+def cmd_sim_random(repo, feature_info, weight, image_side, loop, suffix):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     feat = np.random.randint(
-        feature_info[0], feature_info[1], size=image_side ** 2
+        feature_info[0], feature_info[1], size=image_side**2
     )
     feat_arr = feat.reshape(image_side, image_side)
 
     if dim == 1:
-        wght = np.random.randint(
-            weight[0], weight[1], size=b_len ** 2
-        )
+        wght = np.random.randint(weight[0], weight[1], size=b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
     else:
-        wght = np.random.randint(
-            weight[0], weight[1], size=b_len[0] * b_len[1]
-        )
+        wght = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
         wght_arr = wght.reshape(b_len[0], b_len[1])
-    return sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr)
+    return sim(
+        a_len,
+        b_len,
+        c_len,
+        dim,
+        feat_arr,
+        feature_info,
+        image_side,
+        quant_data,
+        repo,
+        suffix,
+        weight,
+        wght_arr,
+    )
 
 
-def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data, repo, suffix, weight, wght_arr):
+def sim(
+    a_len,
+    b_len,
+    c_len,
+    dim,
+    feat_arr,
+    feature_info,
+    image_side,
+    quant_data,
+    repo,
+    suffix,
+    weight,
+    wght_arr,
+):
     output_default = signal.convolve2d(
         feat_arr, wght_arr[::-1, ::-1], mode="valid"
     )
@@ -931,7 +971,9 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
         #     fast.sliding1d_window_2d(feat_arr, output_default.shape, i, c_len, a_len)
         #     for i in range(0, wght_arr.shape[0])
         # ]
-        feat_list_sv = fast.sliding1d_window_2d(feat_arr, output_default.shape, c_len, a_len)
+        feat_list_sv = fast.sliding1d_window_2d(
+            feat_arr, output_default.shape, c_len, a_len
+        )
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
     else:
@@ -947,7 +989,9 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
-        feat_list_sv = fast.sliding2d_window2d(feat_arr, output_default.shape, c_len, a_len)
+        feat_list_sv = fast.sliding2d_window2d(
+            feat_arr, output_default.shape, c_len, a_len
+        )
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0]
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
@@ -987,8 +1031,8 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
     with open(path / "sim.txt", "w") as f:
         f.write(text)
     for arr, name in zip(
-            [feat_arr, wght_arr, output_default, output_fast],
-            ["d", "g", "s_default", "s"],
+        [feat_arr, wght_arr, output_default, output_fast],
+        ["d", "g", "s_default", "s"],
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
@@ -1016,17 +1060,23 @@ def sim(a_len, b_len, c_len, dim, feat_arr, feature_info, image_side, quant_data
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
     arr_float = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def)
+    utils.c_header(
+        repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
+    )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     list_array = [
         {"name": "weight", "value": wght_arr.reshape(1, -1)},
         {"name": "weight_gg", "value": np.array(bg).reshape(1, -1)},
         {"name": "weight_gg_quant", "value": np.array(bg_quant).reshape(1, -1)},
         {"name": "feat_in", "value": feat_list_sv},
-        {"name": "gold", "value": output_default},
-        {"name": "gold_quant", "value": output_fast},
+        {"name": "feat_out", "value": output_default},
+        {"name": "feat_out_quant", "value": output_fast},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
+    dict_def = {
+        "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
+        **quant_dict,
+    }
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
@@ -1117,13 +1167,15 @@ def example(dim, f, path, repo, w):
         utils.c_header(repo.dir_clib_data / "example.h", arr, {})
 
         arr_float = [{**r, "type": "float"} for r in list_array]
-        utils.c_header(repo.dir_clib_data_float / "example_float.h", arr_float, {})
+        utils.c_header(
+            repo.dir_clib_data_float / "example_float.h", arr_float, {}
+        )
         repo.dir_sv.mkdir(parents=True, exist_ok=True)
         list_array = [
             {"name": "md", "value": np.array(d).reshape(1, -1)},
             {"name": "mg", "value": np.array(g).reshape(1, -1)},
             {"name": "mgg", "value": np.array(bg).reshape(1, -1)},
-            {"name": "ms_gold", "value": np.array(s).reshape(1, -1)},
+            {"name": "ms", "value": np.array(s).reshape(1, -1)},
         ]
         arr = [{**r, "type": "int"} for r in list_array]
         path.mkdir(parents=True, exist_ok=True)

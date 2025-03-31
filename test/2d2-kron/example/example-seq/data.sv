@@ -9,7 +9,7 @@ const int mg = {
 const int mgg = {
 	'{0, -1, 0, -2, -4, 9, 3, 7, -1, 3, 1, 2, -6, 10, 3, 8
 };
-const int ms_gold = {
+const int ms = {
 	'{258, 294, 402, 438
 };
 
