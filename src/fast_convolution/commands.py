@@ -124,15 +124,19 @@ def read_bind_if_exists(repo):
 def header_init(repo, dimensions, a, b, c, m):
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     init_path = repo.dir_clib_data / "init.h"
-    if dimensions == 1:
+    dict_defs = dict_dimension(dimensions, a, b, c, m)
+    utils.c_header(init_path, [], dict_defs)
+
+
+def dict_dimension(dim, a, b, c, m):
+    if dim == 1:
         dict_defs = {
             "A_SIZE": a,
             "B_SIZE": b,
             "C_SIZE": c,
             "M_SIZE": m,
         }
-        utils.c_header(init_path, [], dict_defs)
-    elif dimensions == 2:
+    elif dim == 2:
         dict_defs = {
             "A1_SIZE": a,
             "B1_SIZE": b,
@@ -143,7 +147,7 @@ def header_init(repo, dimensions, a, b, c, m):
             "C2_SIZE": c,
             "M2_SIZE": m,
         }
-        utils.c_header(init_path, [], dict_defs)
+    return dict_defs
 
 
 def cmd_init(repo, dimensions, in_len, out_len, w):
@@ -503,7 +507,7 @@ def build2d(
 def cmd_build2d_bind_nest(repo):
     path = repo.dir_build / "bind-nest"
     path.mkdir(parents=True, exist_ok=True)
-    init_data = read_init(repo)
+    # init_data = read_init(repo)
     build_data = read_build_2d(repo)
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
@@ -1065,12 +1069,9 @@ def sim(
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     list_array = [
-        {"name": "weight", "value": wght_arr.reshape(1, -1)},
-        {"name": "weight_gg", "value": np.array(bg).reshape(1, -1)},
-        {"name": "weight_gg_quant", "value": np.array(bg_quant).reshape(1, -1)},
-        {"name": "feat_in", "value": feat_list_sv},
-        {"name": "feat_out", "value": output_default},
-        {"name": "feat_out_quant", "value": output_fast},
+        {"name": "weight[][]", "value": np.array(bg_quant).reshape(1, -1)},
+        {"name": "feat_in[][]", "value": feat_list_sv},
+        {"name": "feat_out[][]", "value": output_fast},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {
@@ -1172,11 +1173,19 @@ def example(dim, f, path, repo, w):
         )
         repo.dir_sv.mkdir(parents=True, exist_ok=True)
         list_array = [
-            {"name": "md", "value": np.array(d).reshape(1, -1)},
-            {"name": "mg", "value": np.array(g).reshape(1, -1)},
-            {"name": "mgg", "value": np.array(bg).reshape(1, -1)},
-            {"name": "ms", "value": np.array(s).reshape(1, -1)},
+            {"name": "feat_in[][]", "value": np.array(d).reshape(1, -1)},
+            {"name": "weight[][]", "value": np.array(bg).reshape(1, -1)},
+            {"name": "feat_out[][]", "value": np.array(s).reshape(1, -1)},
         ]
         arr = [{**r, "type": "int"} for r in list_array]
+        dim, c_len, b_len, a_len = read_init(repo)
+        _, _, _, _, (q1, q2) = read_build_2d(repo)
+        dict_defs = dict_dimension(
+            dim,
+            a_len[0],
+            b_len[0],
+            c_len[0],
+            len(q1),
+        )
         path.mkdir(parents=True, exist_ok=True)
-        utils.sv_pkg(path / "data.sv", arr, {})
+        utils.sv_pkg(path / "data.sv", arr, dict_defs)

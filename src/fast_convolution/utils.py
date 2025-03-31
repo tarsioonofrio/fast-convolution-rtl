@@ -159,12 +159,12 @@ def c_header(path, list_array, dict_defs):
 def sv_pkg(path, list_array, dict_defs):
     name = path.stem
     source_str = (
-        f"package {name};\n"
-        "{code}\n"
+        f"package {name};\n\n"
+        "{code}\n\n"
         f"endpackage\n"
     )
-    array_str = "const {type} {name} = {{\n" "{value}\n" "}};\n"
-    def_str = "`define {key} {value}\n"
+    array_str = "  const {type} {name} = {{\n" "{value}\n" "}};\n"
+    def_str = "  `define {key} {value}\n"
     list_def = []
     if len(dict_defs) > 0:
         for k, v in dict_defs.items():
@@ -179,7 +179,7 @@ def sv_pkg(path, list_array, dict_defs):
             np_arr = np.array(array["value"]).astype(typ)
             shape = np_arr.shape
             value = np_arr.tolist()
-            value_str = ("},\n").join(["\t'{" + ", ".join(map(str, v)) for v in value])
+            value_str = ("},\n").join(["  '{" + ", ".join(map(str, v)) for v in value])
             size = "*".join(map(str, shape))
             array = array_str.format(type=typ, name=name, value=value_str, size=size)
             list_data.append(array)
