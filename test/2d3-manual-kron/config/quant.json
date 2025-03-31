@@ -1,6 +1,6 @@
 {
     "func": "shift",
     "params": {
-        "bits": 4
+        "bits": 8
     }
 }

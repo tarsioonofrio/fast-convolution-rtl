@@ -2,7 +2,7 @@
 #define C_SIM_H
 
 #define QUANT SHIFT
-#define QUANT_BITS 4
+#define QUANT_BITS 8
 #define W_SIZE 3
 #define FIN_SIZE 32
 #define FOUT_SIZE 30
@@ -18,9 +18,9 @@ const int weight_gg[3*6] = {
 	0, 1, 0, 1, 0, 1
 };
 const int weight_gg_quant[3*6] = {
-	0, 16, 0, 16, 0, 16,
-	16, -64, 16, -48, 32, -48,
-	0, 16, 0, 16, 0, 16
+	0, 256, 0, 256, 0, 256,
+	256, -1024, 256, -768, 512, -768,
+	0, 256, 0, 256, 0, 256
 };
 const int feat_in[32*32] = {
 	118, 120, 124, 118, 122, 116, 115, 116, 111, 109, 111, 107, 109, 108, 110, 116, 117, 121, 124, 132, 135, 136, 140, 143, 144, 148, 151, 152, 153, 154, 152, 152,

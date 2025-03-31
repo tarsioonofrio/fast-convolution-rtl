@@ -160,10 +160,10 @@ def sv_pkg(path, list_array, dict_defs):
     name = path.stem
     source_str = (
         f"package {name};\n\n"
-        "{code}\n\n"
+        "{code}\n"
         f"endpackage\n"
     )
-    array_str = "  const {type} {name} = {{\n" "{value}\n" "  }};\n"
+    array_str = "  const {type} {name} = '{{\n" "{value}\n" "  }};\n"
     def_str = "  `define {key} {value}\n"
     list_def = []
     if len(dict_defs) > 0:

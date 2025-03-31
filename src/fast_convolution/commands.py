@@ -1069,9 +1069,9 @@ def sim(
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     list_array = [
-        {"name": "weight[][]", "value": np.array(bg_quant).reshape(1, -1)},
-        {"name": "feat_in[][]", "value": feat_list_sv},
-        {"name": "feat_out[][]", "value": output_fast},
+        {"name": "const_weight[][]", "value": np.array(bg_quant).reshape(1, -1)},
+        {"name": "const_feat_in[][]", "value": feat_list_sv},
+        {"name": "const_feat_out[][]", "value": output_fast},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {
@@ -1173,19 +1173,19 @@ def example(dim, f, path, repo, w):
         )
         repo.dir_sv.mkdir(parents=True, exist_ok=True)
         list_array = [
-            {"name": "feat_in[][]", "value": np.array(d).reshape(1, -1)},
-            {"name": "weight[][]", "value": np.array(bg).reshape(1, -1)},
-            {"name": "feat_out[][]", "value": np.array(s).reshape(1, -1)},
+            {"name": "const_weight[][]", "value": np.array(bg).reshape(1, -1)},
+            {"name": "const_feat_in[][]", "value": np.array(d).reshape(1, -1)},
+            {"name": "const_feat_out[][]", "value": np.array(s).reshape(1, -1)},
         ]
-        arr = [{**r, "type": "int"} for r in list_array]
-        dim, c_len, b_len, a_len = read_init(repo)
-        _, _, _, _, (q1, q2) = read_build_2d(repo)
-        dict_defs = dict_dimension(
-            dim,
-            a_len[0],
-            b_len[0],
-            c_len[0],
-            len(q1),
-        )
-        path.mkdir(parents=True, exist_ok=True)
-        utils.sv_pkg(path / "data.sv", arr, dict_defs)
+        # arr = [{**r, "type": "int"} for r in list_array]
+        # dim, c_len, b_len, a_len = read_init(repo)
+        # _, _, _, _, (q1, q2) = read_build_2d(repo)
+        # dict_defs = dict_dimension(
+        #     dim,
+        #     a_len[0],
+        #     b_len[0],
+        #     c_len[0],
+        #     len(q1),
+        # )
+        # path.mkdir(parents=True, exist_ok=True)
+        # utils.sv_pkg(path / "data.sv", arr, dict_defs)
