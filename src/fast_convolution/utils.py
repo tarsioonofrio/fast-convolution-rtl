@@ -157,7 +157,7 @@ def c_header(path, list_array, dict_defs):
 
 
 def sv_pkg(path, list_array, dict_defs):
-    name = path.stem.upper()
+    name = path.stem
     source_str = (
         f"package {name};\n"
         "{code}\n"

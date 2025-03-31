@@ -1,4 +1,4 @@
-package DATA;
+package data;
 `define QUANT SHIFT
 `define QUANT_BITS 4
 `define W_SIZE 3

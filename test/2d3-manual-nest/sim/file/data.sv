@@ -1,4 +1,4 @@
-package DATA;
+package data;
 `define QUANT None
 `define W_SIZE 3
 `define FIN_SIZE 32
