@@ -1069,7 +1069,10 @@ def sim(
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     list_array = [
-        {"name": "const_weight[][]", "value": np.array(bg_quant).reshape(1, -1)},
+        {
+            "name": "const_weight[][]",
+            "value": np.array(bg_quant).reshape(1, -1),
+        },
         {"name": "const_feat_in[][]", "value": feat_list_sv},
         {"name": "const_feat_out[][]", "value": output_fast},
     ]
@@ -1078,7 +1081,6 @@ def sim(
         "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
         **quant_dict,
     }
-    repo.dir_sv.mkdir(parents=True, exist_ok=True)
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
 
@@ -1171,12 +1173,11 @@ def example(dim, f, path, repo, w):
         utils.c_header(
             repo.dir_clib_data_float / "example_float.h", arr_float, {}
         )
-        repo.dir_sv.mkdir(parents=True, exist_ok=True)
-        list_array = [
-            {"name": "const_weight[][]", "value": np.array(bg).reshape(1, -1)},
-            {"name": "const_feat_in[][]", "value": np.array(d).reshape(1, -1)},
-            {"name": "const_feat_out[][]", "value": np.array(s).reshape(1, -1)},
-        ]
+        # list_array = [
+        #     {"name": "const_weight[][]", "value": np.array(bg).reshape(1, -1)},
+        #     {"name": "const_feat_in[][]", "value": np.array(d).reshape(1, -1)},
+        #     {"name": "const_feat_out[][]", "value": np.array(s).reshape(1, -1)},
+        # ]
         # arr = [{**r, "type": "int"} for r in list_array]
         # dim, c_len, b_len, a_len = read_init(repo)
         # _, _, _, _, (q1, q2) = read_build_2d(repo)

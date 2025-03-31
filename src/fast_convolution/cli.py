@@ -298,7 +298,7 @@ def sim():
     pass
 
 
-@sim.command(help="Simulation using file")
+@sim.command(name="file", help="Simulation using file")
 @click.option(
     "--feature",
     "-f",
@@ -313,11 +313,7 @@ def sim():
 )
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
 @click.pass_context
-# @click.option("--mae", flag_value=True, help="Mean absolute error")
-# @click.option("--mse", flag_value=True, help="Mean squared error")
-# @click.option("--rmse", flag_value=True, help="Root mean squared error")
-# @click.option("--r2", flag_value=True, help="R2", default=True)
-def file(ctx, feature, weight, suffix):
+def sim_file(ctx, feature, weight, suffix):
     from .commands import cmd_sim_file
 
     repo = ctx.obj
@@ -328,12 +324,7 @@ def file(ctx, feature, weight, suffix):
     ctx.exit(exit_code)
     click.echo(output["text"])
 
-
 @sim.command(name="rand", help="Simulation with random numbers")
-# @click.option(
-#     "--constant", "--const", "-c", type=int, default=1,
-#     help="Constant to multiply the weight.")
-# )
 @click.option(
     "--image-side", "-s", default=32, help="Image side, must be a power of two."
 )
@@ -366,41 +357,39 @@ def sim_rand(ctx, feature, weight, image_side, loop, suffix):
     exit_code = 1 if quant == 0 and metric == 0 else 0
     ctx.exit(exit_code)
     click.echo(output["text"])
-
 
 @sim.command(name="seq", help="Simulation with sequential numbers")
 @click.option(
     "--image-side", "-s", default=32, help="Image side, must be a power of two."
 )
 @click.option(
-    "--loop", "-L", default=1, help="Total of execution loops. Not implemented"
-)
-@click.option(
     "--feature",
     "-f",
     nargs=2,
     default=[0, 256],
-    help="Minimal and maximal value of feature random data.",
+    help="Minimal and maximal value of feature sequential data.",
 )
 @click.option(
     "--weight",
     "-w",
     nargs=2,
     default=[0, 1024],
-    help="Minimal and maximal value of weight random data.",
+    help="Minimal and maximal value of weight sequential data.",
 )
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
 @click.pass_context
-def sim_rand(ctx, feature, weight, image_side, loop, suffix):
-    from .commands import cmd_sim_random
+def sim_seq(ctx, feature, weight, image_side, loop, suffix):
+    from .commands import cmd_sim_seq
 
     repo = ctx.obj
-    output = cmd_sim_random(repo, feature, weight, image_side, loop, suffix)
+    output = cmd_sim_seq(repo, feature, weight, image_side, loop, suffix)
     quant = output["quant"]
     metric = output["metric"]
     exit_code = 1 if quant == 0 and metric == 0 else 0
     ctx.exit(exit_code)
     click.echo(output["text"])
+
+
 
 
 @main.group(help="Create example")
@@ -433,7 +422,7 @@ def ex_rand(ctx, feature, weight, suffix):
     click.echo("Random example")
 
 
-@example.command(help="Example with sequential numbers")
+@example.command(name="seq", help="Example with sequential numbers")
 @click.option(
     "--feature",
     "-f",
@@ -445,7 +434,7 @@ def ex_rand(ctx, feature, weight, suffix):
 )
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
 @click.pass_context
-def seq(ctx, feature, weight, suffix):
+def ex_seq(ctx, feature, weight, suffix):
     from .commands import cmd_example_sequential
 
     repo = ctx.obj
