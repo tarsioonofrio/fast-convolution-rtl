@@ -312,20 +312,26 @@ def filter2d_slide2d_count(out_shape, out_size):
     return count
 
 
-def sliding2d_window2d(in_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
+def sliding2d_window2d(in_arr, out_arr, out_shape, in_size=(5, 5), out_size=(3, 3)):
+    list_in = []
     list_out = []
     for r in range(0, out_shape[0], out_size[0]):
         for c in range(0, out_shape[1], out_size[1]):
             feat = in_arr[r: r + in_size[0], c: c + in_size[1]]
             if tuple(feat.shape) == tuple(in_size):
-                list_out.append(feat.reshape(-1))
+                list_in.append(feat.reshape(-1))
+                list_out.append(out_arr[r: r + out_size[0], c: c + out_size[1]].reshape(-1))
             else:
                 row_in = feat.shape[0]
                 col_in = feat.shape[1]
                 new_feat = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new_feat[:row_in, :col_in] = feat
-                list_out.append(new_feat.reshape(-1))
-    return list_out
+                list_in.append(new_feat.reshape(-1))
+                new_out = np.zeros((out_size[0], out_size[1]), dtype=int)
+                row_out, col_out = out_arr[r: r + out_size[0], c: c + out_size[1]].shape
+                new_out[:row_out, :col_out] = out_arr[r: r + row_out, c: c + col_out]
+                list_out.append(new_out.reshape(-1))
+    return list_in, list_out
 
 
 def c3x3_5m20a9e(g):

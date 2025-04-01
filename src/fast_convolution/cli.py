@@ -324,6 +324,7 @@ def sim_file(ctx, feature, weight, suffix):
     ctx.exit(exit_code)
     click.echo(output["text"])
 
+
 @sim.command(name="rand", help="Simulation with random numbers")
 @click.option(
     "--image-side", "-s", default=32, help="Image side, must be a power of two."
@@ -358,6 +359,7 @@ def sim_rand(ctx, feature, weight, image_side, loop, suffix):
     ctx.exit(exit_code)
     click.echo(output["text"])
 
+
 @sim.command(name="seq", help="Simulation with sequential numbers")
 @click.option(
     "--image-side", "-s", default=32, help="Image side, must be a power of two."
@@ -388,8 +390,6 @@ def sim_seq(ctx, feature, weight, image_side, loop, suffix):
     exit_code = 1 if quant == 0 and metric == 0 else 0
     ctx.exit(exit_code)
     click.echo(output["text"])
-
-
 
 
 @main.group(help="Create example")
@@ -439,6 +439,29 @@ def ex_seq(ctx, feature, weight, suffix):
 
     repo = ctx.obj
     cmd_example_sequential(repo, feature, weight, suffix)
+    click.echo("Sequential example")
+
+
+@example.command(name="list", help="Example from list of numbers")
+@click.option(
+    "--feature",
+    "-f",
+    type=str,
+    help="List of features.",
+)
+@click.option("--weight", "-w", type=str, help="List of weights.")
+@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.pass_context
+def ex_list(ctx, feature, weight, suffix):
+    from .commands import cmd_example_list
+
+    repo = ctx.obj
+    cmd_example_list(
+        repo,
+        list(map(int, feature.split())),
+        list(map(int, weight.split())),
+        suffix,
+    )
     click.echo("Sequential example")
 
 

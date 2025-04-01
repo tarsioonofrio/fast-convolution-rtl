@@ -993,8 +993,8 @@ def sim(
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
-        feat_list_sv = fast.sliding2d_window2d(
-            feat_arr, output_default.shape, c_len, a_len
+        feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
+            feat_arr, output_fast, output_default.shape, c_len, a_len
         )
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0]
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
@@ -1074,13 +1074,19 @@ def sim(
             "value": np.array(bg_quant).reshape(1, -1),
         },
         {"name": "const_feat_in[][]", "value": feat_list_sv},
-        {"name": "const_feat_out[][]", "value": output_fast},
+        {"name": "const_feat_out[][]", "value": out_feat_list_sv},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    dict_def = {
-        "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
-        **quant_dict,
-    }
+    dim, c_len, b_len, a_len = read_init(repo)
+    _, _, _, _, (q1, q2) = read_build_2d(repo)
+    dict_dim = dict_dimension(
+        dim,
+        a_len[0],
+        b_len[0],
+        c_len[0],
+        len(q1),
+    )
+    dict_def = {**quant_dict, **dict_dim}
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
 
@@ -1122,6 +1128,32 @@ def cmd_example_sequential(repo, feature, weight, suffix):
         f = np.array(f0).reshape(c_len[0], c_len[1])
         w0 = np.arange(weight, weight + b_len[0] * b_len[1])
         w = np.array(w0).reshape(b_len[0], b_len[1])
+    example(dim, f, path, repo, w)
+
+
+def cmd_example_list(repo, feature, weight, suffix):
+    dim, c_len, b_len, a_len = read_init(repo)
+    repo.dir_example.mkdir(parents=True, exist_ok=True)
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+    if len(suffix) > 0:
+        path = repo.dir_example / f"example-list-{suffix}"
+    else:
+        path = repo.dir_example / "example-list"
+
+    if dim == 1:
+        if len(feature) != c_len:
+            raise ValueError("feature length must match c_len")
+        f = np.array(feature)
+        if len(weight) != c_len:
+            raise ValueError("weight length must match c_len")
+        w = np.array(weight)
+    else:
+        if len(feature) != c_len[0] ** 2:
+            raise ValueError("feature length must match c_len")
+        f = np.array(feature).reshape(c_len[0], c_len[1])
+        if len(weight) != b_len[0] ** 2:
+            raise ValueError("weight length must match c_len")
+        w = np.array(weight).reshape(b_len[0], b_len[1])
     example(dim, f, path, repo, w)
 
 
