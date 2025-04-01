@@ -901,6 +901,7 @@ def sim(
     output_naive = naive_convolve(feat_arr, wght_arr)
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
+    quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
         # Corrected error in fast 1d conv
@@ -919,7 +920,7 @@ def sim(
             .tolist()
         )
         fast_conv = [
-            fast.conv1d(wght_arr[i], c, q, b, a, quant_data["bits"])
+            fast.conv1d(wght_arr[i], c, q, b, a, quant_bits)
             for i in range(b_len)
         ]
         output_fast_ = [
@@ -944,7 +945,7 @@ def sim(
         if len(quant_data) == 0:
             bg_quant = bg
         if len(quant_data) == 1:
-            weight_quant = np.left_shift(wght_arr, quant_data["bits"])
+            weight_quant = np.left_shift(wght_arr, quant_bits)
             bg_q = [
                 fast.g_to_bg(q, b, weight_quant[i])
                 for i in range(0, weight_quant.shape[0])
@@ -953,7 +954,12 @@ def sim(
     else:
         points, c, b, a, q = read_build_2d(repo)
         fast_conv = fast.conv2d(
-            wght_arr, c, q, b, a, quant_data["bits"],
+            wght_arr,
+            c,
+            q,
+            b,
+            a,
+            quant_bits,
         )
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
@@ -975,7 +981,7 @@ def sim(
         if len(quant_data) == 0:
             bg_quant = bg
         else:
-            wght_quant = np.left_shift(wght_arr, quant_data["bits"])
+            wght_quant = np.left_shift(wght_arr, quant_bits)
             bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
 
     if len(quant_data) != 0:
@@ -1022,7 +1028,7 @@ def sim(
         {"name": "gold_quant", "value": output_fast},
     ]
     dict_def = {
-        "QUANT_BITS": quant_data["bits"] if len(quant_data) > 0 else None,
+        "QUANT_BITS": quant_bits,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_default.shape[0],
@@ -1044,10 +1050,7 @@ def sim(
         {"name": "const_feat_out[][]", "value": out_feat_list_sv},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    dict_def = {
-        "QUANT_BITS": quant_data["bits"] if len(quant_data) > 0 else None,
-        **dict_dim
-    }
+    dict_def = {"QUANT_BITS": quant_bits, **dict_dim}
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
 
@@ -1123,7 +1126,6 @@ def example(dim, f, path, repo, w):
         d = sy.Matrix(f)
         g = sy.Matrix(w)
         s = utils.default_convolve(d, g)
-
         points, c, b, a, q = read_build_1d(repo)
         latex.latex_1d(c, b, a, q, path, d, g, False)
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
