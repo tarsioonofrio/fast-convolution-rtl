@@ -42,6 +42,7 @@ def read_build_1d(repo):
 def read_build_2d(repo):
     with open(repo.file_build) as f:
         data = json.load(f)
+    breakpoint()
     p = sy.Matrix(data["p"][0]), sy.Matrix(data["p"][1])
     c = sy.Matrix(data["c"][0]), sy.Matrix(data["c"][1])
     b = sy.Matrix(data["b"][0]), sy.Matrix(data["b"][1])
@@ -786,7 +787,7 @@ def cmd_quant_none(repo):
 
 
 def cmd_quant_shift(repo, bits):
-    data = {"func": "shift", "params": {"bits": bits}}
+    data = {"bits": bits}
     with open(repo.file_quant, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
@@ -917,78 +918,42 @@ def sim(
             .reshape(b_len, -1)
             .tolist()
         )
-        if len(quant_data) == 0:
-            fast_conv = [
-                fast.conv1d(wght_arr[i], c, q, b, a) for i in range(b_len)
-            ]
-            output_fast = np.sum(
-                axis=0,
-                a=[
-                    fast.filter1d_slide2d(
-                        fast_conv[i],
-                        feat_arr,
-                        output_default.shape,
-                        i,
-                        c_len,
-                        a_len,
-                    )
-                    for i in range(0, wght_arr.shape[0])
-                ],
+        fast_conv = [
+            fast.conv1d(wght_arr[i], c, q, b, a, quant_data["bits"])
+            for i in range(b_len)
+        ]
+        output_fast_ = [
+            fast.filter1d_slide2d(
+                fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
             )
+            for i in range(0, wght_arr.shape[0])
+        ]
+        output_fast = np.sum(axis=0, a=output_fast_)
+        feat_list_sv, out_feat_list_sv = fast.sliding1d_window_2d(
+            feat_arr, output_default, output_default.shape, c_len, a_len
+        )
+        count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
+        count_mult = count_nest * len(points) * len(fast_conv)
+        dict_dim = dict_dimension(
+            dim,
+            a_len,
+            b_len,
+            c_len,
+            len(q),
+        )
+        if len(quant_data) == 0:
             bg_quant = bg
-        else:
-            weight_quant = np.left_shift(wght_arr, quant_data["params"]["bits"])
+        if len(quant_data) == 1:
+            weight_quant = np.left_shift(wght_arr, quant_data["bits"])
             bg_q = [
                 fast.g_to_bg(q, b, weight_quant[i])
                 for i in range(0, weight_quant.shape[0])
             ]
-            bg_quant_int = [
-                sy.Matrix(np.array(bg_q[i], dtype=int))
-                for i in range(0, weight_quant.shape[0])
-            ]
-            fast_conv = [
-                fast.wrap_convolution(c, bg_quant_int[i], a)
-                for i in range(0, weight_quant.shape[0])
-            ]
-
-            output_fast_ = np.sum(
-                axis=0,
-                a=[
-                    fast.filter1d_slide2d(
-                        fast_conv[i],
-                        feat_arr,
-                        output_default.shape,
-                        i,
-                        c_len,
-                        a_len,
-                    )
-                    for i in range(0, wght_arr.shape[0])
-                ],
-            )
-            output_fast = np.right_shift(
-                output_fast_, quant_data["params"]["bits"]
-            )
-            # wght_quant = quant.select_func(quant_data)(wght_arr)
             bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
-
-        # feat_list_sv = [
-        #     fast.sliding1d_window_2d(feat_arr, output_default.shape, i, c_len, a_len)
-        #     for i in range(0, wght_arr.shape[0])
-        # ]
-        feat_list_sv = fast.sliding1d_window_2d(
-            feat_arr, output_default.shape, c_len, a_len
-        )
-        count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_nest * len(points) * len(fast_conv)
     else:
         points, c, b, a, q = read_build_2d(repo)
-        conv_func = (
-            fast.conv2d
-            if len(quant_data) == 0
-            else quant.select_conv2d(quant_data)
-        )
-        fast_conv = conv_func(
-            wght_arr, c[0], q[0], b[0], a[0], c[1], q[1], b[1], a[1]
+        fast_conv = fast.conv2d(
+            wght_arr, c, q, b, a, quant_data["bits"],
         )
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
@@ -1000,11 +965,19 @@ def sim(
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
         bg = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_arr)
+        dict_dim = dict_dimension(
+            dim,
+            a_len[0],
+            b_len[0],
+            c_len[0],
+            len(q[0]),
+        )
         if len(quant_data) == 0:
             bg_quant = bg
         else:
-            wght_quant = quant.select_func(quant_data)(wght_arr)
+            wght_quant = np.left_shift(wght_arr, quant_data["bits"])
             bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
+
     if len(quant_data) != 0:
         metric = r2_score(output_default.reshape(-1), output_fast.reshape(-1))
         text_metric = f"R2: {metric}%\n"
@@ -1048,14 +1021,8 @@ def sim(
         {"name": "gold", "value": output_default},
         {"name": "gold_quant", "value": output_fast},
     ]
-    quant_dict = (
-        {f"QUANT_{k}".upper(): v for k, v in quant_data["params"].items()}
-        if len(quant_data) > 0
-        else {}
-    )
     dict_def = {
-        "QUANT": quant_data["func"].upper() if len(quant_data) > 0 else None,
-        **quant_dict,
+        "QUANT_BITS": quant_data["bits"] if len(quant_data) > 0 else None,
         "W_SIZE": wght_arr.shape[0],
         "FIN_SIZE": feat_arr.shape[0],
         "FOUT_SIZE": output_default.shape[0],
@@ -1077,16 +1044,10 @@ def sim(
         {"name": "const_feat_out[][]", "value": out_feat_list_sv},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    dim, c_len, b_len, a_len = read_init(repo)
-    _, _, _, _, (q1, q2) = read_build_2d(repo)
-    dict_dim = dict_dimension(
-        dim,
-        a_len[0],
-        b_len[0],
-        c_len[0],
-        len(q1),
-    )
-    dict_def = {**quant_dict, **dict_dim}
+    dict_def = {
+        "QUANT_BITS": quant_data["bits"] if len(quant_data) > 0 else None,
+        **dict_dim
+    }
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
 

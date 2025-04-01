@@ -77,7 +77,6 @@ def init():
 @click.pass_context
 def init1d(ctx, in_len, out_len, w):
     from .commands import cmd_init
-
     repo = ctx.obj
     msg = cmd_init(repo, 1, in_len, out_len, w)
     if msg is not None:
@@ -91,7 +90,6 @@ def init1d(ctx, in_len, out_len, w):
 @click.pass_context
 def init2d(ctx, in_len, out_len, w):
     from .commands import cmd_init
-
     repo = ctx.obj
     cmd_init(repo, 2, in_len, out_len, w)
 
@@ -132,7 +130,6 @@ def build_d1():
 def toom_cook1d(ctx, points):
     # TODO break if user was trying to use for 2D
     from .commands import cmd_build_toom_cook1d
-
     repo = ctx.obj
     nargs = num_points1d(read_init_if_exists(repo).get("c", 1))
     if points is not None:
@@ -150,7 +147,6 @@ def toom_cook1d(ctx, points):
 def manual1d(ctx):
     # TODO break if user was trying to use for 2D
     from .commands import cmd_build_manual_factorization1d
-
     repo = ctx.obj
     cmd_build_manual_factorization1d(repo)
     click.echo("Build 1D manual factorization")
@@ -190,7 +186,6 @@ def build_d2():
 @click.pass_context
 def toom_cook2d(ctx, points_1d, points_2d):
     from .commands import cmd_build_toom_cook2d
-
     repo = ctx.obj
     nargs1 = num_points2d(read_init_if_exists(repo).get("c", 1), 0)
     nargs2 = num_points2d(read_init_if_exists(repo).get("c", 1), 1)
@@ -217,7 +212,6 @@ def toom_cook2d(ctx, points_1d, points_2d):
 def manual2d(ctx):
     # TODO break if user was trying to use for 2D
     from .commands import cmd_build_manual_factorization2d
-
     repo = ctx.obj
     cmd_build_manual_factorization2d(repo)
     click.echo("Build 2D manual factorization")
@@ -240,7 +234,6 @@ def bind():
 @click.pass_context
 def nest(ctx):
     from .commands import cmd_build2d_bind_nest
-
     repo = ctx.obj
     cmd_build2d_bind_nest(repo)
 
@@ -249,7 +242,6 @@ def nest(ctx):
 @click.pass_context
 def kron(ctx):
     from .commands import cmd_build2d_bind_kron
-
     repo = ctx.obj
     cmd_build2d_bind_kron(repo)
 
@@ -271,7 +263,6 @@ def quant():
 @click.pass_context
 def no_quant(ctx):
     from .commands import cmd_quant_none
-
     repo = ctx.obj
     cmd_quant_none(repo)
 
@@ -287,7 +278,6 @@ def no_quant(ctx):
 @click.pass_context
 def shift(ctx, bits):
     from .commands import cmd_quant_shift
-
     repo = ctx.obj
     cmd_quant_shift(repo, bits)
     click.echo("Shift quantization")
@@ -315,7 +305,6 @@ def sim():
 @click.pass_context
 def sim_file(ctx, feature, weight, suffix):
     from .commands import cmd_sim_file
-
     repo = ctx.obj
     output = cmd_sim_file(repo, feature, weight, suffix)
     quant = output["quant"]
@@ -350,7 +339,6 @@ def sim_file(ctx, feature, weight, suffix):
 @click.pass_context
 def sim_rand(ctx, feature, weight, image_side, loop, suffix):
     from .commands import cmd_sim_random
-
     repo = ctx.obj
     output = cmd_sim_random(repo, feature, weight, image_side, loop, suffix)
     quant = output["quant"]
@@ -382,7 +370,6 @@ def sim_rand(ctx, feature, weight, image_side, loop, suffix):
 @click.pass_context
 def sim_seq(ctx, feature, weight, image_side, loop, suffix):
     from .commands import cmd_sim_seq
-
     repo = ctx.obj
     output = cmd_sim_seq(repo, feature, weight, image_side, loop, suffix)
     quant = output["quant"]
@@ -416,7 +403,6 @@ def example():
 @click.pass_context
 def ex_rand(ctx, feature, weight, suffix):
     from .commands import cmd_example_random
-
     repo = ctx.obj
     cmd_example_random(repo, feature, weight, suffix)
     click.echo("Random example")
@@ -436,7 +422,6 @@ def ex_rand(ctx, feature, weight, suffix):
 @click.pass_context
 def ex_seq(ctx, feature, weight, suffix):
     from .commands import cmd_example_sequential
-
     repo = ctx.obj
     cmd_example_sequential(repo, feature, weight, suffix)
     click.echo("Sequential example")
@@ -454,7 +439,6 @@ def ex_seq(ctx, feature, weight, suffix):
 @click.pass_context
 def ex_list(ctx, feature, weight, suffix):
     from .commands import cmd_example_list
-
     repo = ctx.obj
     cmd_example_list(
         repo,
