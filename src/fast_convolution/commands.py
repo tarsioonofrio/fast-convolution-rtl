@@ -42,7 +42,6 @@ def read_build_1d(repo):
 def read_build_2d(repo):
     with open(repo.file_build) as f:
         data = json.load(f)
-    breakpoint()
     p = sy.Matrix(data["p"][0]), sy.Matrix(data["p"][1])
     c = sy.Matrix(data["c"][0]), sy.Matrix(data["c"][1])
     b = sy.Matrix(data["b"][0]), sy.Matrix(data["b"][1])
