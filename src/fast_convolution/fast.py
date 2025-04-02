@@ -136,7 +136,11 @@ def wrap_convolution(c, bg, a, quant=0):
     def convolution(f):
         tr = c.T * sy.Matrix(f)
         m_ = sy.HadamardProduct(tr, bg.T, evaluate=True)
-        m = m_ if quant == 0 else np.right_shift(m_, quant)
+        m = (
+            m_
+            if quant == 0
+            else np.right_shift(np.array(m_).astype(int), quant)
+        )
         inv = a.T * m
         return inv
 
@@ -151,7 +155,11 @@ def wrap_convolution2d(c1, c2, bg, a1, a2, quant=0):
     def convolution(f):
         tr = c1.T * sy.Matrix(f) * c2
         m_ = sy.HadamardProduct(tr, bg, evaluate=True)
-        m = m_ if quant == 0 else np.right_shift(m_, quant)
+        m = (
+            m_
+            if quant == 0
+            else np.right_shift(np.array(m_).astype(int), quant)
+        )
         inv = a1.T * m * a2
         return inv
 
@@ -277,7 +285,7 @@ def sliding1d_window_2d(in_arr, out_arr, out_shape, in_size=5, out_size=3):
                 f2 = np.array(f.tolist() + zeros)
                 list_in.append(f2.reshape(-1))
                 tmp_out_size = out_shape[0] - c
-                new_out = np.zeros((out_size[0]), dtype=int)
+                new_out = np.zeros((out_size), dtype=int)
                 new_out[:tmp_out_size] = out_arr[r, c : c + tmp_out_size]
                 list_out.append(new_out.reshape(-1))
     return list_in, list_out

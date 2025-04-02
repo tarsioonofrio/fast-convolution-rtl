@@ -1,7 +1,6 @@
 #ifndef C_SIM_H
 #define C_SIM_H
 
-#define QUANT SHIFT
 #define QUANT_BITS 8
 #define W_SIZE 3
 #define FIN_SIZE 32
