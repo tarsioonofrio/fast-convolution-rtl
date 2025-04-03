@@ -10,9 +10,9 @@ from . import fast
 
 
 def plot_pdf(
-        page,
-        crop_float=None,
-        dpi=200,
+    page,
+    crop_float=None,
+    dpi=200,
 ):
     """
     (upper, lower)
@@ -23,7 +23,9 @@ def plot_pdf(
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
-    image = ImageOps.invert(Image.frombytes(mode, [pix.width, pix.height], pix.samples))
+    image = ImageOps.invert(
+        Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+    )
     if crop_float is None:
         display(image)
     else:
@@ -49,7 +51,9 @@ def plot_pdf2col(page, column, crop_float=None, dpi=200):
     pix = page.get_pixmap(dpi=dpi)
     # mode = "RGBA" if pix.alpha else "RGB"
     mode = "RGB"
-    image = ImageOps.invert(Image.frombytes(mode, [pix.width, pix.height], pix.samples))
+    image = ImageOps.invert(
+        Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+    )
     if crop_float is None:
         display(image)
     else:
@@ -73,7 +77,9 @@ def symmetrical_polynomial_factorization(polynomial, di, gi):
             args = [i for e, i in enumerate(polynomial.args)]
         else:
             args = [
-                i for e, i in enumerate(polynomial.args) if sum([quo, rem]) - 1 != e
+                i
+                for e, i in enumerate(polynomial.args)
+                if sum([quo, rem]) - 1 != e
             ]
     pol_idx = [e for e, c in enumerate(di) for d in args if d.coeff(c, 1) != 0]
     prod = np.prod([np.sum([(c[i]) for i in pol_idx]) for c in [di, gi]])
@@ -88,7 +94,7 @@ def symmetrical_cyclic_convolution(x, y):
     xx = np.tile(x_arr.reshape(-1), 2)
     yy = np.array(y).reshape(-1)
     out = np.convolve(xx, yy)
-    out_clip = out[size: 2 * size]
+    out_clip = out[size : 2 * size]
     out_mtx = sy.Matrix(out_clip)
     return out_mtx
 
@@ -142,12 +148,19 @@ def c_header(path, list_array, dict_defs):
             value = np_arr.tolist()
             if typ == "float":
                 value_str = (",\n").join(
-                    ["\t" + ", ".join(map(lambda x: str(x) + "f", v)) for v in value]
+                    [
+                        "\t" + ", ".join(map(lambda x: str(x) + "f", v))
+                        for v in value
+                    ]
                 )
             else:
-                value_str = (",\n").join(["\t" + ", ".join(map(str, v)) for v in value])
+                value_str = (",\n").join(
+                    ["\t" + ", ".join(map(str, v)) for v in value]
+                )
             size = "*".join(map(str, shape))
-            array = array_str.format(type=typ, name=name, value=value_str, size=size)
+            array = array_str.format(
+                type=typ, name=name, value=value_str, size=size
+            )
             list_data.append(array)
 
     list_def_data = list_def + ["\n"] + list_data
@@ -160,6 +173,8 @@ def sv_pkg(path, list_array, dict_defs):
     name = path.stem
     source_str = (
         f"package {name};\n\n"
+        "  timeunit 1ns;\n"
+        "  timeprecision 1ps;\n\n"
         "{code}\n"
         f"endpackage\n"
     )
@@ -179,9 +194,13 @@ def sv_pkg(path, list_array, dict_defs):
             np_arr = np.array(array["value"]).astype(typ)
             shape = np_arr.shape
             value = np_arr.tolist()
-            value_str = (",\n").join(["    '{" + ", ".join(map(str, v)) + "}" for v in value])
+            value_str = (",\n").join(
+                ["    '{" + ", ".join(map(str, v)) + "}" for v in value]
+            )
             size = "*".join(map(str, shape))
-            array = array_str.format(type=typ, name=name, value=value_str, size=size)
+            array = array_str.format(
+                type=typ, name=name, value=value_str, size=size
+            )
             list_data.append(array)
 
     list_def_data = list_def + ["\n"] + list_data
@@ -225,11 +244,13 @@ def c_matmul_shift_noloop(mtx, name_suffix):
 
 def c_matmul_shift_noloop_nest(mtx1, name_suffix, in_shp, out_shp, swap=False):
     mtx1_log = fast.log2_lst(mtx1)
-    mtx2 = np.array([f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]).reshape(
-        *in_shp
-    )
+    mtx2 = np.array(
+        [f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]
+    ).reshape(*in_shp)
     mtx3 = (
-        matmul(mtx2, np.array(mtx1_log)) if swap else matmul(np.array(mtx1_log), mtx2)
+        matmul(mtx2, np.array(mtx1_log))
+        if swap
+        else matmul(np.array(mtx1_log), mtx2)
     )
     var_out = [f"m_out[{i}]" for i in range(out_shp[0] * out_shp[1])]
 

@@ -1040,13 +1040,14 @@ def sim(
         repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
+    bg_quant_flat = np.array(bg_quant).reshape(1, -1)
     list_array = [
         {
-            "name": "const_weight[][]",
-            "value": np.array(bg_quant).reshape(1, -1),
+            "name": f"const_weight[{len(bg_quant_flat)}][{len(bg_quant_flat[0])}]",
+            "value": bg_quant_flat,
         },
-        {"name": "const_feat_in[][]", "value": feat_list_sv},
-        {"name": "const_feat_out[][]", "value": out_feat_list_sv},
+        {"name": f"const_feat_in[{len(feat_arr)}][{len(feat_arr[0])}]", "value": feat_list_sv},
+        {"name": f"const_feat_out[{len(out_feat_list_sv)}][{len(out_feat_list_sv[0])}]", "value": out_feat_list_sv},
     ]
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {"QUANT_BITS": quant_bits, **dict_dim}
