@@ -35,4 +35,4 @@ rand/
 rand-quant/
 example-random.tex
 example-random/
-sim/file/data.sv
+**/sim/file/data.sv
