@@ -1,6 +1,15 @@
 package data;
 
+  timeunit 1ns;
+  timeprecision 1ps;
+
   localparam int QUANT_BITS = 8;
+  localparam int W1_SIZE = 1;
+  localparam int W2_SIZE = 25;
+  localparam int FIN1_SIZE = 100;
+  localparam int FIN2_SIZE = 25;
+  localparam int FOUT1_SIZE = 100;
+  localparam int FOUT2_SIZE = 9;
   localparam int A1_SIZE = 3;
   localparam int B1_SIZE = 3;
   localparam int C1_SIZE = 5;
@@ -10,10 +19,10 @@ package data;
   localparam int C2_SIZE = 5;
   localparam int M2_SIZE = 5;
 
-  const int const_weight[][] = '{
+  const int const_weight[1][25] = '{
     '{0, -64, 21, 42, 0, -64, 0, 85, -21, -128, 21, 85, -56, -49, 42, 42, -21, -49, 28, 85, 0, -128, 42, 85, 0}
   };
-  const int const_feat_in[][] = '{
+  const int const_feat_in[100][25] = '{
     '{118, 120, 124, 118, 122, 119, 125, 127, 122, 120, 122, 126, 127, 121, 125, 135, 136, 133, 126, 125, 129, 131, 124, 130, 133},
     '{118, 122, 116, 115, 116, 122, 120, 121, 121, 125, 121, 125, 126, 127, 122, 126, 125, 124, 120, 119, 130, 133, 132, 123, 178},
     '{115, 116, 111, 109, 111, 121, 125, 119, 112, 108, 127, 122, 118, 106, 107, 120, 119, 142, 153, 161, 123, 178, 201, 175, 154},
@@ -115,7 +124,7 @@ package data;
     '{155, 120, 154, 148, 145, 118, 161, 177, 171, 162, 116, 178, 185, 177, 174, 142, 183, 191, 178, 181, 157, 191, 189, 185, 180},
     '{148, 145, 158, 171, 178, 171, 162, 159, 153, 164, 177, 174, 169, 171, 166, 178, 181, 176, 178, 168, 185, 180, 180, 182, 177}
   };
-  const int const_feat_out[][] = '{
+  const int const_feat_out[100][9] = '{
     '{-13, -12, -14, 4, -3, 11, -25, -20, -8},
     '{5, -5, -6, -9, -9, -21, 1, 1, -1},
     '{-29, -12, -18, -4, 15, 59, 74, 22, -44},

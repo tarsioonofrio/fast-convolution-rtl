@@ -4,7 +4,7 @@
   "sim_rand": ["sim", "rand"],
   "sim_file": ["sim", "file"],
   "quant": ["quant", "shift", "-b", "8"],
-  "sim_rand_quant": ["sim", "rand", "-s", "quant"],
-  "sim_file_quant": ["sim", "file", "-s", "quant"],
+  "sim_rand_quant": ["sim", "rand", "-n", "quant"],
+  "sim_file_quant": ["sim", "file", "-n", "quant"],
   "show": ["show"]
 }

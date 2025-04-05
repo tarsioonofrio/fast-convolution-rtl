@@ -850,14 +850,14 @@ def cmd_sim_seq(repo, feature_info, weight, image_side, loop, suffix):
     )
 
 
-def cmd_sim_random(repo, feature_info, weight, image_side, loop, suffix):
+def cmd_sim_random(repo, feature_info, weight, image_side, loop, suffix, seed):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     feat = np.random.randint(
         feature_info[0], feature_info[1], size=image_side**2
     )
     feat_arr = feat.reshape(image_side, image_side)
-
+    np.random.seed(seed)
     if dim == 1:
         wght = np.random.randint(weight[0], weight[1], size=b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
@@ -1041,16 +1041,34 @@ def sim(
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     bg_quant_flat = np.array(bg_quant).reshape(1, -1)
+    w_size = (len(bg_quant_flat), len(bg_quant_flat[0]))
+    fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
+    fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
     list_array = [
         {
-            "name": f"const_weight[{len(bg_quant_flat)}][{len(bg_quant_flat[0])}]",
+            "name": f"const_weight[{w_size[0]}][{w_size[1]}]",
             "value": bg_quant_flat,
         },
-        {"name": f"const_feat_in[{len(feat_arr)}][{len(feat_arr[0])}]", "value": feat_list_sv},
-        {"name": f"const_feat_out[{len(out_feat_list_sv)}][{len(out_feat_list_sv[0])}]", "value": out_feat_list_sv},
+        {
+            "name": f"const_feat_in[{fin_size[0]}][{fin_size[1]}]",
+            "value": feat_list_sv,
+        },
+        {
+            "name": f"const_feat_out[{fout_size[0]}][{fout_size[1]}]",
+            "value": out_feat_list_sv,
+        },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    dict_def = {"QUANT_BITS": quant_bits, **dict_dim}
+    dict_def = {
+        "QUANT_BITS": quant_bits,
+        "W1_SIZE": w_size[0],
+        "W2_SIZE": w_size[1],
+        "FIN1_SIZE": fin_size[0],
+        "FIN2_SIZE": fin_size[1],
+        "FOUT1_SIZE": fout_size[0],
+        "FOUT2_SIZE": fout_size[1],
+        **dict_dim
+    }
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
 

@@ -1,15 +1,24 @@
 package data;
 
+  timeunit 1ns;
+  timeprecision 1ps;
+
   localparam int QUANT_BITS = 8;
+  localparam int W1_SIZE = 1;
+  localparam int W2_SIZE = 18;
+  localparam int FIN1_SIZE = 240;
+  localparam int FIN2_SIZE = 6;
+  localparam int FOUT1_SIZE = 240;
+  localparam int FOUT2_SIZE = 4;
   localparam int A_SIZE = 4;
   localparam int B_SIZE = 3;
   localparam int C_SIZE = 6;
   localparam int M_SIZE = 6;
 
-  const int const_weight[][] = '{
+  const int const_weight[1][18] = '{
     '{0, -42, 42, 21, -21, 0, 64, 85, -256, -32, 138, 256, 0, -42, 42, 21, -21, 0}
   };
-  const int const_feat_in[][] = '{
+  const int const_feat_in[240][6] = '{
     '{118, 120, 124, 118, 122, 116},
     '{122, 116, 115, 116, 111, 109},
     '{111, 109, 111, 107, 109, 108},
@@ -251,7 +260,7 @@ package data;
     '{116, 178, 185, 177, 174, 169},
     '{174, 169, 171, 166, 0, 0}
   };
-  const int const_feat_out[][] = '{
+  const int const_feat_out[240][4] = '{
     '{-8, -10, -2, 10},
     '{-1, 4, -22, -10},
     '{-6, 5, -49, -13},

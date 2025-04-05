@@ -301,12 +301,12 @@ def sim():
     default=example_path() / "laplace.json",
     help="Weight file, need to be a json list file.",
 )
-@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--name", "-n", default="", help="Suffix of output file name.")
 @click.pass_context
-def sim_file(ctx, feature, weight, suffix):
+def sim_file(ctx, feature, weight, name):
     from .commands import cmd_sim_file
     repo = ctx.obj
-    output = cmd_sim_file(repo, feature, weight, suffix)
+    output = cmd_sim_file(repo, feature, weight, name)
     quant = output["quant"]
     metric = output["metric"]
     exit_code = 1 if quant == 0 and metric == 0 else 0
@@ -335,12 +335,15 @@ def sim_file(ctx, feature, weight, suffix):
     default=[0, 1024],
     help="Minimal and maximal value of weight random data.",
 )
-@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--name", "-n", default="", help="Suffix of output file name.")
+@click.option(
+    "--seed", "-d", default=0, help="Seed to random number generator."
+)
 @click.pass_context
-def sim_rand(ctx, feature, weight, image_side, loop, suffix):
+def sim_rand(ctx, feature, weight, image_side, loop, name, seed):
     from .commands import cmd_sim_random
     repo = ctx.obj
-    output = cmd_sim_random(repo, feature, weight, image_side, loop, suffix)
+    output = cmd_sim_random(repo, feature, weight, image_side, loop, name, seed)
     quant = output["quant"]
     metric = output["metric"]
     exit_code = 1 if quant == 0 and metric == 0 else 0
