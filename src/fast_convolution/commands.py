@@ -9,7 +9,7 @@ from PIL import Image
 from scipy import signal
 from sklearn.metrics import r2_score
 
-from . import fast, latex, quant, readme, utils
+from . import fast, latex, readme, utils
 from .makefile import makefile
 from .naive import naive_convolve
 
@@ -1036,6 +1036,7 @@ def sim(
     arr = [{**r, "type": "int"} for r in list_array]
     utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
     arr_float = [{**r, "type": "float"} for r in list_array]
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     utils.c_header(
         repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
     )
@@ -1067,7 +1068,7 @@ def sim(
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
-        **dict_dim
+        **dict_dim,
     }
     utils.sv_pkg(path / "data.sv", arr, dict_def)
     return out_dict
