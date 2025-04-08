@@ -644,7 +644,6 @@ def cmd_build2d_bind_nest(repo):
 def cmd_build2d_bind_kron(repo):
     path = repo.dir_build / "bind-kron"
     path.mkdir(parents=True, exist_ok=True)
-    init_data = read_init(repo)
     build_data = read_build_2d(repo)
     write_bind(repo, "kron")
 
