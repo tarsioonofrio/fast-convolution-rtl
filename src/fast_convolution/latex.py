@@ -19,8 +19,15 @@ def doc_append(doc, lst):
     doc.append(tex.Math(data=data, escape=False))
 
 
-def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
-    name = "Symbolic" if symbolic else "Numeric"
+def latex_1d(c, b, a, q, path, d_user, g_user_, symbolic=True, quant=0):
+    name = (
+        "Symbolic"
+        if symbolic
+        else "Numeric"
+        if quant == 0
+        else "Numeric Quantized"
+    )
+    g_user = g_user_ if quant == 0 else sy.Matrix(np.left_shift(g_user_, quant))
     gg_sym = sy.Matrix(
         sy.symbols(" ".join(f"G_{i}" for i in range(q.shape[0])))
     )
@@ -96,7 +103,13 @@ def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
         )
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
-    ss_num = sy.hadamard_product(gg_num, dd_num)
+    ss_num_ = sy.hadamard_product(gg_num, dd_num)
+    ss_num = (
+        ss_num_
+        if quant == 0
+        else sy.Matrix(np.right_shift(np.array(ss_num_).astype(int), quant))
+    )
+
     ss_user = ss_sym if symbolic else ss_num
     gg_user = gg_sym if symbolic else gg_num
     dd_user = dd_sym if symbolic else dd_num
@@ -151,8 +164,20 @@ def latex_1d(c, b, a, q, path, d_user, g_user, symbolic=True):
         print("Result:", compare_naive)
 
 
-def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
-    name = "Symbolic" if symbolic else "Numeric"
+def latex_2d_bind_nest(
+    build_data, d1_user, g1_user_, path, symbolic=True, quant=0
+):
+    name = (
+        "Symbolic"
+        if symbolic
+        else "Numeric"
+        if quant == 0
+        else "Numeric Quantized"
+    )
+    g1_user = (
+        g1_user_ if quant == 0 else sy.Matrix(np.left_shift(g1_user_, quant))
+    )
+
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
     d2_sym = sy.Matrix(
@@ -298,7 +323,12 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
         )
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
-    ss2_num = sy.hadamard_product(gg_user, dd_num)
+    ss2_num_ = sy.hadamard_product(gg_user, dd_num)
+    ss2_num = (
+        ss2_num_
+        if quant == 0
+        else sy.Matrix(np.right_shift(np.array(ss2_num_).astype(int), quant))
+    )
     ss_user = ss2_sym if symbolic else ss2_num
     gg_user = gg_sym if symbolic else gg_user
     dd_user = dd_sym if symbolic else dd_num
@@ -360,8 +390,17 @@ def latex_2d_bind_nest(build_data, d1_user, g1_user, path, symbolic=True):
         print("Result:", compare_naive)
 
 
-def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
-    name = "Symbolic" if symbolic else "Numeric"
+def latex_2d_bind_kron(build_data, d1_user, g1_user_, path, symbolic, quant):
+    name = (
+        "Symbolic"
+        if symbolic
+        else "Numeric"
+        if quant == 0
+        else "Numeric Quantized"
+    )
+    g1_user = (
+        g1_user_ if quant == 0 else sy.Matrix(np.left_shift(g1_user_, quant))
+    )
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
     aa_shape = (
@@ -541,8 +580,13 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user, path, symbolic):
         )
     )
     doc.append(tex.Math(data=[r"S = G \odot D"], escape=False))
-    ss_num = sy.hadamard_product(
+    ss_num_ = sy.hadamard_product(
         gg_user, dd_num.reshape(gg_user.shape[0], gg_user.shape[1])
+    )
+    ss_num = (
+        ss_num_
+        if quant == 0
+        else sy.Matrix(np.right_shift(np.array(ss_num_).astype(int), quant))
     )
     ss_user = ss_sym if symbolic else ss_num
     gg_user = gg_sym if symbolic else gg_user

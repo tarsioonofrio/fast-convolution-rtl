@@ -271,7 +271,7 @@ def quant():
 @click.pass_context
 def no_quant(ctx):
     from .commands import cmd_quant_none
-    
+
     repo = ctx.obj
     cmd_quant_none(repo)
 
@@ -416,12 +416,13 @@ def example():
     help="Minimal and maximal value of weight random data.",
 )
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--quant", "-q", is_flag=True, default=False)
 @click.pass_context
-def ex_rand(ctx, feature, weight, suffix):
+def ex_rand(ctx, feature, weight, suffix, quant):
     from .commands import cmd_example_random
 
     repo = ctx.obj
-    cmd_example_random(repo, feature, weight, suffix)
+    cmd_example_random(repo, feature, weight, suffix, quant)
     click.echo("Random example")
 
 
@@ -436,12 +437,13 @@ def ex_rand(ctx, feature, weight, suffix):
     "--weight", "-w", default=0, help="Minimal value of sequential weight data."
 )
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--quant", "-q", is_flag=True, default=False)
 @click.pass_context
-def ex_seq(ctx, feature, weight, suffix):
+def ex_seq(ctx, feature, weight, suffix, quant):
     from .commands import cmd_example_sequential
 
     repo = ctx.obj
-    cmd_example_sequential(repo, feature, weight, suffix)
+    cmd_example_sequential(repo, feature, weight, suffix, quant)
     click.echo("Sequential example")
 
 
@@ -454,8 +456,9 @@ def ex_seq(ctx, feature, weight, suffix):
 )
 @click.option("--weight", "-w", type=str, help="List of weights.")
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--quant", "-q", is_flag=True, default=False)
 @click.pass_context
-def ex_list(ctx, feature, weight, suffix):
+def ex_list(ctx, feature, weight, suffix, quant):
     from .commands import cmd_example_list
 
     repo = ctx.obj
@@ -464,6 +467,7 @@ def ex_list(ctx, feature, weight, suffix):
         list(map(int, feature.split())),
         list(map(int, weight.split())),
         suffix,
+        quant,
     )
     click.echo("Sequential example")
 
