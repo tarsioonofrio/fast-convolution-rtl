@@ -443,7 +443,7 @@ def csa_parcels(a, c):
 def csa_parcels_nest(a1, a2, c1, c2):
     return {
         (n, s): csa_lst(lst, positive=typ)
-        for lst, n in zip([a1.T, a2.T, c1.T, c2.T], ["a", "A", "c", "C"])
+        for lst, n in zip([a1.T, a2.T, c1.T, c2.T], ["a1", "a2", "c1", "c2"])
         for typ, s in zip([True, False], ["p", "n"])
     }
 

@@ -390,7 +390,7 @@ def latex_2d_bind_nest(
         print("Result:", compare_naive)
 
 
-def latex_2d_bind_kron(build_data, d1_user, g1_user_, path, symbolic, quant):
+def latex_2d_bind_kron(build_data, d1_user, g1_user_, path, symbolic, quant=0):
     name = (
         "Symbolic"
         if symbolic

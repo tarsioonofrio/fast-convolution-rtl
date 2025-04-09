@@ -1,8 +1,8 @@
-10 a p
-1 a n
-10 A p
-1 A n
-8 c p
-9 c n
-8 C p
-9 C n
+10 a1 p
+1 a1 n
+10 a2 p
+1 a2 n
+8 c1 p
+9 c1 n
+8 c2 p
+9 c2 n
