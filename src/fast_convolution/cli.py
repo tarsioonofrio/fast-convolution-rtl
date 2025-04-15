@@ -464,8 +464,8 @@ def ex_list(ctx, feature, weight, suffix, quant):
     repo = ctx.obj
     cmd_example_list(
         repo,
-        list(map(int, feature.split())),
-        list(map(int, weight.split())),
+        list(map(int, feature.split(","))),
+        list(map(int, weight.split(","))),
         suffix,
         quant,
     )
