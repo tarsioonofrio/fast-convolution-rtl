@@ -75,7 +75,13 @@ def latex_1d(c, b, a, q, path, d_user, g_user_, symbolic=True, quant=0):
             ],
         )
     )
-    gg_num = sy.hadamard_product(q, b * g_user)
+    gg_num_ = sy.hadamard_product(q, b * g_user)
+    gg_num = (
+        gg_num_
+        if quant == 0
+        else sy.Matrix(np.round(np.array(gg_num_).astype(float)).astype(int))
+    )
+
     doc.append(
         tex.Math(
             escape=False,
@@ -260,7 +266,12 @@ def latex_2d_bind_nest(
             data=[r"G = (q_1 \odot b_1) g (q_2 \odot b_2)^t"], escape=False
         )
     )
-    g2_num = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
+    g2_num_ = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
+    g2_num = (
+        g2_num_
+        if quant == 0
+        else sy.Matrix(np.round(np.array(g2_num_).astype(float)).astype(int))
+    )
     doc.append(
         tex.Math(
             escape=False,
@@ -282,8 +293,12 @@ def latex_2d_bind_nest(
             ],
         )
     )
-
-    gg_user = sy.diag(*q2) * b2 * sy.Matrix(g2_sym if symbolic else g2_num)
+    gg_user_ = sy.diag(*q2) * b2 * sy.Matrix(g2_sym if symbolic else g2_num)
+    gg_user = (
+        gg_user_
+        if quant == 0
+        else sy.Matrix(np.round(np.array(gg_user_).astype(float)).astype(int))
+    )
     g2_user = g2_sym if symbolic else g2_num
     doc.append(
         tex.Math(
@@ -505,6 +520,11 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user_, path, symbolic, quant=0):
         )
     )
     g2_num = sy.Matrix(g1_user) * (sy.diag(*q1) * b1).T
+    # g2_num = (
+    #     g2_num_
+    #     if quant == 0
+    #     else sy.Matrix(np.round(np.array(g2_num_).astype(float)).astype(int))
+    # )
     doc.append(
         tex.Math(
             escape=False,
@@ -526,8 +546,13 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user_, path, symbolic, quant=0):
             ],
         )
     )
-
-    gg_user = sy.diag(*q2) * b2 * sy.Matrix(g2_sym if symbolic else g2_num)
+    # breakpoint()
+    gg_user_ = sy.diag(*q2) * b2 * sy.Matrix(g2_sym if symbolic else g2_num)
+    gg_user = (
+        gg_user_
+        if quant == 0
+        else sy.Matrix(np.round(np.array(gg_user_).astype(float)).astype(int))
+    )
     g2_user = g2_sym if symbolic else g2_num
     doc.append(
         tex.Math(

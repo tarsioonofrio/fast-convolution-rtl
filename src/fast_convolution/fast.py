@@ -135,7 +135,7 @@ def count_sums(mtx):
 def wrap_convolution(c, bg, a, quant=0):
     def convolution(f):
         tr = c.T * sy.Matrix(f)
-        m_ = sy.HadamardProduct(tr, bg.T, evaluate=True)
+        m_ = sy.HadamardProduct(tr, sy.Matrix(bg.T), evaluate=True)
         m = (
             m_
             if quant == 0
@@ -154,7 +154,7 @@ def to_filter(c, bg, a):
 def wrap_convolution2d(c1, c2, bg, a1, a2, quant=0):
     def convolution(f):
         tr = c1.T * sy.Matrix(f) * c2
-        m_ = sy.HadamardProduct(tr, bg, evaluate=True)
+        m_ = sy.HadamardProduct(tr, sy.Matrix(bg), evaluate=True)
         m = (
             m_
             if quant == 0
