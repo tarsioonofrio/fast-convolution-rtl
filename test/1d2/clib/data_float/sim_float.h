@@ -7,16 +7,11 @@
 #define FOUT_SIZE 30
 
 const float weight[3*3] = {
-	0.0f, 1.0f, 0.0f,
-	1.0f, -4.0f, 1.0f,
-	0.0f, 1.0f, 0.0f
+	0.0f, 256.0f, 0.0f,
+	256.0f, -1024.0f, 256.0f,
+	0.0f, 256.0f, 0.0f
 };
 const float weight_gg[3*4] = {
-	0.0f, 0.5f, -0.5f, 0.0f,
-	-1.0f, -1.0f, 3.0f, 1.0f,
-	0.0f, 0.5f, -0.5f, 0.0f
-};
-const float weight_gg_quant[3*4] = {
 	0.0f, 128.0f, -128.0f, 0.0f,
 	-256.0f, -256.0f, 768.0f, 256.0f,
 	0.0f, 128.0f, -128.0f, 0.0f

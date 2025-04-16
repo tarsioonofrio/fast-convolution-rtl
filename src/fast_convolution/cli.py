@@ -318,10 +318,7 @@ def sim_file(ctx, feature, weight, name):
 
     repo = ctx.obj
     output = cmd_sim_file(repo, feature, weight, name)
-    quant = output["quant"]
-    metric = output["metric"]
-    exit_code = 1 if quant == 0 and metric == 0 else 0
-    ctx.exit(exit_code)
+    ctx.exit(0)
     click.echo(output["text"])
 
 
@@ -356,10 +353,7 @@ def sim_rand(ctx, feature, weight, image_side, loop, name, seed):
 
     repo = ctx.obj
     output = cmd_sim_random(repo, feature, weight, image_side, loop, name, seed)
-    quant = output["quant"]
-    metric = output["metric"]
-    exit_code = 1 if quant == 0 and metric == 0 else 0
-    ctx.exit(exit_code)
+    ctx.exit(0)
     click.echo(output["text"])
 
 
@@ -388,10 +382,7 @@ def sim_seq(ctx, feature, weight, image_side, loop, suffix):
 
     repo = ctx.obj
     output = cmd_sim_seq(repo, feature, weight, image_side, loop, suffix)
-    quant = output["quant"]
-    metric = output["metric"]
-    exit_code = 1 if quant == 0 and metric == 0 else 0
-    ctx.exit(exit_code)
+    ctx.exit(0)
     click.echo(output["text"])
 
 

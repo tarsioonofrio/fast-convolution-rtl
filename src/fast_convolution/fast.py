@@ -143,7 +143,6 @@ def wrap_convolution(c, bg, a, quant=0):
         )
         inv = a.T * m
         return inv
-
     return convolution
 
 

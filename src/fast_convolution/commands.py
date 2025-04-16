@@ -965,10 +965,9 @@ def sim(
             if quant_data == 0
             else np.round(np.array(bg_).astype(float)).astype(int)
         )
-        fast_conv = [
-            fast.conv1d(wght_arr[i], c, q, b, a, quant_bits)
-            for i in range(b_len)
-        ]
+        fast_conv = fast.wrap_convolution2d(
+            c[0], c[1], bg, a[0], a[1], quant_bits
+        )
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )
