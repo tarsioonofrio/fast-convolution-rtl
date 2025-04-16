@@ -312,19 +312,22 @@ def sim():
     help="Weight file, need to be a json list file.",
 )
 @click.option("--name", "-n", default="", help="Suffix of output file name.")
+@click.option(
+    "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
+)
 @click.pass_context
-def sim_file(ctx, feature, weight, name):
+def sim_file(ctx, feature, weight, name, standard):
     from .commands import cmd_sim_file
 
     repo = ctx.obj
-    output = cmd_sim_file(repo, feature, weight, name)
+    output = cmd_sim_file(repo, feature, weight, name, standard)
     ctx.exit(0)
     click.echo(output["text"])
 
 
 @sim.command(name="rand", help="Simulation with random numbers")
 @click.option(
-    "--image-side", "-s", default=32, help="Image side, must be a power of two."
+    "--image-side", "-i", default=32, help="Image side, must be a power of two."
 )
 @click.option(
     "--loop", "-L", default=1, help="Total of execution loops. Not implemented"
@@ -347,41 +350,47 @@ def sim_file(ctx, feature, weight, name):
 @click.option(
     "--seed", "-d", default=0, help="Seed to random number generator."
 )
+@click.option(
+    "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
+)
 @click.pass_context
-def sim_rand(ctx, feature, weight, image_side, loop, name, seed):
+def sim_rand(ctx, feature, weight, image_side, loop, name, seed, standard):
     from .commands import cmd_sim_random
 
     repo = ctx.obj
-    output = cmd_sim_random(repo, feature, weight, image_side, loop, name, seed)
+    output = cmd_sim_random(
+        repo, feature, weight, image_side, loop, name, seed, standard
+    )
     ctx.exit(0)
     click.echo(output["text"])
 
 
 @sim.command(name="seq", help="Simulation with sequential numbers")
 @click.option(
-    "--image-side", "-s", default=32, help="Image side, must be a power of two."
+    "--image-side", "-i", default=32, help="Image side, must be a power of two."
 )
 @click.option(
     "--feature",
     "-f",
-    nargs=2,
-    default=[0, 127],
-    help="Minimal and maximal value of feature sequential data.",
+    default=0,
+    help="Start value of feature sequential data.",
 )
 @click.option(
     "--weight",
     "-w",
-    nargs=2,
-    default=[0, 127],
-    help="Minimal and maximal value of weight sequential data.",
+    default=0,
+    help="Start value of weight sequential data.",
 )
 @click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option(
+    "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
+)
 @click.pass_context
-def sim_seq(ctx, feature, weight, image_side, loop, suffix):
+def sim_seq(ctx, feature, weight, image_side, suffix, standard):
     from .commands import cmd_sim_seq
 
     repo = ctx.obj
-    output = cmd_sim_seq(repo, feature, weight, image_side, loop, suffix)
+    output = cmd_sim_seq(repo, feature, weight, image_side, suffix, standard)
     ctx.exit(0)
     click.echo(output["text"])
 

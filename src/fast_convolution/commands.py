@@ -790,7 +790,7 @@ def cmd_quant_shift(repo, bits):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-def cmd_sim_file(repo, feature_info, weight, suffix):
+def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     with open(feature_info) as f:
@@ -803,53 +803,85 @@ def cmd_sim_file(repo, feature_info, weight, suffix):
             wght_arr = w_arr.reshape(b_len, b_len)
         else:
             wght_arr = w_arr.reshape(b_len[0], b_len[1])
-    return sim(
-        a_len,
-        b_len,
-        c_len,
-        dim,
-        feat_arr,
-        feature_info,
-        image_side,
-        quant_data,
-        repo,
-        suffix,
-        weight,
-        wght_arr,
-    )
+    if standard:
+        return sim_default(
+            a_len,
+            b_len,
+            c_len,
+            dim,
+            feat_arr,
+            feature_info,
+            image_side,
+            quant_data,
+            repo,
+            suffix,
+            weight,
+            wght_arr,
+        )
+    else:
+        return sim(
+            a_len,
+            b_len,
+            c_len,
+            dim,
+            feat_arr,
+            feature_info,
+            image_side,
+            quant_data,
+            repo,
+            suffix,
+            weight,
+            wght_arr,
+        )
 
 
-def cmd_sim_seq(repo, feature_info, weight, image_side, loop, suffix):
+def cmd_sim_seq(repo, feature_info, weight, image_side, suffix, standard):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
-    feat = np.arange(
-        feature_info, feature_info + image_side**2, size=image_side**2
-    )
+    feat = np.arange(feature_info, feature_info + image_side**2)
     feat_arr = feat.reshape(image_side, image_side)
 
     if dim == 1:
-        wght = np.arange(weight, weight + b_len**2, size=b_len**2)
+        wght = np.arange(weight, weight + b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
     else:
-        wght = np.arange(weight, weight + b_len**2, size=b_len[0] * b_len[1])
+        wght = np.arange(weight, weight + b_len[0] ** 2)
         wght_arr = wght.reshape(b_len[0], b_len[1])
-    return sim(
-        a_len,
-        b_len,
-        c_len,
-        dim,
-        feat_arr,
-        feature_info,
-        image_side,
-        quant_data,
-        repo,
-        suffix,
-        weight,
-        wght_arr,
-    )
+    if standard:
+        return sim_default(
+            a_len,
+            b_len,
+            c_len,
+            dim,
+            feat_arr,
+            feature_info,
+            image_side,
+            quant_data,
+            repo,
+            suffix,
+            weight,
+            wght_arr,
+        )
+    else:
+        return sim(
+            a_len,
+            b_len,
+            c_len,
+            dim,
+            feat_arr,
+            feature_info,
+            image_side,
+            quant_data,
+            repo,
+            suffix,
+            weight,
+            wght_arr,
+        )
 
 
-def cmd_sim_random(repo, feature_info, weight, image_side, loop, suffix, seed):
+def cmd_sim_random(
+    repo, feature_info, weight, image_side, loop, suffix, seed, standard
+):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     feat = np.random.randint(
@@ -863,20 +895,37 @@ def cmd_sim_random(repo, feature_info, weight, image_side, loop, suffix, seed):
     else:
         wght = np.random.randint(weight[0], weight[1], size=b_len[0] * b_len[1])
         wght_arr = wght.reshape(b_len[0], b_len[1])
-    return sim(
-        a_len,
-        b_len,
-        c_len,
-        dim,
-        feat_arr,
-        feature_info,
-        image_side,
-        quant_data,
-        repo,
-        suffix,
-        weight,
-        wght_arr,
-    )
+
+    if standard:
+        return sim_default(
+            a_len,
+            b_len,
+            c_len,
+            dim,
+            feat_arr,
+            feature_info,
+            image_side,
+            quant_data,
+            repo,
+            suffix,
+            weight,
+            wght_arr,
+        )
+    else:
+        return sim(
+            a_len,
+            b_len,
+            c_len,
+            dim,
+            feat_arr,
+            feature_info,
+            image_side,
+            quant_data,
+            repo,
+            suffix,
+            weight,
+            wght_arr,
+        )
 
 
 def sim(
@@ -1048,14 +1097,142 @@ def sim(
         repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
-    bg_quant_flat = np.array(bg).reshape(1, -1)
-    w_size = (len(bg_quant_flat), len(bg_quant_flat[0]))
+
+    weight_sv = np.array(bg).reshape(1, -1)
+    w_size = (len(weight_sv), len(weight_sv[0]))
     fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
     fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
     list_array = [
         {
             "name": f"const_weight[{w_size[0]}][{w_size[1]}]",
-            "value": bg_quant_flat,
+            "value": weight_sv,
+        },
+        {
+            "name": f"const_feat_in[{fin_size[0]}][{fin_size[1]}]",
+            "value": feat_list_sv,
+        },
+        {
+            "name": f"const_feat_out[{fout_size[0]}][{fout_size[1]}]",
+            "value": out_feat_list_sv,
+        },
+    ]
+    arr = [{**r, "type": "int"} for r in list_array]
+    dict_def = {
+        "QUANT_BITS": quant_bits,
+        "W1_SIZE": w_size[0],
+        "W2_SIZE": w_size[1],
+        "FIN1_SIZE": fin_size[0],
+        "FIN2_SIZE": fin_size[1],
+        "FOUT1_SIZE": fout_size[0],
+        "FOUT2_SIZE": fout_size[1],
+        **dict_dim,
+    }
+    utils.sv_pkg(path / "data.sv", arr, dict_def)
+    return out_dict
+
+
+def sim_default(
+    a_len,
+    b_len,
+    c_len,
+    dim,
+    feat_arr,
+    feature_info,
+    image_side,
+    quant_data,
+    repo,
+    suffix,
+    weight,
+    wght_arr,
+):
+    output_default = signal.convolve2d(
+        feat_arr, wght_arr[::-1, ::-1], mode="valid"
+    )
+    output_naive = naive_convolve(feat_arr, wght_arr)
+    compare_naive = np.all(output_default == output_naive)
+    text_equal = f"Output default and naive are equals: {compare_naive}\n"
+    quant_bits = quant_data["bits"] if "bits" in quant_data else 0
+    wght_quant = (
+        wght_arr
+        if len(quant_data) == 0
+        else np.left_shift(wght_arr, quant_bits)
+    )
+
+    output_quant = np.right_shift(
+        naive_convolve(feat_arr, wght_quant), quant_bits
+    )
+    feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
+        feat_arr, output_quant, output_default.shape, c_len, a_len
+    )
+    dict_dim = dict_dimension(dim, 3, 3, 5, 9)
+    # if len(quant_data) == 0:
+    #     bg_quant = bg
+    # else:
+    #     wght_quant = np.left_shift(wght_arr, quant_bits)
+    #     bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
+
+    if len(quant_data) != 0:
+        metric = r2_score(output_default.reshape(-1), output_quant.reshape(-1))
+        text_metric = f"R2: {metric}%\n"
+    else:
+        metric = np.all(output_default == output_quant)
+        text_metric = f"Output default and fast are equals: {metric}\n"
+    size = output_default.size
+    text = (
+        f"Feature: {feature_info}\n"
+        f"Weights: {weight}\n"
+        f"Image side: {image_side}\n"
+        f"{text_equal}"
+        f"{text_metric}"
+        "Totals\n"
+        "Naive\n"
+        f"Convolutions: {size}\n"
+        f"Multiplications: {size * 9}\n"
+        f"Additions: {size * 8}\n"
+    )
+    if len(suffix) > 0:
+        path = repo.dir_sim / f"file-{suffix}"
+    else:
+        path = repo.dir_sim / "file"
+    path.mkdir(exist_ok=True, parents=True)
+    with open(path / "sim.txt", "w") as f:
+        f.write(text)
+    for arr, name in zip(
+        [feat_arr, wght_quant, output_default, output_quant],
+        ["d", "g", "s_default", "s"],
+    ):
+        np.savetxt(path / f"{name}.txt", arr, fmt="%d")
+    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+    list_array = [
+        {"name": "weight", "value": wght_quant},
+        # {"name": "weight_gg_quant", "value": bg_quant},
+        {"name": "feat_in", "value": feat_arr},
+        {"name": "gold", "value": output_default},
+        {"name": "gold_quant", "value": output_quant},
+    ]
+    dict_def = {
+        "QUANT_BITS": quant_bits,
+        "W_SIZE": wght_quant.shape[0],
+        "FIN_SIZE": feat_arr.shape[0],
+        "FOUT_SIZE": output_default.shape[0],
+    }
+    # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
+    arr = [{**r, "type": "int"} for r in list_array]
+    utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
+    arr_float = [{**r, "type": "float"} for r in list_array]
+    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+    utils.c_header(
+        repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
+    )
+    out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
+    weight_sv = np.array(wght_quant).reshape(1, -1)
+    w_size = (len(weight_sv), len(weight_sv[0]))
+    fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
+    fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
+    list_array = [
+        {
+            "name": f"const_weight[{w_size[0]}][{w_size[1]}]",
+            "value": weight_sv,
         },
         {
             "name": f"const_feat_in[{fin_size[0]}][{fin_size[1]}]",
