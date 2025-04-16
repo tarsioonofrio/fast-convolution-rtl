@@ -923,14 +923,11 @@ def sim(
             .reshape(b_len, -1)
             .tolist()
         )
-        bg = (
-            bg_
-            if quant_data == 0
-            else (np.round(np.array(b).astype(float)).astype(int) for b in bg_)
-        )
+        bg2_ = [np.round(np.array(b).astype(float)).astype(int) for b in bg_]
+        bg = bg_ if quant_data == 0 else bg2_
 
         fast_conv = [
-            fast.wrap_convolution(c, bg, a, quant_bits) for i in range(b_len)
+            fast.wrap_convolution(c, bg[i], a, quant_bits) for i in range(b_len)
         ]
         output_fast_ = [
             fast.filter1d_slide2d(
@@ -968,9 +965,10 @@ def sim(
             if quant_data == 0
             else np.round(np.array(bg_).astype(float)).astype(int)
         )
-        fast_conv = fast.wrap_convolution2d(
-            c[0], c[1], bg, a[0], a[1], quant_bits
-        )
+        fast_conv = [
+            fast.conv1d(wght_arr[i], c, q, b, a, quant_bits)
+            for i in range(b_len)
+        ]
         output_fast = fast.filter2d_slide2d(
             fast_conv, feat_arr, output_default.shape, c_len, a_len
         )

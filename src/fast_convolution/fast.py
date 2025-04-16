@@ -135,7 +135,7 @@ def count_sums(mtx):
 def wrap_convolution(c, bg, a, quant=0):
     def convolution(f):
         tr = c.T * sy.Matrix(f)
-        m_ = sy.HadamardProduct(tr, sy.Matrix(bg.T), evaluate=True)
+        m_ = sy.HadamardProduct(tr, sy.Matrix(bg), evaluate=True)
         m = (
             m_
             if quant == 0
@@ -226,7 +226,10 @@ def g_to_bg2d(q1, b1, q2, b2, g):
 
 def conv1d(g_, c, q, b, a, quant=0):
     g = g_ if quant == 0 else np.left_shift(g_, quant)
-    bg = g_to_bg(q, b, g)
+    bg_ = g_to_bg(q, b, g)
+    bg = (
+        bg_ if quant == 0 else np.round(np.array(bg_).astype(float)).astype(int)
+    )
     f = wrap_convolution(c, bg, a, quant)
     return f
 
