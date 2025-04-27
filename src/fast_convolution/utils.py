@@ -504,7 +504,7 @@ def matmul_sv(m1, m2):
     return out
 
 
-def sv_nest(mtx, input_shp):
+def sv_nest(mtx, input_shp, name):
     # input_shp = [4, 4]
     # hadamard_shp = [4, 4]
     # output_shp = [2, 2]
@@ -523,6 +523,16 @@ def sv_nest(mtx, input_shp):
     # cp = np.where(c > 0, c, 0)
     # cn = np.where(c < 0, c, 0)
     # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
+    module1 = (
+        f"module Matrix{name.upper()}0"
+        "  import packConv::*;\n"
+        "  (\n"
+        "    input  port_in P,\n"
+        "    output type_matrix_c port_out\n"
+        "  );\n"
+        "  timeunit 1ns;\n"
+        "  timeprecision 1ps;\n"
+    )
     port1_p = matmul_sv(input_str, mtxp.T)
     # _recursive_log2(9)
     csa1_p = []
@@ -587,4 +597,3 @@ def sv_nest(mtx, input_shp):
             port2_out.append(f"assign port_out[{idx}] = sp{idx});")
         elif len(n) > 0:
             port2_out.append(f"assign port_out[{idx}] = sn{idx});")
-
