@@ -505,25 +505,53 @@ def matmul_sv(m1, m2):
 
 
 def sv_nest():
+    # input_shp = [4, 4]
+    # hadamard_shp = [4, 4]
+    # output_shp = [2, 2]
+
+    # D shape
     input_shp = [4, 4]
-    hadamard_shp = [4, 4]
-    output_shp = [2, 2]
     input_str = np.array(
         [f"p_in[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
-    a = np.array([[1, 0], [1, 1], [1, -1], [0, 1]])
-    c = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
-    ap = np.where(a > 0, a, 0)
-    an = np.where(a < 0, a, 0)
-    cp = np.where(c > 0, c, 0)
-    cn = np.where(c < 0, c, 0)
-    d1 = matmul_sv(input_str, cp.T)
-    lst_out = []
-    for idx, lst_port in enumerate(d1):
-        if len(lst_port) > 1:
+    input_str
+    # matrix A
+    # mtx = np.array([[1, 0], [1, 1], [1, -1], [0, 1]])
+    # matrix C
+    mtx = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
+    mtx
+    mtxp = np.where(mtx > 0, mtx, 0)
+    mtxp
+    mtxn = np.where(mtx < 0, mtx, 0)
+    mtxn
+    # cp = np.where(c > 0, c, 0)
+    # cn = np.where(c < 0, c, 0)
+    mtx_pn = np.logical_and(np.any(mtx < 0, axis=1), np.any(mtx > 0, axis=1))
+    # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
+
+    port_p = matmul_sv(input_str, mtxp.T)
+    port_p
+    csa_p = []
+    # _recursive_log2(9)
+    for idx, lst_port in enumerate(port_p):
+        if len(lst_port) == 1:
+            csa_p.append(f"assign sp{idx} = {lst_port[0]};")
+        elif len(lst_port) > 1:
             str_port = ", ".join(lst_port)
-            lst_out.append(f"CSA_{len(lst_port)} csa_p{idx} ({str_port})")
-    lst_out
-    d2 = matmul_sv(cp, input_str)
-    d2
-    _recursive_log2(9)
+            csa_p.append(f"CSA_{len(lst_port)} csa_p{idx} ({str_port}, sp{idx});")
+    csa_p
+
+    port_n = matmul_sv(input_str, mtxn.T)
+    csa_n = []
+    # _recursive_log2(9)
+    for idx, lst_port in enumerate(port_n):
+        if len(lst_port) == 1:
+            csa_n.append(f"assign sn{idx} = {lst_port[0]};")
+        elif len(lst_port) > 1:
+            str_port = ", ".join(lst_port)
+            csa_p.append(f"CSA_{len(lst_port)} csa_n{idx} ({str_port}, sn{idx});")
+    csa_n
+    mtx_pn
+    
+    # d2 = matmul_sv(cp, input_str)
+    # d2
