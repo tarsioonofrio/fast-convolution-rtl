@@ -6,8 +6,6 @@ import sympy as sy
 from PIL import Image, ImageOps
 from scipy import signal
 
-from . import fast
-
 
 def plot_pdf(
     page,
@@ -222,7 +220,7 @@ def c_shift(d, s, z):
 
 
 def c_matmul_shift_noloop(mtx, name_suffix):
-    mtx_log = fast.log2_lst(mtx)
+    mtx_log = log2_lst(mtx)
     var_in = [f"m_in[{i}]" for i in range(mtx.shape[1])]
     var_out = [f"m_out[{i}]" for i in range(mtx.shape[0])]
 
@@ -243,7 +241,7 @@ def c_matmul_shift_noloop(mtx, name_suffix):
 
 
 def c_matmul_shift_noloop_nest(mtx1, name_suffix, in_shp, out_shp, swap=False):
-    mtx1_log = fast.log2_lst(mtx1)
+    mtx1_log = log2_lst(mtx1)
     mtx2 = np.array(
         [f"m_in[{i}]" for i in range(in_shp[0] * in_shp[1])]
     ).reshape(*in_shp)
@@ -301,3 +299,231 @@ def matmul(m1, m2):
                 data = {d2: d1} if isinstance(d2, str) else {d1: d2}
                 out[r * col2 + c] += [data]
     return out
+
+
+def _recursive_log2(n):
+    return [e for e, b in enumerate(bin(n)[2::][::-1]) if b == "1"]
+
+
+def recursive_log2(n):
+    if n == 0:
+        return {}
+    sign = -1 if n < 0 else 1
+    if isinstance(n, sy.Integer):
+        exp_z = _recursive_log2(n)
+        out = {"s": sign, "z": exp_z}
+    else:
+        exp_p = _recursive_log2(n.p)
+        exp_q = _recursive_log2(n.q)
+        out = {
+            "s": sign,
+            "p": exp_p,
+            "q": exp_q,
+        }
+    return out
+
+
+def log2_lst(mtx):
+    lst_in = mtx.tolist()
+    lst_out = [
+        [None for c in range(len(lst_in[0]))] for r in range(len(lst_in))
+    ]
+    for r, row in enumerate(lst_in):
+        for c, col in enumerate(row):
+            lst_out[r][c] = recursive_log2(col)
+    return lst_out
+
+
+def log2_matrix(lst):
+    def log2_rational(p, q):
+        p0 = sy.UnevaluatedExpr(sy.Pow(2, p, evaluate=False))
+        q0 = sy.Pow(
+            sy.UnevaluatedExpr(sy.Pow(2, q, evaluate=False)), -1, evaluate=False
+        )
+        return p0 * q0
+
+    mtx = sy.zeros(len(lst), len(lst[0]))
+    for er, r in enumerate(lst):
+        for ec, c in enumerate(r):
+            if "z" in c:
+                n = sum(
+                    [
+                        c["s"]
+                        * sy.UnevaluatedExpr(sy.Pow(2, z, evaluate=False))
+                        for z in c["z"]
+                    ]
+                )
+            elif "p" in c:
+                p = sum(
+                    [
+                        (
+                            c["s"]
+                            * sy.UnevaluatedExpr(sy.Pow(2, p, evaluate=False))
+                        )
+                        for p in c["p"]
+                    ]
+                )
+                # q = sum([
+                #     (c["s"] * sy.Pow(sy.UnevaluatedExpr(
+                #         sy.Pow(2, q, evaluate=False)), -1, evaluate=False)
+                #      )
+                #     for q in c["q"]
+                # ])
+                if len(c["q"]) == 1:
+                    _q = sy.UnevaluatedExpr(
+                        sy.Pow(2, c["q"][0], evaluate=False)
+                    )
+                    q = sy.Pow(_q, -1, evaluate=False)
+                else:
+                    q = c["q"]
+                n = p * q
+            else:
+                n = 0
+            mtx[er, ec] = n
+    return mtx
+
+
+def matrix_to_log2(mtx):
+    return log2_matrix(log2_lst(mtx))
+
+
+def count_sums(mtx):
+    m_log = matrix_to_log2(mtx)
+    m_sum = [
+        [1 if -1 in m.args else len(m.args) for m in r] for r in m_log.tolist()
+    ]
+    return np.sum(m_sum)
+
+
+def csa_lst(mtx, positive=True):
+    lst = log2_lst(mtx)
+    signal = 1 if positive else -1
+    max_pow = max_power(lst, signal)
+    max_lst = [
+        [
+            [
+                1 if len(c) > 0 and p in c["z"] and c["s"] == signal else 0
+                for c in r
+            ]
+            for r in lst
+        ]
+        for p in range(max_pow + 1)
+    ]
+    return max_lst
+
+
+def max_power(lst, positive=True):
+    signal = 1 if positive else -1
+    max_pow = max(
+        [0]
+        + [
+            max(
+                [0]
+                + [max(c["z"]) for c in r if len(c) > 0 and c["s"] == signal]
+            )
+            for r in lst
+        ]
+    )
+    return max_pow
+
+
+def csa_config(a, c):
+    config = {
+        (n, s): max_power(log2_lst(lst), positive=typ)
+        for lst, n in zip([a.T, c.T], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+    return config
+
+
+def csa_config_nest(a1, a2, c1, c2):
+    config = {
+        (n, s): max_power(log2_lst(lst), positive=typ)
+        for lst, n in zip([a1.T, a2.T, c1.T, c2.T], ["a", "A", "c", "C"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+    return config
+
+
+def write_csa_config(config, path):
+    path.mkdir(parents=True, exist_ok=True)
+    with open(path / "config.txt", "w") as f:
+        for (n, s), p in config.items():
+            f.write(f"{p} {n} {s}\n")
+
+
+def csa_parcels(a, c):
+    return {
+        (n, s): csa_lst(lst, positive=typ)
+        for lst, n in zip([a.T, c.T], ["a", "c"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+
+
+def csa_parcels_nest(a1, a2, c1, c2):
+    return {
+        (n, s): csa_lst(lst, positive=typ)
+        for lst, n in zip([a1, a2.T, c1, c2.T], ["a1", "a2", "c1", "c2"])
+        for typ, s in zip([True, False], ["p", "n"])
+    }
+
+
+def write_csa_parcels(csa, path):
+    path.mkdir(parents=True, exist_ok=True)
+
+    with open(path / "info.txt", "w") as f:
+        for (n, s), lst in csa.items():
+            f.write(f"{np.sum(lst)} {n} {s}\n")
+
+    for (n, s), lst in csa.items():
+        with open(path / f"{n}{s}.txt", "w") as f:
+            for power in lst:
+                for line in power:
+                    f.write(" ".join(map(str, line)) + "\n")
+                f.write("\n")
+
+
+def matmul_sv(m1, m2):
+    row1 = m1.shape[0]
+    col2 = m2.shape[1]
+    col2_row1 = m1.shape[1]
+    in1 = m1.reshape(-1)
+    in2 = m2.reshape(-1)
+    out = [[] for _ in range(row1 * col2)]
+    for r in range(row1):
+        for c in range(col2):
+            for k in range(col2_row1):
+                d1 = in1[r * col2_row1 + k]
+                d2 = in2[k * col2 + c]
+                if isinstance(d1, str):
+                    if d2 != 0:
+                        out[r * col2 + c] += [d1]
+                else:
+                    if d1 != 0:
+                        out[r * col2 + c] += [d2]
+    return out
+
+
+def sv_nest():
+    input_shp = [4, 4]
+    hadamard_shp = [4, 4]
+    output_shp = [2, 2]
+    input_str = np.array(
+        [f"p_in[{i}]" for i in range(input_shp[0] * input_shp[1])]
+    ).reshape(*input_shp)
+    a = np.array([[1, 0], [1, 1], [1, -1], [0, 1]])
+    c = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
+    ap = np.where(a > 0, a, 0)
+    an = np.where(a < 0, a, 0)
+    cp = np.where(c > 0, c, 0)
+    cn = np.where(c < 0, c, 0)
+    d1 = matmul_sv(input_str, cp.T)
+    lst_out = []
+    for idx, lst_port in enumerate(d1):
+        if len(lst_port) > 1:
+            str_port = ", ".join(lst_port)
+            lst_out.append(f"CSA_{len(lst_port)} csa_p{idx} ({str_port})")
+    lst_out
+    d2 = matmul_sv(cp, input_str)
+    d2
+    _recursive_log2(9)

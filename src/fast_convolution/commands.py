@@ -268,8 +268,8 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     repo.dir_build.mkdir(parents=True, exist_ok=True)
     path = repo.dir_build / "convolution"
     latex.latex_1d(c, b, a, sy.Matrix(q), path, d, g, True)
-    a_sum = fast.count_sums(a)
-    c_sum = fast.count_sums(c)
+    a_sum = utils.count_sums(a)
+    c_sum = utils.count_sums(c)
     text = (
         f"Total multiplications: {b_len}\n"
         f"Sums:\n"
@@ -290,10 +290,10 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     with open(repo.dir_clib / "README.md", "w") as f:
         f.write(readme_str)
 
-    csa_config = fast.csa_config(a, c)
-    fast.write_csa_config(csa_config, path / "csa")
-    csa_parcels = fast.csa_parcels(a, c)
-    fast.write_csa_parcels(csa_parcels, path / "csa")
+    csa_config = utils.csa_config(a, c)
+    utils.write_csa_config(csa_config, path / "csa")
+    csa_parcels = utils.csa_parcels(a, c)
+    utils.write_csa_parcels(csa_parcels, path / "csa")
     header_csa = {
         f"{n.upper()}{s.upper()}_SIZE": p for (n, s), p in csa_config.items()
     }
@@ -516,10 +516,10 @@ def cmd_build2d_bind_nest(repo):
         generator = json.load(f)
     gen_text = vars(readme)[generator["generator"]]
 
-    a1_sum = fast.count_sums(a1)
-    a2_sum = fast.count_sums(a2)
-    c1_sum = fast.count_sums(c1)
-    c2_sum = fast.count_sums(c2)
+    a1_sum = utils.count_sums(a1)
+    a2_sum = utils.count_sums(a2)
+    c1_sum = utils.count_sums(c1)
+    c2_sum = utils.count_sums(c2)
     text = (
         f"Total multiplications: {len(q1) * len(q2)}\n"
         f"Sums:\n"
@@ -543,10 +543,11 @@ def cmd_build2d_bind_nest(repo):
         f.write(readme_str)
 
     # TODO export bind_kron_float.h with data in float
-    csa_config = fast.csa_config_nest(a1, a2, c1, c2)
-    fast.write_csa_config(csa_config, path / "csa")
-    csa_parcels = fast.csa_parcels_nest(a1, a2, c1, c2)
-    fast.write_csa_parcels(csa_parcels, path / "csa")
+    csa_config = utils.csa_config_nest(a1, a2, c1, c2)
+    utils.write_csa_config(csa_config, path / "csa")
+    csa_parcels = utils.csa_parcels_nest(a1, a2, c1, c2)
+    utils.write_csa_parcels(csa_parcels, path / "csa")
+    breakpoint()
 
     d1_sym = sy.Matrix(
         c1.shape[0],
@@ -672,8 +673,8 @@ def cmd_build2d_bind_kron(repo):
         generator = json.load(f)
 
     gen_text = vars(readme)[generator["generator"]]
-    a_sum = fast.count_sums(a)
-    c_sum = fast.count_sums(c)
+    a_sum = utils.count_sums(a)
+    c_sum = utils.count_sums(c)
     text = (
         f"Total multiplications: {len(q1) * len(q2)}\n"
         f"Sums:\n"
@@ -697,10 +698,10 @@ def cmd_build2d_bind_kron(repo):
         f.write(readme_str)
 
     # TODO export bind_kron_float.h with data in float
-    csa_config = fast.csa_config(a, c)
-    fast.write_csa_config(csa_config, path / "csa")
-    csa_parcels = fast.csa_parcels(a, c)
-    fast.write_csa_parcels(csa_parcels, path / "csa")
+    csa_config = utils.csa_config(a, c)
+    utils.write_csa_config(csa_config, path / "csa")
+    csa_parcels = utils.csa_parcels(a, c)
+    utils.write_csa_parcels(csa_parcels, path / "csa")
 
     list_array = [
         {"name": "ma_kron", "value": a.T},
