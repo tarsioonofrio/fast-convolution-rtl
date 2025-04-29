@@ -535,7 +535,7 @@ def sv_nest(mtx, input_shp, name):
     mtx = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
 
     module1 = (
-        f"module Matrix{name.upper()}0"
+        f"module Matrix{name.upper()}0\n"
         "  import packConv::*;\n"
         "  (\n"
         "    input  port_in P,\n"
@@ -557,10 +557,8 @@ def sv_nest(mtx, input_shp, name):
     # cn = np.where(c < 0, c, 0)
     # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
     port1_p, port1_pp = matmul_sv2(input1_str, mtxp.T)
-    signal_p1_str = (
-        "  logic_vector "
-        + ", ".join(f"sp{i}" for i in range(len(port1_p)))
-        + ";\n"
+    signal_p1_str = "  logic_vector " + ", ".join(
+        f"sp{i}" for i in range(len(port1_p))
     )
     csa1_p = []
     for idx, lst_port in enumerate(port1_p):
@@ -573,10 +571,8 @@ def sv_nest(mtx, input_shp, name):
             )
 
     port1_n, port1_np = matmul_sv2(input1_str, mtxn.T)
-    signal_n1_str = (
-        "  logic_vector "
-        + ", ".join(f"sn{i}" for i in range(len(port1_n)))
-        + ";\n"
+    signal_n1_str = "  logic_vector " + ", ".join(
+        f"sn{i}" for i in range(len(port1_n))
     )
     csa1_n = []
     # _recursive_log2(9)
@@ -599,7 +595,7 @@ def sv_nest(mtx, input_shp, name):
             port1_out.append(f"  assign port_out[{idx}] = sn{idx};")
 
     module2 = (
-        f"module Matrix{name.upper()}1"
+        f"module Matrix{name.upper()}\n"
         "  import packConv::*;\n"
         "  (\n"
         "    input  port_in P,\n"
@@ -614,10 +610,8 @@ def sv_nest(mtx, input_shp, name):
     ).reshape(*input_shp)
 
     port2_pp, port2_p = matmul_sv2(mtxp, input2_str)
-    signal_p2_str = (
-        "  logic_vector "
-        + ", ".join(f"sp{i}" for i in range(len(port2_p)))
-        + ";\n"
+    signal_p2_str = "  logic_vector " + ", ".join(
+        f"sp{i}" for i in range(len(port2_p))
     )
 
     csa2_p = []
@@ -631,10 +625,8 @@ def sv_nest(mtx, input_shp, name):
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
     port2_np, port2_n = matmul_sv2(mtxn, input2_str)
-    signal_n2_str = (
-        "  logic_vector "
-        + ", ".join(f"sn{i}" for i in range(len(port2_n)))
-        + ";\n"
+    signal_n2_str = "  logic_vector " + ", ".join(
+        f"sn{i}" for i in range(len(port2_n))
     )
 
     csa2_n = []
