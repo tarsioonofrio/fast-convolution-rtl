@@ -659,7 +659,6 @@ def sv_nest(mtx, input_shp, name):
             "\n".join(port1_out),
         ]
     )
-
     m2_str = "\n".join(
         [
             module2,
@@ -670,5 +669,4 @@ def sv_nest(mtx, input_shp, name):
             "\n".join(port2_out),
         ]
     )
-
     return (m1_str, m2_str)
