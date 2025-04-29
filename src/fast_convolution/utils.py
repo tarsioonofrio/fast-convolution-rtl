@@ -532,6 +532,7 @@ def sv_nest(mtx, input_shp, name):
     # D shape
     input_shp = [4, 4]
     name = "a"
+    mtx = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
 
     module1 = (
         f"module Matrix{name.upper()}0"
@@ -550,7 +551,6 @@ def sv_nest(mtx, input_shp, name):
     # matrix A
     # mtx = np.array([[1, 0], [1, 1], [1, -1], [0, 1]])
     # matrix C
-    mtx = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
     mtxp = np.where(mtx > 0, mtx, 0)
     mtxn = np.where(mtx < 0, mtx, 0)
     # cp = np.where(c > 0, c, 0)
