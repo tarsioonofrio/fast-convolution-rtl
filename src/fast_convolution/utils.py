@@ -503,6 +503,25 @@ def matmul_sv(m1, m2):
                         out[r * col2 + c] += [d2]
     return out
 
+def matmul_sv2(m1, m2):
+    row1 = m1.shape[0]
+    col2 = m2.shape[1]
+    col2_row1 = m1.shape[1]
+    in1 = m1.reshape(-1)
+    in2 = m2.reshape(-1)
+    out1 = [[] for _ in range(row1 * col2)]
+    out2 = [[] for _ in range(row1 * col2)]
+    for r in range(row1):
+        for c in range(col2):
+            for k in range(col2_row1):
+                d1 = in1[r * col2_row1 + k]
+                d2 = in2[k * col2 + c]
+                if d2 != 0:
+                    out1[r * col2 + c] += [d1]
+                if d1 != 0:
+                    out2[r * col2 + c] += [d2]
+    return [out1, out2]
+
 
 def sv_nest(mtx, input_shp, name):
     # input_shp = [4, 4]
@@ -511,6 +530,18 @@ def sv_nest(mtx, input_shp, name):
 
     # D shape
     input_shp = [4, 4]
+    name = 'a'
+    module1 = (
+        f"module Matrix{name.upper()}0"
+        "  import packConv::*;\n"
+        "  (\n"
+        "    input  port_in P,\n"
+        f"    output type_matrix_{name} port_out\n"
+        "  );\n"
+        "  timeunit 1ns;\n"
+        "  timeprecision 1ps;\n"
+    )
+
     input_str = np.array(
         [f"p_in[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
@@ -523,18 +554,8 @@ def sv_nest(mtx, input_shp, name):
     # cp = np.where(c > 0, c, 0)
     # cn = np.where(c < 0, c, 0)
     # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
-    module1 = (
-        f"module Matrix{name.upper()}0"
-        "  import packConv::*;\n"
-        "  (\n"
-        "    input  port_in P,\n"
-        "    output type_matrix_c port_out\n"
-        "  );\n"
-        "  timeunit 1ns;\n"
-        "  timeprecision 1ps;\n"
-    )
-    port1_p = matmul_sv(input_str, mtxp.T)
-    # _recursive_log2(9)
+    port1_p, port1_pp = matmul_sv2(input_str, mtxp.T)
+    port1_p
     csa1_p = []
     for idx, lst_port in enumerate(port1_p):
         if len(lst_port) == 1:
@@ -544,8 +565,8 @@ def sv_nest(mtx, input_shp, name):
             csa1_p.append(
                 f"CSA_{len(lst_port)} csa_p{idx} ({str_port}, sp{idx});"
             )
-
-    port1_n = matmul_sv(input_str, mtxn.T)
+            
+    port1_n, port1_np = matmul_sv2(input_str, mtxn.T)
     csa1_n = []
     # _recursive_log2(9)
     for idx, lst_port in enumerate(port1_n):
@@ -566,7 +587,7 @@ def sv_nest(mtx, input_shp, name):
         elif len(n) > 0:
             port1_out.append(f"assign port_out[{idx}] = sn{idx});")
 
-    port2_p = matmul_sv(mtxp, input_str)
+    port2_pp, port2_p = matmul_sv2(mtxp, input_str)
     csa2_p = []
     # _recursive_log2(9)
     for idx, lst_port in enumerate(port2_p):
@@ -577,7 +598,7 @@ def sv_nest(mtx, input_shp, name):
             csa2_p.append(
                 f"CSA_{len(lst_port)} csa_p{idx} ({str_port}, sp{idx});"
             )
-    port2_n = matmul_sv(mtxn, input_str)
+    port2_np, port2_n = matmul_sv2(mtxn, input_str)
     csa2_n = []
     # _recursive_log2(9)
     for idx, lst_port in enumerate(port2_n):
