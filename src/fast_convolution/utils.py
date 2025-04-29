@@ -503,6 +503,7 @@ def matmul_sv(m1, m2):
                         out[r * col2 + c] += [d2]
     return out
 
+
 def matmul_sv2(m1, m2):
     row1 = m1.shape[0]
     col2 = m2.shape[1]
@@ -530,7 +531,8 @@ def sv_nest(mtx, input_shp, name):
 
     # D shape
     input_shp = [4, 4]
-    name = 'a'
+    name = "a"
+
     module1 = (
         f"module Matrix{name.upper()}0"
         "  import packConv::*;\n"
@@ -542,7 +544,7 @@ def sv_nest(mtx, input_shp, name):
         "  timeprecision 1ps;\n"
     )
 
-    input_str = np.array(
+    input1_str = np.array(
         [f"p_in[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
     # matrix A
@@ -554,67 +556,127 @@ def sv_nest(mtx, input_shp, name):
     # cp = np.where(c > 0, c, 0)
     # cn = np.where(c < 0, c, 0)
     # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
-    port1_p, port1_pp = matmul_sv2(input_str, mtxp.T)
-    port1_p
+    port1_p, port1_pp = matmul_sv2(input1_str, mtxp.T)
+    signal_p1_str = (
+        "  logic_vector "
+        + ", ".join(f"sp{i}" for i in range(len(port1_p)))
+        + ";\n"
+    )
     csa1_p = []
     for idx, lst_port in enumerate(port1_p):
         if len(lst_port) == 1:
-            csa1_p.append(f"assign sp{idx} = {lst_port[0]};")
+            csa1_p.append(f"  assign sp{idx} = {lst_port[0]};")
         elif len(lst_port) > 1:
             str_port = ", ".join(lst_port)
             csa1_p.append(
-                f"CSA_{len(lst_port)} csa_p{idx} ({str_port}, sp{idx});"
+                f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
-            
-    port1_n, port1_np = matmul_sv2(input_str, mtxn.T)
+
+    port1_n, port1_np = matmul_sv2(input1_str, mtxn.T)
+    signal_n1_str = (
+        "  logic_vector "
+        + ", ".join(f"sn{i}" for i in range(len(port1_n)))
+        + ";\n"
+    )
     csa1_n = []
     # _recursive_log2(9)
     for idx, lst_port in enumerate(port1_n):
         if len(lst_port) == 1:
-            csa1_n.append(f"assign sn{idx} = {lst_port[0]};")
+            csa1_n.append(f"  assign sn{idx} = {lst_port[0]};")
         elif len(lst_port) > 1:
             str_port = ", ".join(lst_port)
             csa1_n.append(
-                f"CSA_{len(lst_port)} csa_n{idx} ({str_port}, sn{idx});"
+                f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
             )
 
     port1_out = []
     for idx, (p, n) in enumerate(zip(port1_n, port1_p)):
         if len(p) > 0 and len(n) > 0:
-            port1_out.append(f"assign port_out[{idx}] = sp{idx} - sn{idx});")
+            port1_out.append(f"  assign port_out[{idx}] = sp{idx} - sn{idx};")
         elif len(p) > 0:
-            port1_out.append(f"assign port_out[{idx}] = sp{idx});")
+            port1_out.append(f"  assign port_out[{idx}] = sp{idx};")
         elif len(n) > 0:
-            port1_out.append(f"assign port_out[{idx}] = sn{idx});")
+            port1_out.append(f"  assign port_out[{idx}] = sn{idx};")
 
-    port2_pp, port2_p = matmul_sv2(mtxp, input_str)
+    module2 = (
+        f"module Matrix{name.upper()}1"
+        "  import packConv::*;\n"
+        "  (\n"
+        "    input  port_in P,\n"
+        f"    output type_matrix_{name} port_out\n"
+        "  );\n"
+        "  timeunit 1ns;\n"
+        "  timeprecision 1ps;\n"
+    )
+
+    input2_str = np.array(
+        [f"p_in[{i}]" for i in range(input_shp[0] * input_shp[1])]
+    ).reshape(*input_shp)
+
+    port2_pp, port2_p = matmul_sv2(mtxp, input2_str)
+    signal_p2_str = (
+        "  logic_vector "
+        + ", ".join(f"sp{i}" for i in range(len(port2_p)))
+        + ";\n"
+    )
+
     csa2_p = []
     # _recursive_log2(9)
     for idx, lst_port in enumerate(port2_p):
         if len(lst_port) == 1:
-            csa2_p.append(f"assign sp{idx} = {lst_port[0]};")
+            csa2_p.append(f"  assign sp{idx} = {lst_port[0]};")
         elif len(lst_port) > 2:
             str_port = ", ".join(lst_port)
             csa2_p.append(
-                f"CSA_{len(lst_port)} csa_p{idx} ({str_port}, sp{idx});"
+                f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
-    port2_np, port2_n = matmul_sv2(mtxn, input_str)
+    port2_np, port2_n = matmul_sv2(mtxn, input2_str)
+    signal_n2_str = (
+        "  logic_vector "
+        + ", ".join(f"sn{i}" for i in range(len(port2_n)))
+        + ";\n"
+    )
+
     csa2_n = []
     # _recursive_log2(9)
     for idx, lst_port in enumerate(port2_n):
         if len(lst_port) == 1:
-            csa2_n.append(f"assign sn{idx} = {lst_port[0]};")
+            csa2_n.append(f"  assign sn{idx} = {lst_port[0]};")
         elif len(lst_port) > 1:
             str_port = ", ".join(lst_port)
             csa2_n.append(
-                f"CSA_{len(lst_port)} csa_n{idx} ({str_port}, sn{idx});"
+                f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
             )
 
     port2_out = []
     for idx, (p, n) in enumerate(zip(port2_n, port2_p)):
         if len(p) > 0 and len(n) > 0:
-            port2_out.append(f"assign port_out[{idx}] = sp{idx} - sn{idx});")
+            port2_out.append(f"  assign port_out[{idx}] = sp{idx} - sn{idx};")
         elif len(p) > 0:
-            port2_out.append(f"assign port_out[{idx}] = sp{idx});")
+            port2_out.append(f"  assign port_out[{idx}] = sp{idx};")
         elif len(n) > 0:
-            port2_out.append(f"assign port_out[{idx}] = sn{idx});")
+            port2_out.append(f"  assign port_out[{idx}] = sn{idx};")
+
+    m1_str = "\n".join(
+        [
+            module1,
+            signal_p1_str,
+            signal_n1_str,
+            "\n".join(csa1_p),
+            "\n".join(csa1_n),
+            "\n".join(port1_out),
+        ]
+    )
+
+    m2_str = "\n".join(
+        [
+            module2,
+            signal_p2_str,
+            signal_n2_str,
+            "\n".join(csa2_p),
+            "\n".join(csa2_n),
+            "\n".join(port2_out),
+        ]
+    )
+
+    return (m1_str, m2_str)
