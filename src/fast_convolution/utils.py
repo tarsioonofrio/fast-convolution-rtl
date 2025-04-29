@@ -530,9 +530,9 @@ def sv_nest(mtx, input_shp, name):
     # output_shp = [2, 2]
 
     # D shape
-    input_shp = [4, 4]
-    name = "a"
-    mtx = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
+    # input_shp = [4, 4]
+    # name = "a"
+    # mtx = np.array([[-1, 0, 1, 0], [0, 1, 1, 0], [0, -1, 1, 0], [0, -1, 0, 1]])
 
     module1 = (
         f"module Matrix{name.upper()}0\n"
@@ -551,12 +551,14 @@ def sv_nest(mtx, input_shp, name):
     # matrix A
     # mtx = np.array([[1, 0], [1, 1], [1, -1], [0, 1]])
     # matrix C
-    mtxp = np.where(mtx > 0, mtx, 0)
-    mtxn = np.where(mtx < 0, mtx, 0)
+    arr = np.array(mtx)
+    arrp = np.where(arr > 0, arr, 0)
+    arrn = np.where(arr < 0, arr, 0)
     # cp = np.where(c > 0, c, 0)
     # cn = np.where(c < 0, c, 0)
     # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
-    port1_p, port1_pp = matmul_sv2(input1_str, mtxp.T)
+    # breakpoint()
+    port1_p, port1_pp = matmul_sv2(input1_str, arrp)
     signal_p1_str = "  logic_vector " + ", ".join(
         f"sp{i}" for i in range(len(port1_p))
     )
@@ -570,7 +572,7 @@ def sv_nest(mtx, input_shp, name):
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
 
-    port1_n, port1_np = matmul_sv2(input1_str, mtxn.T)
+    port1_n, port1_np = matmul_sv2(input1_str, arrn)
     signal_n1_str = "  logic_vector " + ", ".join(
         f"sn{i}" for i in range(len(port1_n))
     )
@@ -609,7 +611,7 @@ def sv_nest(mtx, input_shp, name):
         [f"p_in[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
 
-    port2_pp, port2_p = matmul_sv2(mtxp, input2_str)
+    port2_pp, port2_p = matmul_sv2(arrp.T, input2_str)
     signal_p2_str = "  logic_vector " + ", ".join(
         f"sp{i}" for i in range(len(port2_p))
     )
@@ -624,7 +626,7 @@ def sv_nest(mtx, input_shp, name):
             csa2_p.append(
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
-    port2_np, port2_n = matmul_sv2(mtxn, input2_str)
+    port2_np, port2_n = matmul_sv2(arrn.T, input2_str)
     signal_n2_str = "  logic_vector " + ", ".join(
         f"sn{i}" for i in range(len(port2_n))
     )
@@ -653,7 +655,7 @@ def sv_nest(mtx, input_shp, name):
         [
             module1,
             signal_p1_str,
-            signal_n1_str,
+            signal_n1_str + "\n",
             "\n".join(csa1_p),
             "\n".join(csa1_n),
             "\n".join(port1_out),
@@ -663,7 +665,7 @@ def sv_nest(mtx, input_shp, name):
         [
             module2,
             signal_p2_str,
-            signal_n2_str,
+            signal_n2_str + "\n",
             "\n".join(csa2_p),
             "\n".join(csa2_n),
             "\n".join(port2_out),
