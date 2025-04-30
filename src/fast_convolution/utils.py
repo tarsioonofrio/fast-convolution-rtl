@@ -574,12 +574,10 @@ def sv_nest(mtx, input_shp, name):
         [f"P[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
     arr = np.array(mtx)
-    arrp = np.where(arr > 0, arr, 0)
-    arrn = np.where(arr < 0, arr, 0)
-    # cp = np.where(c > 0, c, 0)
-    # cn = np.where(c < 0, c, 0)
-    # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
-    port1_p, port1_pp_ = matmul_sv2(input1_str, arrp)
+    arr_p = np.where(arr > 0, arr, 0)
+    arr_n = np.where(arr < 0, arr, 0)
+
+    port1_p, port1_pp_ = matmul_sv2(input1_str, arr_p)
     port1_pp = [[p for p in pp if p != 0] for pp in port1_pp_]
     signal_p1_str = (
         "  logic_vector "
@@ -594,7 +592,7 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_port) == 0:
+        if len(lst_shift) == 0:
             pass
         elif len(lst_shift) == 1:
             csa1_p.append(f"  assign sp{idx} = {lst_shift[0]};")
@@ -603,7 +601,7 @@ def sv_nest(mtx, input_shp, name):
             csa1_p.append(
                 f"  CSA_{len(lst_shift)} csa_p{idx}({str_port}, sp{idx});"
             )
-    port1_n, port1_np_ = matmul_sv2(input1_str, arrn)
+    port1_n, port1_np_ = matmul_sv2(input1_str, arr_n)
     port1_np = [[p for p in pp if p != 0] for pp in port1_np_]
     signal_n1_str = (
         "  logic_vector "
@@ -617,7 +615,7 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_port) == 0:
+        if len(lst_shift) == 0:
             pass
         elif len(lst_shift) == 1:
             csa1_n.append(f"  assign sn{idx} = {lst_shift[0]};")
@@ -628,7 +626,7 @@ def sv_nest(mtx, input_shp, name):
             )
 
     port1_out = []
-    for idx, (p, n) in enumerate(zip(port1_n, port1_p)):
+    for idx, (n, p) in enumerate(zip(port1_n, port1_p)):
         if len(p) > 0 and len(n) > 0:
             port1_out.append(f"  assign soma[{idx}] = sp{idx} - sn{idx};")
         elif len(p) > 0:
@@ -662,7 +660,7 @@ def sv_nest(mtx, input_shp, name):
     input2_str = np.array(
         [f"P[{i}]" for i in range(input_shp[0] * mtx.shape[1])]
     ).reshape(input_shp[0], mtx.shape[1])
-    port2_pp_, port2_p = matmul_sv2(arrp.T, input2_str)
+    port2_pp_, port2_p = matmul_sv2(arr_p.T, input2_str)
     port2_pp = [[p for p in pp if p != 0] for pp in port2_pp_]
     signal_p2_str = (
         "  logic_vector "
@@ -676,16 +674,16 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_port) == 0:
+        if len(lst_shift) == 0:
             pass
         elif len(lst_shift) == 1:
-            csa1_p.append(f"  assign sp{idx} = {lst_shift[0]};")
+            csa2_p.append(f"  assign sp{idx} = {lst_shift[0]};")
         else:
             str_port = ", ".join(lst_shift)
-            csa1_p.append(
+            csa2_p.append(
                 f"  CSA_{len(lst_shift)} csa_p{idx}({str_port}, sp{idx});"
             )
-    port2_np_, port2_n = matmul_sv2(arrn.T, input2_str)
+    port2_np_, port2_n = matmul_sv2(arr_n.T, input2_str)
     port2_np = [[p for p in pp if p != 0] for pp in port2_np_]
     signal_n2_str = (
         "  logic_vector "
@@ -701,18 +699,18 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_port) == 0:
+        if len(lst_shift) == 0:
             pass
         elif len(lst_shift) == 1:
-            csa1_n.append(f"  assign sn{idx} = {lst_shift[0]};")
+            csa2_n.append(f"  assign sn{idx} = {lst_shift[0]};")
         else:
             str_port = ", ".join(lst_shift)
-            csa1_n.append(
+            csa2_n.append(
                 f"  CSA_{len(lst_shift)} csa_n{idx}({str_port}, sn{idx});"
             )
 
     port2_out = []
-    for idx, (p, n) in enumerate(zip(port2_n, port2_p)):
+    for idx, (n, p) in enumerate(zip(port2_n, port2_p)):
         if len(p) > 0 and len(n) > 0:
             port2_out.append(f"  assign soma[{idx}] = sp{idx} - sn{idx};")
         elif len(p) > 0:
