@@ -483,6 +483,9 @@ def write_csa_parcels(csa, path):
                 f.write("\n")
 
 
+def is_two_power(n):
+    return n > 0 and (n & (n - 1)) == 0
+
 def matmul_sv(m1, m2):
     row1 = m1.shape[0]
     col2 = m2.shape[1]
@@ -588,7 +591,7 @@ def sv_nest(mtx, input_shp, name):
 
     csa1_p = []
     for idx, (lst_port, lst_pow) in enumerate(zip(port1_p, port1_pp)):
-        if len(lst_port) == 1:
+        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
             str_port = (
                 lst_port[0]
                 if abs(lst_pow[0]) == 0
@@ -624,7 +627,7 @@ def sv_nest(mtx, input_shp, name):
     )
     csa1_n = []
     for idx, (lst_port, lst_pow) in enumerate(zip(port1_n, port1_np)):
-        if len(lst_port) == 1:
+        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
             str_port = (
                 lst_port[0]
                 if abs(lst_pow[0]) == 0
@@ -686,7 +689,7 @@ def sv_nest(mtx, input_shp, name):
     )
     csa2_p = []
     for idx, (lst_port, lst_pow) in enumerate(zip(port2_p, port2_pp)):
-        if len(lst_port) == 1:
+        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
             str_port = (
                 lst_port[0]
                 if abs(lst_pow[0]) == 0
@@ -714,7 +717,7 @@ def sv_nest(mtx, input_shp, name):
     csa2_n = []
     # _recursive_log2(9)
     for idx, (lst_port, lst_pow) in enumerate(zip(port2_n, port2_np)):
-        if len(lst_port) == 1:
+        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
             str_port = (
                 lst_port[0]
                 if abs(lst_pow[0]) == 0
