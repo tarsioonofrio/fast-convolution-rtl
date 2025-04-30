@@ -601,7 +601,7 @@ def sv_nest(mtx, input_shp, name):
         else:
             str_port = ", ".join(lst_shift)
             csa1_p.append(
-                f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
+                f"  CSA_{len(lst_shift)} csa_p{idx}({str_port}, sp{idx});"
             )
     port1_n, port1_np_ = matmul_sv2(input1_str, arrn)
     port1_np = [[p for p in pp if p != 0] for pp in port1_np_]
@@ -624,7 +624,7 @@ def sv_nest(mtx, input_shp, name):
         else:
             str_port = ", ".join(lst_shift)
             csa1_n.append(
-                f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
+                f"  CSA_{len(lst_shift)} csa_n{idx}({str_port}, sn{idx});"
             )
 
     port1_out = []
@@ -683,7 +683,7 @@ def sv_nest(mtx, input_shp, name):
         else:
             str_port = ", ".join(lst_shift)
             csa1_p.append(
-                f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
+                f"  CSA_{len(lst_shift)} csa_p{idx}({str_port}, sp{idx});"
             )
     port2_np_, port2_n = matmul_sv2(arrn.T, input2_str)
     port2_np = [[p for p in pp if p != 0] for pp in port2_np_]
@@ -708,7 +708,7 @@ def sv_nest(mtx, input_shp, name):
         else:
             str_port = ", ".join(lst_shift)
             csa1_n.append(
-                f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
+                f"  CSA_{len(lst_shift)} csa_n{idx}({str_port}, sn{idx});"
             )
 
     port2_out = []
