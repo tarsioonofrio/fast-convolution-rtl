@@ -546,19 +546,21 @@ def sv_nest(mtx, input_shp, name):
     #         [0, 0, 0, 0, 1],
     #     ]
     # )
-
-    type_input = {
-        "c": {0: "type_input", 1: "type_matrix_c"},
-        "a": {1: "type_weight", 0: "type_matrix_a"},
+    matrix_idx = {
+        "c": [0, 1],
+        "a": [1, 0],
     }
-
+    type_input = {
+        "c": ["type_input", "type_matrix_c"],
+        "a": ["type_weight", "type_matrix_a"],
+    }
     type_output = {
-        "c": {0: "type_matrix_c", 1: "type_weight"},
-        "a": {1: "type_matrix_a", 0: "type_output"},
+        "c": ["type_matrix_c", "type_weight"],
+        "a": ["type_matrix_a", "type_output"],
     }
 
     module1 = (
-        f"module Matrix{name.upper()}0\n"
+        f"module Matrix{name.upper()}{matrix_idx[name][0]}\n"
         "  import packConv::*;\n"
         "  (\n"
         f"    input  {type_input[name][0]} P,\n"
@@ -611,7 +613,7 @@ def sv_nest(mtx, input_shp, name):
     # f"{lst_port[0]} <<< {lst_pow[0]}"
 
     # _recursive_log2(3)
-
+    # breakpoint()
     port1_n, port1_np_ = matmul_sv2(input1_str, arrn)
     port1_np = [[p for p in pp if p != 0] for pp in port1_np_]
     signal_n1_str = (
@@ -648,8 +650,20 @@ def sv_nest(mtx, input_shp, name):
         elif len(n) > 0:
             port1_out.append(f"  assign soma[{idx}] = sn{idx};")
 
+    m1_str = "\n".join(
+        [
+            module1,
+            signal_p1_str,
+            signal_n1_str + "\n",
+            "\n".join(csa1_p),
+            "\n".join(csa1_n),
+            "\n".join(port1_out),
+            "endmodule",
+        ]
+    )
+
     module2 = (
-        f"module Matrix{name.upper()}1\n"
+        f"module Matrix{name.upper()}{matrix_idx[name][1]}\n"
         "  import packConv::*;\n"
         "  (\n"
         f"    input  {type_input[name][1]} P,\n"
@@ -660,9 +674,8 @@ def sv_nest(mtx, input_shp, name):
     )
 
     input2_str = np.array(
-        [f"P[{i}]" for i in range(input_shp[0] * input_shp[1])]
-    ).reshape(*input_shp)
-
+        [f"P[{i}]" for i in range(input_shp[0] * mtx.shape[1])]
+    ).reshape(input_shp[0], mtx.shape[1])
     port2_pp_, port2_p = matmul_sv2(arrp.T, input2_str)
     port2_pp = [[p for p in pp if p != 0] for pp in port2_pp_]
     signal_p2_str = (
@@ -727,17 +740,6 @@ def sv_nest(mtx, input_shp, name):
         elif len(n) > 0:
             port2_out.append(f"  assign soma[{idx}] = sn{idx};")
 
-    m1_str = "\n".join(
-        [
-            module1,
-            signal_p1_str,
-            signal_n1_str + "\n",
-            "\n".join(csa1_p),
-            "\n".join(csa1_n),
-            "\n".join(port1_out),
-            "endmodule",
-        ]
-    )
     m2_str = "\n".join(
         [
             module2,
@@ -750,3 +752,8 @@ def sv_nest(mtx, input_shp, name):
         ]
     )
     return (m1_str, m2_str)
+    # breakpoint()
+    # if name == "c":
+    #     return (m1_str, m2_str)
+    # else:
+    #     return (m2_str, m1_str)
