@@ -486,6 +486,7 @@ def write_csa_parcels(csa, path):
 def is_two_power(n):
     return n > 0 and (n & (n - 1)) == 0
 
+
 def matmul_sv(m1, m2):
     row1 = m1.shape[0]
     col2 = m2.shape[1]
@@ -528,12 +529,9 @@ def matmul_sv2(m1, m2):
 
 
 def sv_bitshift(port, pow):
-    return " + ".join(
-        [
-            f"{port}" if s == 0 else f"{port} <<< {s}"
-            for s in _recursive_log2(pow)
-        ]
-    )
+    return [
+        f"{port}" if s == 0 else f"{port} <<< {s}" for s in _recursive_log2(pow)
+    ]
 
 
 def sv_nest(mtx, input_shp, name):
@@ -591,33 +589,18 @@ def sv_nest(mtx, input_shp, name):
 
     csa1_p = []
     for idx, (lst_port, lst_pow) in enumerate(zip(port1_p, port1_pp)):
-        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
-            str_port = (
-                lst_port[0]
-                if abs(lst_pow[0]) == 0
-                else sv_bitshift(lst_port[0], lst_pow[0])
-            )
-            csa1_p.append(f"  assign sp{idx} = {str_port};")
-        elif len(lst_port) > 1:
-            # str_port = ", ".join(lst_port)
-            str_port = ", ".join(
-                [
-                    port if abs(pow) == 0 else sv_bitshift(port, pow)
-                    for port, pow in (zip(lst_port, lst_pow))
-                ]
-            )
+        pack_shift = [
+            port if abs(pow) == 0 else sv_bitshift(port, pow)
+            for port, pow in (zip(lst_port, lst_pow))
+        ]
+        lst_shift = [unpack for pack in pack_shift for unpack in pack]
+        if len(lst_shift) == 1:
+            csa1_p.append(f"  assign sp{idx} = {lst_shift[0]};")
+        else:
+            str_port = ", ".join(lst_shift)
             csa1_p.append(
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
-    # ", ".join(lst_port)
-    # [
-    #     port if abs(pow) != 1 else sv_bitshift(port, pow)
-    #     for port, pow in (zip(lst_port, lst_pow))
-    # ]
-    # f"{lst_port[0]} <<< {lst_pow[0]}"
-
-    # _recursive_log2(3)
-    # breakpoint()
     port1_n, port1_np_ = matmul_sv2(input1_str, arrn)
     port1_np = [[p for p in pp if p != 0] for pp in port1_np_]
     signal_n1_str = (
@@ -627,20 +610,15 @@ def sv_nest(mtx, input_shp, name):
     )
     csa1_n = []
     for idx, (lst_port, lst_pow) in enumerate(zip(port1_n, port1_np)):
-        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
-            str_port = (
-                lst_port[0]
-                if abs(lst_pow[0]) == 0
-                else sv_bitshift(lst_port[0], lst_pow[0])
-            )
-            csa1_n.append(f"  assign sn{idx} = {str_port};")
-        elif len(lst_port) > 1:
-            str_port = ", ".join(
-                [
-                    port if abs(pow) == 0 else sv_bitshift(port, pow)
-                    for port, pow in (zip(lst_port, lst_pow))
-                ]
-            )
+        pack_shift = [
+            port if abs(pow) == 0 else sv_bitshift(port, pow)
+            for port, pow in (zip(lst_port, lst_pow))
+        ]
+        lst_shift = [unpack for pack in pack_shift for unpack in pack]
+        if len(lst_shift) == 1:
+            csa1_n.append(f"  assign sn{idx} = {lst_shift[0]};")
+        else:
+            str_port = ", ".join(lst_shift)
             csa1_n.append(
                 f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
             )
@@ -689,21 +667,16 @@ def sv_nest(mtx, input_shp, name):
     )
     csa2_p = []
     for idx, (lst_port, lst_pow) in enumerate(zip(port2_p, port2_pp)):
-        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
-            str_port = (
-                lst_port[0]
-                if abs(lst_pow[0]) == 0
-                else sv_bitshift(lst_port[0], lst_pow[0])
-            )
-            csa2_p.append(f"  assign sp{idx} = {str_port};")
-        elif len(lst_port) > 1:
-            str_port = ", ".join(
-                [
-                    port if abs(pow) == 0 else sv_bitshift(port, pow)
-                    for port, pow in (zip(lst_port, lst_pow))
-                ]
-            )
-            csa2_p.append(
+        pack_shift = [
+            port if abs(pow) == 0 else sv_bitshift(port, pow)
+            for port, pow in (zip(lst_port, lst_pow))
+        ]
+        lst_shift = [unpack for pack in pack_shift for unpack in pack]
+        if len(lst_shift) == 1:
+            csa1_p.append(f"  assign sp{idx} = {lst_shift[0]};")
+        else:
+            str_port = ", ".join(lst_shift)
+            csa1_p.append(
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
     port2_np_, port2_n = matmul_sv2(arrn.T, input2_str)
@@ -717,21 +690,16 @@ def sv_nest(mtx, input_shp, name):
     csa2_n = []
     # _recursive_log2(9)
     for idx, (lst_port, lst_pow) in enumerate(zip(port2_n, port2_np)):
-        if (len(lst_port) == 1 and is_two_power(lst_pow[0])):
-            str_port = (
-                lst_port[0]
-                if abs(lst_pow[0]) == 0
-                else sv_bitshift(lst_port[0], lst_pow[0])
-            )
-            csa2_n.append(f"  assign sn{idx} = {str_port};")
-        elif len(lst_port) > 1:
-            str_port = ", ".join(
-                [
-                    port if abs(pow) == 0 else sv_bitshift(port, pow)
-                    for port, pow in (zip(lst_port, lst_pow))
-                ]
-            )
-            csa2_n.append(
+        pack_shift = [
+            port if abs(pow) == 0 else sv_bitshift(port, pow)
+            for port, pow in (zip(lst_port, lst_pow))
+        ]
+        lst_shift = [unpack for pack in pack_shift for unpack in pack]
+        if len(lst_shift) == 1:
+            csa1_n.append(f"  assign sn{idx} = {lst_shift[0]};")
+        else:
+            str_port = ", ".join(lst_shift)
+            csa1_n.append(
                 f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
             )
 
