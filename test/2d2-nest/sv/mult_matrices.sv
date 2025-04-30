@@ -73,6 +73,10 @@ module MatrixC1
   assign sp1 = P[9];
   assign sp2 = P[10];
   assign sp3 = P[11];
+  CSA_2 csa_p4(P[4], P[8], sp4);
+  CSA_2 csa_p5(P[5], P[9], sp5);
+  CSA_2 csa_p6(P[6], P[10], sp6);
+  CSA_2 csa_p7(P[7], P[11], sp7);
   assign sp8 = P[8];
   assign sp9 = P[9];
   assign sp10 = P[10];
@@ -163,6 +167,10 @@ module MatrixA1
   CSA_3 csa_p1(P[1], P[5], P[9], sp1);
   CSA_3 csa_p2(P[2], P[6], P[10], sp2);
   CSA_3 csa_p3(P[3], P[7], P[11], sp3);
+  CSA_2 csa_p4(P[4], P[12], sp4);
+  CSA_2 csa_p5(P[5], P[13], sp5);
+  CSA_2 csa_p6(P[6], P[14], sp6);
+  CSA_2 csa_p7(P[7], P[15], sp7);
   assign sn4 = P[8];
   assign sn5 = P[9];
   assign sn6 = P[10];

@@ -524,7 +524,29 @@ def matmul_sv2(m1, m2):
     return [out1, out2]
 
 
+def sv_bitshift(port, pow):
+    return " + ".join(
+        [
+            f"{port}" if s == 0 else f"{port} <<< {s}"
+            for s in _recursive_log2(pow)
+        ]
+    )
+
+
 def sv_nest(mtx, input_shp, name):
+    # matrix C
+    # name = "c"
+    # input_shp = (5, 5)
+    # mtx = sy.Matrix(
+    #     [
+    #         [2, 0, 0, 0, 0],
+    #         [-1, -2, 2, -1, 2],
+    #         [-2, -1, -3, 0, -1],
+    #         [1, 1, 1, 1, -2],
+    #         [0, 0, 0, 0, 1],
+    #     ]
+    # )
+
     type_input = {
         "c": {0: "type_input", 1: "type_matrix_c"},
         "a": {1: "type_weight", 0: "type_matrix_a"},
@@ -545,49 +567,74 @@ def sv_nest(mtx, input_shp, name):
         "  timeunit 1ns;\n"
         "  timeprecision 1ps;\n"
     )
-
     input1_str = np.array(
         [f"P[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
-    # matrix A
-    # mtx = np.array([[1, 0], [1, 1], [1, -1], [0, 1]])
-    # matrix C
     arr = np.array(mtx)
     arrp = np.where(arr > 0, arr, 0)
     arrn = np.where(arr < 0, arr, 0)
     # cp = np.where(c > 0, c, 0)
     # cn = np.where(c < 0, c, 0)
     # c_or = np.logical_and(np.any(c < 0, axis=1), np.any(c > 0, axis=1))
-    # breakpoint()
-    port1_p, port1_pp = matmul_sv2(input1_str, arrp)
+    port1_p, port1_pp_ = matmul_sv2(input1_str, arrp)
+    port1_pp = [[p for p in pp if p != 0] for pp in port1_pp_]
     signal_p1_str = (
         "  logic_vector "
         + ", ".join(f"sp{i}" for i in range(len(port1_p)))
         + ";"
     )
     csa1_p = []
-    for idx, lst_port in enumerate(port1_p):
+    for idx, (lst_port, lst_pow) in enumerate(zip(port1_p, port1_pp)):
         if len(lst_port) == 1:
-            csa1_p.append(f"  assign sp{idx} = {lst_port[0]};")
+            str_port = (
+                lst_port[0]
+                if abs(lst_pow[0]) == 0
+                else sv_bitshift(lst_port[0], lst_pow[0])
+            )
+            csa1_p.append(f"  assign sp{idx} = {str_port};")
         elif len(lst_port) > 1:
-            str_port = ", ".join(lst_port)
+            # str_port = ", ".join(lst_port)
+            str_port = ", ".join(
+                [
+                    port if abs(pow) == 0 else sv_bitshift(port, pow)
+                    for port, pow in (zip(lst_port, lst_pow))
+                ]
+            )
             csa1_p.append(
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
+    # ", ".join(lst_port)
+    # [
+    #     port if abs(pow) != 1 else sv_bitshift(port, pow)
+    #     for port, pow in (zip(lst_port, lst_pow))
+    # ]
+    # f"{lst_port[0]} <<< {lst_pow[0]}"
 
-    port1_n, port1_np = matmul_sv2(input1_str, arrn)
+    # _recursive_log2(3)
+
+    port1_n, port1_np_ = matmul_sv2(input1_str, arrn)
+    port1_np = [[p for p in pp if p != 0] for pp in port1_np_]
     signal_n1_str = (
         "  logic_vector "
         + ", ".join(f"sn{i}" for i in range(len(port1_n)))
         + ";"
     )
     csa1_n = []
-    # _recursive_log2(9)
-    for idx, lst_port in enumerate(port1_n):
+    for idx, (lst_port, lst_pow) in enumerate(zip(port1_n, port1_np)):
         if len(lst_port) == 1:
-            csa1_n.append(f"  assign sn{idx} = {lst_port[0]};")
+            str_port = (
+                lst_port[0]
+                if abs(lst_pow[0]) == 0
+                else sv_bitshift(lst_port[0], lst_pow[0])
+            )
+            csa1_n.append(f"  assign sn{idx} = {str_port};")
         elif len(lst_port) > 1:
-            str_port = ", ".join(lst_port)
+            str_port = ", ".join(
+                [
+                    port if abs(pow) == 0 else sv_bitshift(port, pow)
+                    for port, pow in (zip(lst_port, lst_pow))
+                ]
+            )
             csa1_n.append(
                 f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
             )
@@ -616,24 +663,34 @@ def sv_nest(mtx, input_shp, name):
         [f"P[{i}]" for i in range(input_shp[0] * input_shp[1])]
     ).reshape(*input_shp)
 
-    port2_pp, port2_p = matmul_sv2(arrp.T, input2_str)
+    port2_pp_, port2_p = matmul_sv2(arrp.T, input2_str)
+    port2_pp = [[p for p in pp if p != 0] for pp in port2_pp_]
     signal_p2_str = (
         "  logic_vector "
         + ", ".join(f"sp{i}" for i in range(len(port2_p)))
         + ";"
     )
-
     csa2_p = []
-    # _recursive_log2(9)
-    for idx, lst_port in enumerate(port2_p):
+    for idx, (lst_port, lst_pow) in enumerate(zip(port2_p, port2_pp)):
         if len(lst_port) == 1:
-            csa2_p.append(f"  assign sp{idx} = {lst_port[0]};")
-        elif len(lst_port) > 2:
-            str_port = ", ".join(lst_port)
+            str_port = (
+                lst_port[0]
+                if abs(lst_pow[0]) == 0
+                else sv_bitshift(lst_port[0], lst_pow[0])
+            )
+            csa2_p.append(f"  assign sp{idx} = {str_port};")
+        elif len(lst_port) > 1:
+            str_port = ", ".join(
+                [
+                    port if abs(pow) == 0 else sv_bitshift(port, pow)
+                    for port, pow in (zip(lst_port, lst_pow))
+                ]
+            )
             csa2_p.append(
                 f"  CSA_{len(lst_port)} csa_p{idx}({str_port}, sp{idx});"
             )
-    port2_np, port2_n = matmul_sv2(arrn.T, input2_str)
+    port2_np_, port2_n = matmul_sv2(arrn.T, input2_str)
+    port2_np = [[p for p in pp if p != 0] for pp in port2_np_]
     signal_n2_str = (
         "  logic_vector "
         + ", ".join(f"sn{i}" for i in range(len(port2_n)))
@@ -642,11 +699,21 @@ def sv_nest(mtx, input_shp, name):
 
     csa2_n = []
     # _recursive_log2(9)
-    for idx, lst_port in enumerate(port2_n):
+    for idx, (lst_port, lst_pow) in enumerate(zip(port2_n, port2_np)):
         if len(lst_port) == 1:
-            csa2_n.append(f"  assign sn{idx} = {lst_port[0]};")
+            str_port = (
+                lst_port[0]
+                if abs(lst_pow[0]) == 0
+                else sv_bitshift(lst_port[0], lst_pow[0])
+            )
+            csa2_n.append(f"  assign sn{idx} = {str_port};")
         elif len(lst_port) > 1:
-            str_port = ", ".join(lst_port)
+            str_port = ", ".join(
+                [
+                    port if abs(pow) == 0 else sv_bitshift(port, pow)
+                    for port, pow in (zip(lst_port, lst_pow))
+                ]
+            )
             csa2_n.append(
                 f"  CSA_{len(lst_port)} csa_n{idx}({str_port}, sn{idx});"
             )
