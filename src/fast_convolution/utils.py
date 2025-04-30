@@ -594,7 +594,9 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_shift) == 1:
+        if len(lst_port) == 0:
+            pass
+        elif len(lst_shift) == 1:
             csa1_p.append(f"  assign sp{idx} = {lst_shift[0]};")
         else:
             str_port = ", ".join(lst_shift)
@@ -615,7 +617,9 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_shift) == 1:
+        if len(lst_port) == 0:
+            pass
+        elif len(lst_shift) == 1:
             csa1_n.append(f"  assign sn{idx} = {lst_shift[0]};")
         else:
             str_port = ", ".join(lst_shift)
@@ -672,7 +676,9 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_shift) == 1:
+        if len(lst_port) == 0:
+            pass
+        elif len(lst_shift) == 1:
             csa1_p.append(f"  assign sp{idx} = {lst_shift[0]};")
         else:
             str_port = ", ".join(lst_shift)
@@ -695,7 +701,9 @@ def sv_nest(mtx, input_shp, name):
             for port, pow in (zip(lst_port, lst_pow))
         ]
         lst_shift = [unpack for pack in pack_shift for unpack in pack]
-        if len(lst_shift) == 1:
+        if len(lst_port) == 0:
+            pass
+        elif len(lst_shift) == 1:
             csa1_n.append(f"  assign sn{idx} = {lst_shift[0]};")
         else:
             str_port = ", ".join(lst_shift)
