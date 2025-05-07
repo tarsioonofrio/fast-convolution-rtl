@@ -1,6 +1,101 @@
-module MatrixC0
+module Transform
+  import packConv::*;
+ #(
+  parameter int QUANT = 8,
+  parameter int NBITS = 20
+  )
+  (
+    input  type_input pin,
+    output type_matrix_c pout
+ );
+  timeunit 1ns;
+  timeprecision 1ps;
+
+  type_input partial;
+  
+  // Instance of matrix multiplier "C"
+  MatrixC0 matrix_c0(
+    .P(pin),
+    .soma(partial)
+  );
+  MatrixC1 matrix_c1(
+    .P(partial),
+    .soma(pout)
+  );
+endmodule
+
+
+module Inverse
+  import packConv::*;
+ #(
+  parameter int QUANT = 8,
+  parameter int NBITS = 20
+  )
+  (
+    input  type_matrix_a pin,
+    output type_output pout
+ );
+  timeunit 1ns;
+  timeprecision 1ps;
+  
+  type_matrix_a partial;
+
+  MatrixA1 matrix_a1 (
+    .P(pin),
+    .soma(partial)
+  );
+  MatrixA0 matrix_a0 (
+    .P(partial),
+    .soma(pout)
+  );
+endmodule
+
+
+
+module Transform
   import packConv::*;
   (
+    input  type_input pin,
+    output type_weight pout
+  );
+  timeunit 1ns;
+  timeprecision 1ps;
+
+  type_matrix_c partial;
+
+  // Instance of matrix multiplier "C"
+  MatrixC0 matrix_c0(
+    .P(pin),
+    .soma(partial)
+  );
+  MatrixC1 matrix_c1(
+    .P(partial),
+    .soma(pout)
+  );
+endmodule
+
+
+
+module Inverse
+  import packConv::*;
+  (
+    input  type_weight pin,
+    output type_output pout
+ );
+  timeunit 1ns;
+  timeprecision 1ps;
+
+  type_matrix_a partial;
+
+  MatrixA1 matrix_a1 (
+    .P(pin),
+    .soma(partial)
+  );
+  MatrixA0 matrix_a0 (
+    .P(partial),
+    .soma(pout)
+  );
+endmodule
     input  type_input P,
     output type_matrix_c soma
   );
@@ -39,19 +134,19 @@ module MatrixC0
   assign sn14 = P[13];
   assign sn15 = P[13];
   assign soma[0] = sp0 - sn0;
-  assign soma[1] = sn1;
+  assign soma[1] = sp1;
   assign soma[2] = sp2 - sn2;
   assign soma[3] = sp3 - sn3;
   assign soma[4] = sp4 - sn4;
-  assign soma[5] = sn5;
+  assign soma[5] = sp5;
   assign soma[6] = sp6 - sn6;
   assign soma[7] = sp7 - sn7;
   assign soma[8] = sp8 - sn8;
-  assign soma[9] = sn9;
+  assign soma[9] = sp9;
   assign soma[10] = sp10 - sn10;
   assign soma[11] = sp11 - sn11;
   assign soma[12] = sp12 - sn12;
-  assign soma[13] = sn13;
+  assign soma[13] = sp13;
   assign soma[14] = sp14 - sn14;
   assign soma[15] = sp15 - sn15;
 endmodule
@@ -101,10 +196,10 @@ module MatrixC1
   assign soma[1] = sp1 - sn1;
   assign soma[2] = sp2 - sn2;
   assign soma[3] = sp3 - sn3;
-  assign soma[4] = sn4;
-  assign soma[5] = sn5;
-  assign soma[6] = sn6;
-  assign soma[7] = sn7;
+  assign soma[4] = sp4;
+  assign soma[5] = sp5;
+  assign soma[6] = sp6;
+  assign soma[7] = sp7;
   assign soma[8] = sp8 - sn8;
   assign soma[9] = sp9 - sn9;
   assign soma[10] = sp10 - sn10;
@@ -116,11 +211,11 @@ module MatrixC1
 endmodule
 
 
-module MatrixA0
+module MatrixA1
   import packConv::*;
   (
-    input  type_matrix_a P,
-    output type_output soma
+    input  type_weight P,
+    output type_matrix_a soma
   );
   timeunit 1ns;
   timeprecision 1ps;
@@ -140,47 +235,37 @@ module MatrixA0
   assign sn3 = P[6];
   assign sn5 = P[10];
   assign sn7 = P[14];
-  assign soma[0] = sn0;
+  assign soma[0] = sp0;
   assign soma[1] = sp1 - sn1;
-  assign soma[2] = sn2;
+  assign soma[2] = sp2;
   assign soma[3] = sp3 - sn3;
-  assign soma[4] = sn4;
+  assign soma[4] = sp4;
   assign soma[5] = sp5 - sn5;
-  assign soma[6] = sn6;
+  assign soma[6] = sp6;
   assign soma[7] = sp7 - sn7;
 endmodule
 
 
-module MatrixA1
+module MatrixA0
   import packConv::*;
   (
-    input  type_weight P,
-    output type_matrix_a soma
+    input  type_matrix_a P,
+    output type_output soma
   );
   timeunit 1ns;
   timeprecision 1ps;
 
-  logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7;
-  logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7;
+  logic_vector sp0, sp1, sp2, sp3;
+  logic_vector sn0, sn1, sn2, sn3;
 
-  CSA_3 csa_p0(P[0], P[4], P[8], sp0);
-  CSA_3 csa_p1(P[1], P[5], P[9], sp1);
-  CSA_3 csa_p2(P[2], P[6], P[10], sp2);
-  CSA_3 csa_p3(P[3], P[7], P[11], sp3);
-  CSA_2 csa_p4(P[4], P[12], sp4);
-  CSA_2 csa_p5(P[5], P[13], sp5);
-  CSA_2 csa_p6(P[6], P[14], sp6);
-  CSA_2 csa_p7(P[7], P[15], sp7);
-  assign sn4 = P[8];
-  assign sn5 = P[9];
-  assign sn6 = P[10];
-  assign sn7 = P[11];
-  assign soma[0] = sn0;
-  assign soma[1] = sn1;
-  assign soma[2] = sn2;
-  assign soma[3] = sn3;
-  assign soma[4] = sp4 - sn4;
-  assign soma[5] = sp5 - sn5;
-  assign soma[6] = sp6 - sn6;
-  assign soma[7] = sp7 - sn7;
+  CSA_3 csa_p0(P[0], P[2], P[4], sp0);
+  CSA_3 csa_p1(P[1], P[3], P[5], sp1);
+  CSA_2 csa_p2(P[2], P[6], sp2);
+  CSA_2 csa_p3(P[3], P[7], sp3);
+  assign sn2 = P[4];
+  assign sn3 = P[5];
+  assign soma[0] = sp0;
+  assign soma[1] = sp1;
+  assign soma[2] = sp2 - sn2;
+  assign soma[3] = sp3 - sn3;
 endmodule

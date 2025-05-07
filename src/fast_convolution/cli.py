@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 import os
+import sys
+import traceback
 from pathlib import Path
 
 import click
+import ipdb as pdb
 
 from .commands import (
     default_toom_cook_points1d,
@@ -12,6 +15,13 @@ from .commands import (
     num_points2d,
     read_init_if_exists,
 )
+
+
+def excepthook(type, value, tb):
+    traceback.print_exception(type, value, tb)
+    pdb.post_mortem(tb)
+
+sys.excepthook = excepthook
 
 
 def example_path():

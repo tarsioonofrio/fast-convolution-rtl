@@ -1,5 +1,0 @@
-Total multiplications: 36
-Sums:
-A: 324
-C: 572
-Total: 896

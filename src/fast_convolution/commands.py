@@ -547,11 +547,15 @@ def cmd_build2d_bind_nest(repo):
     utils.write_csa_config(csa_config, path / "csa")
     csa_parcels = utils.csa_parcels_nest(a1, a2, c1, c2)
     utils.write_csa_parcels(csa_parcels, path / "csa")
-    c0_sv, c1_sv = utils.sv_nest(c1, c1.shape, "c")
-    a1_sv, a0_sv = utils.sv_nest(a1, (a1.shape[0], a1.shape[0]), "a")
+
+    dim, s_len, g_len, d_len = read_init(repo)
+    c0_sv, c1_sv = utils.sv_nest(c1, s_len, "c")
+    a1_sv, a0_sv = utils.sv_nest(a1, (q1.shape[0], q2.shape[0]), "a")
     repo.dir_sv.mkdir(exist_ok=True)
+    with open(Path(__file__).parent / "template/nest.sv") as f:
+        nest_sv = f.read()
     with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
-        str_sv = "\n\n\n".join([c0_sv, c1_sv, a1_sv, a0_sv])
+        str_sv = "\n\n\n".join([nest_sv, c0_sv, c1_sv, a1_sv, a0_sv])
         f.write(str_sv)
 
     d1_sym = sy.Matrix(

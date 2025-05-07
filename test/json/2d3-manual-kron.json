@@ -1,5 +1,0 @@
-{
-  "init": ["init", "2d", "-o", "3"],
-  "build": ["build", "2d", "manual"],
-  "bind": ["build", "2d", "bind", "kron"]
-}
