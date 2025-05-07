@@ -6,7 +6,7 @@ module Transform
   )
   (
     input  type_input pin,
-    output type_matrix_c pout
+    output type_weight pout
  );
   timeunit 1ns;
   timeprecision 1ps;

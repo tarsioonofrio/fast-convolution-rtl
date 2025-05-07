@@ -7,7 +7,7 @@ from sympy.physics.quantum import TensorProduct
 
 from fast_convolution.utils import default_convolve
 
-from . import fast
+from . import fast, utils
 
 
 def syt(expr):
@@ -147,13 +147,13 @@ def latex_1d(c, b, a, q, path, d_user, g_user_, symbolic=True, quant=0):
     )
 
     doc.append(
-        tex.Math(data=[r"a^{t} =", syt(fast.matrix_to_log2(a.T))], escape=False)
+        tex.Math(data=[r"a^{t} =", syt(utils.matrix_to_log2(a.T))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"b =", syt(fast.matrix_to_log2(b))], escape=False)
+        tex.Math(data=[r"b =", syt(utils.matrix_to_log2(b))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"c^{t} =", syt(fast.matrix_to_log2(c.T))], escape=False)
+        tex.Math(data=[r"c^{t} =", syt(utils.matrix_to_log2(c.T))], escape=False)
     )
     try:
         doc.generate_pdf(path, clean_tex=False)
@@ -648,10 +648,10 @@ def latex_2d_bind_kron(build_data, d1_user, g1_user_, path, symbolic, quant=0):
     )
 
     doc.append(
-        tex.Math(data=[r"A =", syt(fast.matrix_to_log2(aa_num))], escape=False)
+        tex.Math(data=[r"A =", syt(utils.matrix_to_log2(aa_num))], escape=False)
     )
     doc.append(
-        tex.Math(data=[r"C =", syt(fast.matrix_to_log2(cc_num))], escape=False)
+        tex.Math(data=[r"C =", syt(utils.matrix_to_log2(cc_num))], escape=False)
     )
     try:
         doc.generate_pdf(path, clean_tex=False)
