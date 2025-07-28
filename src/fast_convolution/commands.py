@@ -1127,7 +1127,7 @@ def sim(
         },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    dict_def = {
+    dict_fast_conv = {
         "QUANT_BITS": quant_bits,
         "W1_SIZE": w_size[0],
         "W2_SIZE": w_size[1],
@@ -1137,7 +1137,25 @@ def sim(
         "FOUT2_SIZE": fout_size[1],
         **dict_dim,
     }
-    utils.sv_pkg(path / "data.sv", arr, dict_def)
+    utils.sv_pkg(path / "data.sv", [], dict_fast_conv)
+
+    dict_data = {
+        "FIN1_SIZE": fin_size[0],
+        "FIN2_SIZE": fin_size[1],
+        "FOUT1_SIZE": fout_size[0],
+        "FOUT2_SIZE": fout_size[1],
+    }
+
+    utils.sv_pkg(path / "data.sv", arr, dict_data)
+
+    mem_sv = [
+        {
+            "name": "const_data[]",
+            "value": [0] + bg + np.array(feat_list_sv).reshape(-1).tolist(),
+        },
+    ]
+
+    utils.sv_pkg(path / "mem_data.sv", mem_sv, {})
     return out_dict
 
 
