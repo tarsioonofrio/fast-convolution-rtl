@@ -370,7 +370,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
     # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
     total_mults = q.shape[0]
-    for steps in sy.divisors(total_mults):
+    for steps in sy.divisors(total_mults)[1:]:
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
         with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult)
@@ -565,7 +565,7 @@ def cmd_build2d_bind_nest(repo):
         f.write(str_sv)
 
     total_mults = q1.shape[0] ** 2
-    for steps in sy.divisors(total_mults):
+    for steps in sy.divisors(total_mults)[1:]:
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
         with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult)
