@@ -735,3 +735,19 @@ def sv_nest(mtx, input_shp, name):
     #     return (m1_str, m2_str)
     # else:
     #     return (m2_str, m1_str)
+
+
+def sv_mux_mult(total, step):
+    state_idx = [
+        [e, [y for y in range(x, min(x + step, total))]]
+        for e, x in enumerate(range(0, total, step))
+    ]
+    mult_list = [
+        f"      MUL{state}: begin {''.join([f'idx[{state}]={idx}; ' for idx in lst])}end"
+        for state, lst in state_idx
+    ]
+    mult_str = "\n".join(mult_list)
+    with open(Path(__file__).parent / "template/mux_mult.sv") as f:
+        mux_mult_template = f.read()
+
+    return mux_mult_template.format(case=mult_str)

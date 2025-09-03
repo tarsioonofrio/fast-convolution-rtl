@@ -367,8 +367,13 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         dir_clib_make.mkdir(parents=True, exist_ok=True)
         with open(dir_clib_make / "Makefile", "w") as f:
             f.write(makefile_str)
-    # repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    repo.dir_sv.mkdir(parents=True, exist_ok=True)
     # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
+    total_mults = q.shape[0]
+    for steps in sy.divisors(total_mults):
+        sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
+        with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
+            f.write(sv_mux_mult)
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -500,7 +505,8 @@ def build2d(
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     arr_float = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr_float, {})
-    # repo.dir_sv.mkdir(parents=True, exist_ok=True)
+    repo.dir_sv.mkdir(parents=True, exist_ok=True)
+
     # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
 
 
@@ -557,6 +563,12 @@ def cmd_build2d_bind_nest(repo):
     with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
         str_sv = "\n\n\n".join([nest_sv, c0_sv, c1_sv, a1_sv, a0_sv])
         f.write(str_sv)
+
+    total_mults = q1.shape[0] ** 2
+    for steps in sy.divisors(total_mults):
+        sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
+        with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
+            f.write(sv_mux_mult)
 
     d1_sym = sy.Matrix(
         c1.shape[0],
