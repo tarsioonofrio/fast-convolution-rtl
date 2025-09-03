@@ -743,7 +743,7 @@ def sv_mux_mult(total, step):
         for e, x in enumerate(range(0, total, step))
     ]
     mult_list = [
-        f"      MUL{state}: begin {''.join([f'idx[{state}]={idx}; ' for idx in lst])}end"
+        f"      MULT{state}: begin {''.join([f'idx[{e}]={idx}; ' for e, idx in enumerate(lst)])}end"
         for state, lst in state_idx
     ]
     mult_str = "\n".join(mult_list)

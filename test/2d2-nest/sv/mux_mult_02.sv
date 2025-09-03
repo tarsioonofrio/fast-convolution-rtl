@@ -11,14 +11,14 @@ module MuxMult
 
   always_comb begin
     unique case (current_st)
-      MUL0: begin idx[0]=0; idx[0]=1; end
-      MUL1: begin idx[1]=2; idx[1]=3; end
-      MUL2: begin idx[2]=4; idx[2]=5; end
-      MUL3: begin idx[3]=6; idx[3]=7; end
-      MUL4: begin idx[4]=8; idx[4]=9; end
-      MUL5: begin idx[5]=10; idx[5]=11; end
-      MUL6: begin idx[6]=12; idx[6]=13; end
-      MUL7: begin idx[7]=14; idx[7]=15; end
+      MULT0: begin idx[0]=0; idx[1]=1; end
+      MULT1: begin idx[0]=2; idx[1]=3; end
+      MULT2: begin idx[0]=4; idx[1]=5; end
+      MULT3: begin idx[0]=6; idx[1]=7; end
+      MULT4: begin idx[0]=8; idx[1]=9; end
+      MULT5: begin idx[0]=10; idx[1]=11; end
+      MULT6: begin idx[0]=12; idx[1]=13; end
+      MULT7: begin idx[0]=14; idx[1]=15; end
     default: begin end
     endcase
   end
