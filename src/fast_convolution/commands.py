@@ -374,7 +374,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
         with open(repo.dir_sv / f"mux_mult_state_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult["state"])
-        with open(repo.dir_sv / f"mux_mult_int_{steps:02d}_int.sv", "w") as f:
+        with open(repo.dir_sv / f"mux_mult_int_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult["int"])
 
 
@@ -571,7 +571,7 @@ def cmd_build2d_bind_nest(repo):
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
         with open(repo.dir_sv / f"mux_mult_state_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult["state"])
-        with open(repo.dir_sv / f"mux_mult_int_{steps:02d}_int.sv", "w") as f:
+        with open(repo.dir_sv / f"mux_mult_int_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult["int"])
 
     d1_sym = sy.Matrix(
