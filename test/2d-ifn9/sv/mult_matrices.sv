@@ -12,7 +12,7 @@ module Transform
   timeprecision 1ps;
 
   type_matrix_c partial;
-  
+
   // Instance of matrix multiplier "C"
   MatrixC0 matrix_c0(
     .P(pin),
@@ -37,7 +37,7 @@ module Inverse
  );
   timeunit 1ns;
   timeprecision 1ps;
-  
+
   type_matrix_a partial;
 
   MatrixA1 matrix_a1 (
@@ -49,6 +49,7 @@ module Inverse
     .soma(pout)
   );
 endmodule
+
 
 
 module MatrixC0
