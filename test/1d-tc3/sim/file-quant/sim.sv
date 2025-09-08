@@ -1,18 +1,18 @@
-package pack_data;
+package pack_sim;
 
   timeunit 1ns;
   timeprecision 1ps;
 
   localparam int QUANT_BITS = 8;
   localparam int W1_SIZE = 1;
-  localparam int W2_SIZE = 18;
+  localparam int W2_SIZE = 15;
   localparam int FIN1_SIZE = 300;
   localparam int FIN2_SIZE = 5;
   localparam int FOUT1_SIZE = 300;
   localparam int FOUT2_SIZE = 3;
 
-  const int const_weight[1][18] = '{
-    '{0, 256, 0, 256, 0, 256, 256, -1024, 256, -768, 512, -768, 0, 256, 0, 256, 0, 256}
+  const int const_weight[1][15] = '{
+    '{0, -128, 43, 85, 0, 128, 256, -256, -128, 256, 0, -128, 43, 85, 0}
   };
   const int const_feat_in[300][5] = '{
     '{118, 120, 124, 118, 122},

@@ -1162,7 +1162,8 @@ def sim(
         "FOUT2_SIZE": fout_size[1],
         # **dict_dim,
     }
-    utils.sv_pkg("pack_data", path / "data.sv", arr, dict_def)
+    if len(quant_data) != 0:
+        utils.sv_pkg("pack_sim", path / "sim.sv", arr, dict_def)
     return out_dict
 
 
@@ -1289,7 +1290,8 @@ def sim_default(
         "FOUT2_SIZE": fout_size[1],
         # **dict_dim,
     }
-    utils.sv_pkg("pack_data", path / "data.sv", arr, dict_def)
+    if len(quant_data) != 0:
+        utils.sv_pkg("pack_sim", path / "sim.sv", arr, dict_def)
     return out_dict
 
 
