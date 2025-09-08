@@ -748,13 +748,13 @@ def sv_mux_mult(total, step):
         mux_mult_int_template = f.read()
 
     mult_state_list = [
-        f"      MULT{state}: begin {''.join([f'idx[{e}]={idx}; ' for e, idx in enumerate(lst)])}end"
+        f"      {'default' if state==0 else 'MULT' + str(state)}: begin {''.join([f'idx[{e}]={idx}; ' for e, idx in enumerate(lst)])}end"
         for state, lst in state_idx
     ]
     mult_state_str = "\n".join(mult_state_list)
 
     mult_int_list = [
-        f"      {state}: begin {''.join([f'idx_out[{e}]={idx}; ' for e, idx in enumerate(lst)])}end"
+        f"      {'default' if state==0 else 'MULT' + str(state)}: begin {''.join([f'idx_out[{e}]={idx}; ' for e, idx in enumerate(lst)])}end"
         for state, lst in state_idx
     ]
     mult_int_str = "\n".join(mult_int_list)
