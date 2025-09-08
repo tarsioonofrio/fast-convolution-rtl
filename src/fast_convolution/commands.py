@@ -368,7 +368,6 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         with open(dir_clib_make / "Makefile", "w") as f:
             f.write(makefile_str)
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
-    # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
     total_mults = q.shape[0]
     for steps in sy.divisors(total_mults)[1:-1]:
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
@@ -376,6 +375,15 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
             f.write(sv_mux_mult["state"])
         with open(repo.dir_sv / f"mux_mult_int_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult["int"])
+    dim, c_len, b_len, a_len = read_init(repo)
+    dict_dim = dict_dimension(
+        dim,
+        a_len,
+        b_len,
+        c_len,
+        len(q),
+    )
+    utils.sv_pkg("pack_param", repo.dir_sv / "param.sv", [], dict_dim)
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -508,8 +516,15 @@ def build2d(
     arr_float = [{**r, "type": "float"} for r in list_array]
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr_float, {})
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
-
-    # utils.sv_pkg(repo.dir_sv / "pkg.sv", arr, {})
+    dim, c_len, b_len, a_len = read_init(repo)
+    dict_dim = dict_dimension(
+        dim,
+        a_len[0],
+        b_len[0],
+        c_len[0],
+        len(q1),
+    )
+    utils.sv_pkg("pack_param", repo.dir_sv / "param.sv", [], dict_dim)
 
 
 def cmd_build2d_bind_nest(repo):
@@ -1016,13 +1031,13 @@ def sim(
         )
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
-        dict_dim = dict_dimension(
-            dim,
-            a_len,
-            b_len,
-            c_len,
-            len(q),
-        )
+        # dict_dim = dict_dimension(
+        #     dim,
+        #     a_len,
+        #     b_len,
+        #     c_len,
+        #     len(q),
+        # )
         # if len(quant_data) == 0:
         #     bg_quant = bg
         # if len(quant_data) == 1:
@@ -1052,13 +1067,7 @@ def sim(
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0]
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
-        dict_dim = dict_dimension(
-            dim,
-            a_len[0],
-            b_len[0],
-            c_len[0],
-            len(q[0]),
-        )
+
         # if len(quant_data) == 0:
         #     bg_quant = bg
         # else:
@@ -1151,9 +1160,9 @@ def sim(
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
-        **dict_dim,
+        # **dict_dim,
     }
-    utils.sv_pkg(path / "data.sv", arr, dict_def)
+    utils.sv_pkg("pack_data", path / "data.sv", arr, dict_def)
     return out_dict
 
 
@@ -1190,7 +1199,7 @@ def sim_default(
     feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
         feat_arr, output_quant, output_default.shape, c_len, a_len
     )
-    dict_dim = dict_dimension(dim, 3, 3, 5, 9)
+    # dict_dim = dict_dimension(dim, 3, 3, 5, 9)
     # if len(quant_data) == 0:
     #     bg_quant = bg
     # else:
@@ -1278,9 +1287,9 @@ def sim_default(
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
-        **dict_dim,
+        # **dict_dim,
     }
-    utils.sv_pkg(path / "data.sv", arr, dict_def)
+    utils.sv_pkg("pack_data", path / "data.sv", arr, dict_def)
     return out_dict
 
 
@@ -1402,20 +1411,3 @@ def example(dim, f, path, repo, w, quant):
         utils.c_header(
             repo.dir_clib_data_float / "example_float.h", arr_float, {}
         )
-        # list_array = [
-        #     {"name": "const_weight[][]", "value": np.array(bg).reshape(1, -1)},
-        #     {"name": "const_feat_in[][]", "value": np.array(d).reshape(1, -1)},
-        #     {"name": "const_feat_out[][]", "value": np.array(s).reshape(1, -1)},
-        # ]
-        # arr = [{**r, "type": "int"} for r in list_array]
-        # dim, c_len, b_len, a_len = read_init(repo)
-        # _, _, _, _, (q1, q2) = read_build_2d(repo)
-        # dict_defs = dict_dimension(
-        #     dim,
-        #     a_len[0],
-        #     b_len[0],
-        #     c_len[0],
-        #     len(q1),
-        # )
-        # path.mkdir(parents=True, exist_ok=True)
-        # utils.sv_pkg(path / "data.sv", arr, dict_defs)

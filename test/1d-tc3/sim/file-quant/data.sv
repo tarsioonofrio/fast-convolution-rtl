@@ -1,4 +1,4 @@
-package data;
+package pack_data;
 
   timeunit 1ns;
   timeprecision 1ps;
@@ -10,10 +10,6 @@ package data;
   localparam int FIN2_SIZE = 5;
   localparam int FOUT1_SIZE = 300;
   localparam int FOUT2_SIZE = 3;
-  localparam int A_SIZE = 3;
-  localparam int B_SIZE = 3;
-  localparam int C_SIZE = 5;
-  localparam int M_SIZE = 5;
 
   const int const_weight[1][15] = '{
     '{0, -128, 43, 85, 0, 128, 256, -256, -128, 256, 0, -128, 43, 85, 0}

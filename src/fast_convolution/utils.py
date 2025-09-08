@@ -167,8 +167,7 @@ def c_header(path, list_array, dict_defs):
         f.write(source)
 
 
-def sv_pkg(path, list_array, dict_defs):
-    name = path.stem
+def sv_pkg(name, path, list_array, dict_defs):
     source_str = (
         f"package {name};\n\n"
         "  timeunit 1ns;\n"
