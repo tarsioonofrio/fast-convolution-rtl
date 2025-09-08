@@ -760,7 +760,11 @@ def sv_mux_mult(total, step):
     mult_int_str = "\n".join(mult_int_list)
 
     output = {
-        "state": mux_mult_state_template.format(case=mult_state_str),
-        "int": mux_mult_int_template.format(case=mult_int_str),
+        "state": mux_mult_state_template.format(
+            case=mult_state_str, num_mult=step, state_mult=total // step
+        ),
+        "int": mux_mult_int_template.format(
+            case=mult_int_str, num_mult=step, state_mult=total // step
+        ),
     }
     return output
