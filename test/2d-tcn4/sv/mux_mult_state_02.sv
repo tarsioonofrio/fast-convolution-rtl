@@ -19,7 +19,6 @@ module MuxMult
       MULT5: begin idx[0]=10; idx[1]=11; end
       MULT6: begin idx[0]=12; idx[1]=13; end
       MULT7: begin idx[0]=14; idx[1]=15; end
-    default: begin end
     endcase
   end
 

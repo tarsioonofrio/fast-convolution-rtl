@@ -13,7 +13,6 @@ module MuxMult
     unique case (current_st)
       default: begin idx[0]=0; idx[1]=1; idx[2]=2; idx[3]=3; idx[4]=4; idx[5]=5; idx[6]=6; idx[7]=7; end
       MULT1: begin idx[0]=8; idx[1]=9; idx[2]=10; idx[3]=11; idx[4]=12; idx[5]=13; idx[6]=14; idx[7]=15; end
-    default: begin end
     endcase
   end
 

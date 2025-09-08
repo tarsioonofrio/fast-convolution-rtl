@@ -23,7 +23,6 @@ module MuxMult
       MULT9: begin idx_out[0]=27; idx_out[1]=28; idx_out[2]=29; end
       MULT10: begin idx_out[0]=30; idx_out[1]=31; idx_out[2]=32; end
       MULT11: begin idx_out[0]=33; idx_out[1]=34; idx_out[2]=35; end
-    default: begin end
     endcase
   end
 

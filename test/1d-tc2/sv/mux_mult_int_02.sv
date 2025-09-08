@@ -13,7 +13,6 @@ module MuxMult
     unique case (idx_in)
       default: begin idx_out[0]=0; idx_out[1]=1; end
       MULT1: begin idx_out[0]=2; idx_out[1]=3; end
-    default: begin end
     endcase
   end
 

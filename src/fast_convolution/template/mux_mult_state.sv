@@ -12,7 +12,6 @@ module MuxMult
   always_comb begin
     unique case (current_st)
 {case}
-    default: begin end
     endcase
   end
 
