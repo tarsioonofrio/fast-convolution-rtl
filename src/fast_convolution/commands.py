@@ -383,7 +383,7 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         c_len,
         len(q),
     )
-    utils.sv_pkg("pack_param", repo.dir_sv / "param.sv", [], dict_dim)
+    utils.sv_pkg("pack_param", repo.dir_sv / "pack_param.sv", [], dict_dim)
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -524,7 +524,7 @@ def build2d(
         c_len[0],
         len(q1),
     )
-    utils.sv_pkg("pack_param", repo.dir_sv / "param.sv", [], dict_dim)
+    utils.sv_pkg("pack_param", repo.dir_sv / "pack_param.sv", [], dict_dim)
 
 
 def cmd_build2d_bind_nest(repo):
@@ -1163,7 +1163,7 @@ def sim(
         # **dict_dim,
     }
     if len(quant_data) != 0:
-        utils.sv_pkg("pack_sim", path / "sim.sv", arr, dict_def)
+        utils.sv_pkg("pack_sim", path / "pack_sim.sv", arr, dict_def)
     return out_dict
 
 
@@ -1291,7 +1291,7 @@ def sim_default(
         # **dict_dim,
     }
     if len(quant_data) != 0:
-        utils.sv_pkg("pack_sim", path / "sim.sv", arr, dict_def)
+        utils.sv_pkg("pack_sim", path / "pack_sim.sv", arr, dict_def)
     return out_dict
 
 
