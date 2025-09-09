@@ -371,10 +371,8 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     total_mults = q.shape[0]
     for steps in sy.divisors(total_mults)[1:-1]:
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
-        with open(repo.dir_sv / f"mux_mult_state_{steps:02d}.sv", "w") as f:
-            f.write(sv_mux_mult["state"])
-        with open(repo.dir_sv / f"mux_mult_int_{steps:02d}.sv", "w") as f:
-            f.write(sv_mux_mult["int"])
+        with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
+            f.write(sv_mux_mult)
     dim, c_len, b_len, a_len = read_init(repo)
     dict_dim = dict_dimension(
         dim,
@@ -584,10 +582,8 @@ def cmd_build2d_bind_nest(repo):
     total_mults = q1.shape[0] ** 2
     for steps in sy.divisors(total_mults)[1:-1]:
         sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
-        with open(repo.dir_sv / f"mux_mult_state_{steps:02d}.sv", "w") as f:
-            f.write(sv_mux_mult["state"])
-        with open(repo.dir_sv / f"mux_mult_int_{steps:02d}.sv", "w") as f:
-            f.write(sv_mux_mult["int"])
+        with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
+            f.write(sv_mux_mult)
 
     d1_sym = sy.Matrix(
         c1.shape[0],
@@ -1163,7 +1159,7 @@ def sim(
         # **dict_dim,
     }
     if len(quant_data) != 0:
-        utils.sv_pkg("pack_sim", path / "pack_sim.sv", arr, dict_def)
+        utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
     return out_dict
 
 
@@ -1291,7 +1287,7 @@ def sim_default(
         # **dict_dim,
     }
     if len(quant_data) != 0:
-        utils.sv_pkg("pack_sim", path / "pack_sim.sv", arr, dict_def)
+        utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
     return out_dict
 
 
