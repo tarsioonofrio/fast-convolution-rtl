@@ -515,7 +515,9 @@ def build2d(
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
     dim, c_len, b_len, a_len = read_init(repo)
     c_index = (
-        np.arange(len(q1) * len(q1)).reshape(len(q1), len(q1)).T.reshape(-1)
+        np.arange(c_len[0] * c_len[0])
+        .reshape(c_len[0], c_len[0])
+        .T.reshape(-1)
     )
     list_array = [
         {
