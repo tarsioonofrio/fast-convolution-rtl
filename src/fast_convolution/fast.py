@@ -50,6 +50,7 @@ def wrap_convolution(c, bg, a, quant=0):
         )
         inv = a.T * m
         return inv
+
     return convolution
 
 
@@ -249,11 +250,8 @@ def sliding2d_window2d(
             feat = in_arr[r : r + in_size[0], c : c + in_size[1]]
             if tuple(feat.shape) == tuple(in_size):
                 list_in.append(feat.reshape(-1))
-                list_out.append(
-                    out_arr[r : r + out_size[0], c : c + out_size[1]].reshape(
-                        -1
-                    )
-                )
+                new_out = out_arr[r : r + out_size[0], c : c + out_size[1]]
+                list_out.append(new_out.reshape(-1))
             else:
                 row_in = feat.shape[0]
                 col_in = feat.shape[1]

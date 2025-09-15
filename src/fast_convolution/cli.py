@@ -391,7 +391,7 @@ def sim_rand(ctx, feature, weight, image_side, loop, name, seed, standard):
     default=0,
     help="Start value of weight sequential data.",
 )
-@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
 @click.option(
     "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
 )
@@ -425,7 +425,7 @@ def example():
     default=[0, 127],
     help="Minimal and maximal value of weight random data.",
 )
-@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
 @click.option("--quant", "-q", is_flag=True, default=False)
 @click.pass_context
 def ex_rand(ctx, feature, weight, suffix, quant):
@@ -446,7 +446,7 @@ def ex_rand(ctx, feature, weight, suffix, quant):
 @click.option(
     "--weight", "-w", default=0, help="Minimal value of sequential weight data."
 )
-@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
 @click.option("--quant", "-q", is_flag=True, default=False)
 @click.pass_context
 def ex_seq(ctx, feature, weight, suffix, quant):
@@ -465,7 +465,7 @@ def ex_seq(ctx, feature, weight, suffix, quant):
     help="List of features.",
 )
 @click.option("--weight", "-w", type=str, help="List of weights.")
-@click.option("--suffix", "-s", default="", help="Suffix of output file name.")
+@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
 @click.option("--quant", "-q", is_flag=True, default=False)
 @click.pass_context
 def ex_list(ctx, feature, weight, suffix, quant):

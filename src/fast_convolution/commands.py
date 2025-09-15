@@ -374,14 +374,13 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult)
     dim, c_len, b_len, a_len = read_init(repo)
-    dict_dim = dict_dimension(
-        dim,
-        a_len,
-        b_len,
-        c_len,
-        len(q),
-    )
-    utils.sv_pkg("pack_param", repo.dir_sv / "pack_param.sv", [], dict_dim)
+    dict_param = {
+        "A_SIZE": a_len,
+        "B_SIZE": b_len,
+        "C_SIZE": c_len,
+        "M_SIZE": len(q),
+    }
+    utils.sv_pkg("pack_param", repo.dir_sv / "pack_param.sv", [], dict_param)
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -515,14 +514,29 @@ def build2d(
     utils.c_header(repo.dir_clib_data_float / "build_float.h", arr_float, {})
     repo.dir_sv.mkdir(parents=True, exist_ok=True)
     dim, c_len, b_len, a_len = read_init(repo)
-    dict_dim = dict_dimension(
-        dim,
-        a_len[0],
-        b_len[0],
-        c_len[0],
-        len(q1),
+    c_index = (
+        np.arange(len(q1) * len(q1)).reshape(len(q1), len(q1)).T.reshape(-1)
     )
-    utils.sv_pkg("pack_param", repo.dir_sv / "pack_param.sv", [], dict_dim)
+    list_array = [
+        {
+            "name": "c_index[]",
+            "value": c_index,
+            "type": "int",
+        },
+    ]
+    dict_param = {
+        "A1_SIZE": a_len[0],
+        "B1_SIZE": b_len[0],
+        "C1_SIZE": c_len[0],
+        "M1_SIZE": len(q1),
+        "A2_SIZE": a_len[0],
+        "B2_SIZE": b_len[0],
+        "C2_SIZE": c_len[0],
+        "M2_SIZE": len(q1),
+    }
+    utils.sv_pkg(
+        "pack_param", repo.dir_sv / "pack_param.sv", list_array, dict_param
+    )
 
 
 def cmd_build2d_bind_nest(repo):
@@ -1146,6 +1160,14 @@ def sim(
             "name": f"const_feat_out[{fout_size[0]}][{fout_size[1]}]",
             "value": out_feat_list_sv,
         },
+        # {
+        #     "name": "const_in[]",
+        #     "value": feat_arr,
+        # },
+        # {
+        #     "name": "const_out[]",
+        #     "value": output_fast,
+        # },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {

@@ -191,9 +191,12 @@ def sv_pkg(name, path, list_array, dict_defs):
             np_arr = np.array(array["value"]).astype(typ)
             shape = np_arr.shape
             value = np_arr.tolist()
-            value_str = (",\n").join(
-                ["    '{" + ", ".join(map(str, v)) + "}" for v in value]
-            )
+            if len(shape) == 1:
+                value_str = "    " + ", ".join(map(str, value))
+            else:
+                value_str = (",\n").join(
+                    ["    '{" + ", ".join(map(str, v)) + "}" for v in value]
+                )
             size = "*".join(map(str, shape))
             array = array_str.format(
                 type=typ, name=name, value=value_str, size=size
