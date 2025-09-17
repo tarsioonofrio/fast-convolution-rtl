@@ -521,7 +521,7 @@ def build2d(
     )
     list_array = [
         {
-            "name": "c_index[]",
+            "name": f"c_index[{c_index.shape[0]}]",
             "value": c_index,
             "type": "int",
         },
