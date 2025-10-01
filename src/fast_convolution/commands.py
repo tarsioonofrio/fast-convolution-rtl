@@ -948,9 +948,9 @@ def cmd_sim_int(
 def cmd_sim_normal(repo, image_side, suffix, seed, standard):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
-    feat = np.random.randint(0, 255, size=image_side**2)
-    feat_arr = feat.reshape(image_side, image_side)
     np.random.seed(seed)
+    feat = np.random.normal(0, 1, size=image_side**2)
+    feat_arr = feat.reshape(image_side, image_side)
     if dim == 1:
         wght = np.random.normal(0, 1, size=b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
