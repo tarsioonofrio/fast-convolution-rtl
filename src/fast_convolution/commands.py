@@ -1160,17 +1160,13 @@ def sim(
             "value": feat_list_sv,
         },
         {
-            "name": f"const_feat_out[{fout_size[0]}][{fout_size[1]}]",
+            "name": f"const_feat_out_batch[{fout_size[0]}][{fout_size[1]}]",
             "value": out_feat_list_sv,
         },
-        # {
-        #     "name": "const_in[]",
-        #     "value": feat_arr,
-        # },
-        # {
-        #     "name": "const_out[]",
-        #     "value": output_fast,
-        # },
+        {
+            "name": f"const_feat_out[{output_fast.shape[0]}][{output_fast.shape[1]}]",
+            "value": output_fast,
+        },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {
