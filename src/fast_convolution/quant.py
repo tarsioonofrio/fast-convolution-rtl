@@ -5,39 +5,34 @@ from . import fast
 
 
 def select_func(quant_data):
-    mapping = {
-        "shift": shift_func
-    }
+    mapping = {"shift": shift_func}
     func = mapping[quant_data["func"]]
     func_instance = func(**quant_data["params"])
     return func_instance
 
 
 def select_conv1d(quant_data):
-    mapping = {
-        "shift": shift1d
-    }
+    mapping = {"shift": shift1d}
     func = mapping[quant_data["func"]]
     func_instance = func(**quant_data["params"])
     return func_instance
 
 
 def select_conv2d(quant_data):
-    mapping = {
-        "shift": shift2d
-    }
+    mapping = {"shift": shift2d}
     func = mapping[quant_data["func"]]
     func_instance = func(**quant_data["params"])
     return func_instance
 
 
 def shift_quant(g, bits):
-    return np.left_shift(g, bits)
+    return g * (2**bits)
 
 
 def shift_func(bits):
     def func(g):
         return shift_quant(g, bits)
+
     return func
 
 
@@ -53,9 +48,11 @@ def shift1d(bits):
         def quant_conv(f):
             # fq = np.left_shift(f, bits)
             quant_out = conv(f)
-            out = sy.Matrix(np.right_shift(quant_out, bits))
+            out = sy.Matrix(quant_out / (2**bits))
             return out
+
         return quant_conv
+
     return conv1d
 
 
@@ -69,7 +66,9 @@ def shift2d(bits):
         def quant_conv(f):
             # fq = np.left_shift(f, bits)
             quant_out = conv(f)
-            out = sy.Matrix(np.right_shift(quant_out, bits))
+            out = sy.Matrix(quant_out / (2**bits))
             return out
+
         return quant_conv
+
     return conv2d

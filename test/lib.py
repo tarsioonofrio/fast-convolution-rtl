@@ -7,10 +7,10 @@ from fast_convolution import cli
 list_cmd_common = [
     "ex_rand",
     "ex_seq",
-    "sim_rand",
+    "sim_int",
     "sim_file",
     "quant",
-    "sim_rand_quant",
+    "sim_normal",
     "sim_file_quant",
 ]
 

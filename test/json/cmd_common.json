@@ -1,10 +1,10 @@
 {
   "ex_seq": ["example", "seq"],
   "ex_rand": ["example", "rand"],
-  "sim_rand": ["sim", "rand"],
+  "sim_int": ["sim", "int"],
   "sim_file": ["sim", "file"],
   "quant": ["quant", "shift", "-b", "8"],
-  "sim_rand_quant": ["sim", "rand", "-n", "quant"],
+  "sim_normal": ["sim", "normal", "-n", "quant"],
   "sim_file_quant": ["sim", "file", "-n", "quant"],
   "show": ["show"]
 }

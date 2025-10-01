@@ -21,6 +21,7 @@ def excepthook(type, value, tb):
     traceback.print_exception(type, value, tb)
     pdb.post_mortem(tb)
 
+
 sys.excepthook = excepthook
 
 
@@ -335,72 +336,72 @@ def sim_file(ctx, feature, weight, name, standard):
     click.echo(output["text"])
 
 
-@sim.command(name="rand", help="Simulation with random numbers")
-@click.option(
-    "--image-side", "-i", default=32, help="Image side, must be a power of two."
-)
-@click.option(
-    "--loop", "-L", default=1, help="Total of execution loops. Not implemented"
-)
+@sim.command(name="int", help="Simulation with integers")
+@click.option("--image-side", "-i", default=32, help="Image side.")
 @click.option(
     "--feature",
     "-f",
-    nargs=2,
-    default=[0, 127],
-    help="Minimal and maximal value of feature random data.",
+    default=0,
+    help="Minimal and maximal value of feature.",
 )
 @click.option(
     "--weight",
     "-w",
-    nargs=2,
-    default=[0, 127],
-    help="Minimal and maximal value of weight random data.",
+    default=0,
+    help="Minimal and maximal value of kernel.",
+)
+@click.option(
+    "--random",
+    "-r",
+    is_flag=True,
+    default=False,
+    help="Random integers.",
 )
 @click.option("--name", "-n", default="", help="Suffix of output file name.")
 @click.option(
     "--seed", "-d", default=0, help="Seed to random number generator."
 )
 @click.option(
-    "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
+    "--standard",
+    "-s",
+    is_flag=True,
+    default=False,
+    help="Standard convolution.",
 )
 @click.pass_context
-def sim_rand(ctx, feature, weight, image_side, loop, name, seed, standard):
-    from .commands import cmd_sim_random
+def sim_rand(ctx, feature, weight, random, image_side, name, seed, standard):
+    from .commands import cmd_sim_int
 
     repo = ctx.obj
-    output = cmd_sim_random(
-        repo, feature, weight, image_side, loop, name, seed, standard
+    output = cmd_sim_int(
+        repo, feature, weight, random, image_side, name, seed, standard
     )
     ctx.exit(0)
     click.echo(output["text"])
 
 
-@sim.command(name="seq", help="Simulation with sequential numbers")
+@sim.command(
+    name="normal",
+    help="Simulation with data from normal distribution with mean 0 and standard deviation 1",
+)
+@click.option("--image-side", "-i", default=32, help="Image side.")
+@click.option("--name", "-n", default="", help="Suffix of output file name.")
 @click.option(
-    "--image-side", "-i", default=32, help="Image side, must be a power of two."
+    "--seed", "-d", default=0, help="Seed to random number generator."
 )
 @click.option(
-    "--feature",
-    "-f",
-    default=0,
-    help="Start value of feature sequential data.",
-)
-@click.option(
-    "--weight",
-    "-w",
-    default=0,
-    help="Start value of weight sequential data.",
-)
-@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
-@click.option(
-    "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
+    "--standard",
+    "-s",
+    is_flag=True,
+    default=False,
+    help="Standard convolution.",
 )
 @click.pass_context
-def sim_seq(ctx, feature, weight, image_side, suffix, standard):
-    from .commands import cmd_sim_seq
+def sim_normal(ctx, image_side, name, seed, standard):
+    from .commands import cmd_sim_normal
 
     repo = ctx.obj
-    output = cmd_sim_seq(repo, feature, weight, image_side, suffix, standard)
+    output = cmd_sim_normal(repo, image_side, name, seed, standard)
     ctx.exit(0)
     click.echo(output["text"])
 
