@@ -1011,6 +1011,12 @@ def sim(
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
+    output_default_quant = (
+        feat_arr if len(quant_data) == 0 else output_default * (2**quant_bits)
+    )
+    feat_quant = (
+        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    )
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     )
@@ -1040,32 +1046,16 @@ def sim(
         ]
         output_fast_ = [
             fast.filter1d_slide2d(
-                fast_conv[i], feat_arr, output_default.shape, i, c_len, a_len
+                fast_conv[i], feat_quant, output_default.shape, i, c_len, a_len
             )
             for i in range(0, wght_quant.shape[0])
         ]
         output_fast = np.sum(axis=0, a=output_fast_)
         feat_list_sv, out_feat_list_sv = fast.sliding1d_window_2d(
-            feat_arr, output_default, output_default.shape, c_len, a_len
+            feat_quant, output_default, output_default.shape, c_len, a_len
         )
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
-        # dict_dim = dict_dimension(
-        #     dim,
-        #     a_len,
-        #     b_len,
-        #     c_len,
-        #     len(q),
-        # )
-        # if len(quant_data) == 0:
-        #     bg_quant = bg
-        # if len(quant_data) == 1:
-        #     weight_quant = np.left_shift(wght_arr, quant_bits)
-        #     bg_q = [
-        #         fast.g_to_bg(q, b, weight_quant[i])
-        #         for i in range(0, weight_quant.shape[0])
-        #     ]
-        #     bg_quant = np.array(bg_q).reshape(b_len, -1).tolist()
     else:
         points, c, b, a, q = read_build_2d(repo)
         bg_ = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
@@ -1078,24 +1068,20 @@ def sim(
             c[0], c[1], bg, a[0], a[1], quant_bits
         )
         output_fast = fast.filter2d_slide2d(
-            fast_conv, feat_arr, output_default.shape, c_len, a_len
+            fast_conv, feat_quant, output_default.shape, c_len, a_len
         )
         feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
-            feat_arr, output_fast, output_default.shape, c_len, a_len
+            feat_quant, output_fast, output_default.shape, c_len, a_len
         )
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0]
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
 
-        # if len(quant_data) == 0:
-        #     bg_quant = bg
-        # else:
-        #     wght_quant = np.left_shift(wght_arr, quant_bits)
-        #     bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
-
     if len(quant_data) != 0:
-        metric = r2_score(output_default.reshape(-1), output_fast.reshape(-1))
-        text_metric = f"R2: {metric}%\n"
+        metric = r2_score(
+            output_default_quant.reshape(-1), output_fast.reshape(-1)
+        )
+        text_metric = f"R2: {metric}\n"
     else:
         metric = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {metric}\n"
@@ -1124,11 +1110,17 @@ def sim(
     with open(path / "sim.txt", "w") as f:
         f.write(text)
     for arr, name in zip(
-        [feat_arr, wght_quant, output_default, output_fast],
-        ["d", "g", "s_default", "s"],
+        [feat_quant, wght_quant, output_fast, output_default_quant],
+        ["d", "g", "s", "s_default_quant"],
     ):
         np.savetxt(path / f"{name}.txt", arr, fmt="%d")
-    np.savetxt(path / "g_default.txt", wght_arr, fmt="%f")
+
+    for arr, name in zip(
+        [feat_arr, wght_arr, output_default],
+        ["d_default", "g_default", "s_default"],
+    ):
+        np.savetxt(path / f"{name}.txt", arr, fmt="%f")
+
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_quant},
