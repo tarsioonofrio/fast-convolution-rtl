@@ -40,8 +40,8 @@ def shift_func(bits):
 # functions
 def shift1d(bits):
     def conv1d(g, c, q, b, a):
-        g0 = shift_quant(g, bits).tolist()
-        bg0 = fast.g_to_bg(q, b, g0)
+        # g0 = shift_quant(g, bits).tolist()
+        bg0 = fast.g_to_bg(q, b, g)
         bg = sy.Matrix(np.array(bg0, dtype=int))
         conv = fast.wrap_convolution(c, bg, a)
 
@@ -58,8 +58,8 @@ def shift1d(bits):
 
 def shift2d(bits):
     def conv2d(g, c1, q1, b1, a1, c2, q2, b2, a2):
-        g0 = np.left_shift(g, bits).tolist()
-        bg0 = fast.g_to_bg2d(q1, b1, q2, b2, g0)
+        # g0 = np.left_shift(g, bits).tolist()
+        bg0 = fast.g_to_bg2d(q1, b1, q2, b2, g)
         bg = sy.Matrix(np.array(bg0, dtype=int))
         conv = fast.wrap_convolution2d(c1, c2, bg, a1, a2)
 

@@ -948,9 +948,14 @@ def cmd_sim_int(
 def cmd_sim_normal(repo, image_side, suffix, seed, standard):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
+    quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     np.random.seed(seed)
     feat = np.random.normal(0, 1, size=image_side**2)
     feat_arr = feat.reshape(image_side, image_side)
+    feat_quant = (
+        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    ).astype(int)
+
     if dim == 1:
         wght = np.random.normal(0, 1, size=b_len**2)
         wght_arr = wght.reshape(b_len, b_len)
@@ -964,7 +969,7 @@ def cmd_sim_normal(repo, image_side, suffix, seed, standard):
             b_len,
             c_len,
             dim,
-            feat_arr,
+            feat_quant,
             None,
             image_side,
             quant_data,
@@ -979,7 +984,7 @@ def cmd_sim_normal(repo, image_side, suffix, seed, standard):
             b_len,
             c_len,
             dim,
-            feat_arr,
+            feat_quant,
             None,
             image_side,
             quant_data,
@@ -1014,25 +1019,16 @@ def sim(
     output_default_quant = (
         feat_arr if len(quant_data) == 0 else output_default * (2**quant_bits)
     )
-    feat_quant = (
-        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
-    )
+    # feat_quant = (
+    #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    # ).astype(int)
+    feat_quant = feat_arr
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
-    )
+    ).astype(int)
 
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        # Corrected error in fast 1d conv
-        # between C and python in quantized data
-        # In python the data is right shifted and after that is summed
-        # In C the data is summed and after that is summed
-        # shift operator not is linear
-        # i believe is better change C to be like the python code
-        # data in right shifted and after that is summed
-        # TODO
-        # compose inverse quantization in filter like quant.select_conv2d
-
         bg_ = (
             np.array([fast.g_to_bg(q, b, wght_quant[i]) for i in range(b_len)])
             .reshape(b_len, -1)
@@ -1150,6 +1146,13 @@ def sim(
     w_size = (len(weight_sv), len(weight_sv[0]))
     fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
     fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
+
+    const_data_sv = (
+        [0]
+        + weight_sv.reshape(-1).tolist()
+        + np.array(feat_quant).reshape(-1).tolist()
+    )
+
     list_array = [
         {
             "name": f"const_weight[{w_size[0]}][{w_size[1]}]",
@@ -1158,6 +1161,10 @@ def sim(
         {
             "name": f"const_feat_in[{fin_size[0]}][{fin_size[1]}]",
             "value": feat_list_sv,
+        },
+        {
+            "name": f"const_data[{len(const_data_sv)}]",
+            "value": const_data_sv,
         },
         {
             "name": f"const_feat_out_batch[{fout_size[0]}][{fout_size[1]}]",
@@ -1179,8 +1186,7 @@ def sim(
         "FOUT2_SIZE": fout_size[1],
         # **dict_dim,
     }
-    if len(quant_data) != 0:
-        utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
+    utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
     return out_dict
 
 
@@ -1217,13 +1223,6 @@ def sim_default(
     feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
         feat_arr, output_quant, output_default.shape, c_len, a_len
     )
-    # dict_dim = dict_dimension(dim, 3, 3, 5, 9)
-    # if len(quant_data) == 0:
-    #     bg_quant = bg
-    # else:
-    #     wght_quant = np.left_shift(wght_arr, quant_bits)
-    #     bg_quant = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
-
     if len(quant_data) != 0:
         metric = r2_score(output_default.reshape(-1), output_quant.reshape(-1))
         text_metric = f"R2: {metric}%\n"
