@@ -1101,9 +1101,9 @@ def sim(
         f"Multiplications: {count_mult}\n"
     )
     if len(suffix) > 0:
-        path = repo.dir_sim / f"file-{suffix}"
+        path = repo.dir_sim / f"sim-{suffix}"
     else:
-        path = repo.dir_sim / "file"
+        path = repo.dir_sim / "sim"
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
@@ -1245,9 +1245,9 @@ def sim_default(
         f"Additions: {size * 8}\n"
     )
     if len(suffix) > 0:
-        path = repo.dir_sim / f"file-{suffix}"
+        path = repo.dir_sim / f"sim-{suffix}"
     else:
-        path = repo.dir_sim / "file"
+        path = repo.dir_sim / "sim"
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
