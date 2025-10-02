@@ -4,7 +4,7 @@ Image side: 32
 Quantization bits: 8
 Output default and naive are equals: True
 
-R2: 0.007801198655434161
+R2: 0.989901362112621
 
 Totals
 Naive

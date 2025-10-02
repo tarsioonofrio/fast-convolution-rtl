@@ -1016,9 +1016,10 @@ def sim(
     compare_naive = np.all(output_default == output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
-    output_default_quant = (
-        feat_arr if len(quant_data) == 0 else output_default * (2**quant_bits)
-    )
+    # output_default_quant = (
+    #     output_default if len(quant_data) == 0 else output_default * (2**quant_bits)
+    # )
+    output_default_quant = output_default
     # feat_quant = (
     #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
     # ).astype(int)
@@ -1081,6 +1082,7 @@ def sim(
     else:
         metric = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {metric}\n"
+
     size = output_default.size
     text = (
         f"Feature: {feature_info}\n"
