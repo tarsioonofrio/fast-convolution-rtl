@@ -1180,12 +1180,13 @@ def sim(
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {
         "QUANT_BITS": quant_bits,
-        "W1_SIZE": w_size[0],
-        "W2_SIZE": w_size[1],
         "FIN1_SIZE": fin_size[0],
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
+        "FEAT_INPUT_SIZE": feat_arr.shape[0],
+        "FEAT_OUTPUT_SIZE": output_fast.shape[0],
+        "N_WINDOW": output_fast.shape[0] // (a_len if dim == 1 else a_len[0]),
         # **dict_dim,
     }
     utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
@@ -1300,9 +1301,8 @@ def sim_default(
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {
         "QUANT_BITS": quant_bits,
-        "W1_SIZE": w_size[0],
-        "W2_SIZE": w_size[1],
-        "FIN1_SIZE": fin_size[0],
+        "FIN1_SIZE": fin_size[0],        "N_WINDOW": output_fast.shape[0] // (a_len if dim == 1 else a_len[0]),
+
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],

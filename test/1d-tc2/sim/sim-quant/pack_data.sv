@@ -4,12 +4,13 @@ package pack_data;
   timeprecision 1ps;
 
   localparam int QUANT_BITS = 8;
-  localparam int W1_SIZE = 1;
-  localparam int W2_SIZE = 12;
   localparam int FIN1_SIZE = 450;
   localparam int FIN2_SIZE = 4;
   localparam int FOUT1_SIZE = 450;
   localparam int FOUT2_SIZE = 2;
+  localparam int FEAT_INPUT_SIZE = 32;
+  localparam int FEAT_OUTPUT_SIZE = 30;
+  localparam int N_WINDOW = 15;
 
   const int const_weight[1][12] = '{
     '{0, 128, -128, 0, -256, -256, 768, 256, 0, 128, -128, 0}
