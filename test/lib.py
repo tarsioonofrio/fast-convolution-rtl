@@ -11,7 +11,6 @@ list_cmd_common = [
     "sim_file",
     "quant",
     "sim_normal",
-    "sim_file_quant",
 ]
 
 

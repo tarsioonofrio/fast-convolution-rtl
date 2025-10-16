@@ -848,7 +848,7 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     with open(feature_info) as f:
-        image = Image.open(feature_info).convert("L")
+        image = Image.open(feature_info)
     with open(weight) as f:
         w_arr = np.array(json.load(f))
     if dim == 1:
@@ -856,10 +856,10 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     else:
         wght_arr = w_arr.reshape(b_len[0], b_len[1])
     if image.mode == "L":
-        feat_arr = np.expand_dims(image, axis=(0, 1))
+        feat_arr = np.expand_dims(image, axis=(0, 1)).astype(int)
         wght_arr = np.expand_dims(wght_arr, axis=(0, 1))
     elif image.mode == "RGB":
-        feat_arr = np.expand_dims(image, axis=0)
+        feat_arr = np.expand_dims(image, axis=0).astype(int)
         wght_arr = np.expand_dims(wght_arr, axis=0)
     image_side = feat_arr.shape[-1]
     if standard:
@@ -923,7 +923,7 @@ def cmd_sim_int(
             feature_info + channel_in * channel_out * image_side**2,
         )
         feat_arr = feat.reshape(channel_out, channel_in, image_side, image_side)
-    w_len = b_len[0] if dim == 1 else b_len[0]
+    w_len = b_len if dim == 1 else b_len[0]
     if random:
         wght_arr = np.random.randint(
             weight,
@@ -982,7 +982,7 @@ def cmd_sim_normal(
     #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
     # ).astype(int)
 
-    w_len = b_len[0] if dim == 1 else b_len[0]
+    w_len = b_len if dim == 1 else b_len[0]
     wght_arr = np.random.normal(
         0, 1, size=(channel_out, channel_in, w_len, w_len)
     )
@@ -1074,27 +1074,78 @@ def sim(
     output_shape = [output_default.shape[-1], output_default.shape[-2]]
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
-        bg_ = (
-            np.array([fast.g_to_bg(q, b, wght_quant[i]) for i in range(b_len)])
-            .reshape(b_len, -1)
-            .tolist()
+        bg = np.array(
+            [
+                [
+                    [
+                        fast.g_to_bg(q, b, wght_quant[cout][cin][i]).T
+                        for i in range(b_len)
+                    ]
+                    for cin in range(channel_in)
+                ]
+                for cout in range(channel_out)
+            ]
         )
-        bg2_ = [np.round(np.array(b).astype(float)).astype(int) for b in bg_]
-        bg = bg_ if quant_data == 0 else bg2_
-
+        bg = (
+            bg
+            if quant_data == 0
+            else np.round(np.array(bg).astype(float)).astype(int)
+        )
         fast_conv = [
-            fast.wrap_convolution(c, bg[i], a, quant_bits) for i in range(b_len)
+            [
+                [
+                    fast.wrap_convolution(c, bg[cout][cin][i], a, quant_bits)
+                    for i in range(b_len)
+                ]
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
         ]
+
         output_fast_ = [
-            fast.filter1d_slide2d(
-                fast_conv[i], feat_quant, output_default.shape, i, c_len, a_len
-            )
-            for i in range(0, wght_quant.shape[0])
+            [
+                [
+                    fast.filter1d_slide2d(
+                        fast_conv[cout][cin][i],
+                        feat_quant[cout][cin],
+                        output_shape,
+                        i,
+                        c_len,
+                        a_len,
+                    )
+                    for i in range(b_len)
+                ]
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
         ]
-        output_fast = np.sum(axis=0, a=output_fast_)
-        feat_list_sv, out_feat_list_sv = fast.sliding1d_window_2d(
-            feat_quant, output_default, output_default.shape, c_len, a_len
+        output_fast = np.sum(axis=2, a=output_fast_)
+        sliding_window = [
+            [
+                fast.sliding1d_window_2d(
+                    feat_quant[cout][cin],
+                    output_default[cout][cin],
+                    output_shape,
+                    c_len,
+                    a_len,
+                )
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+        feat_list_sv = np.array(
+            [
+                [sliding_window[cout][cin][0] for cin in range(channel_in)]
+                for cout in range(channel_out)
+            ]
         )
+        out_feat_list_sv = np.array(
+            [
+                [sliding_window[cout][cin][1] for cin in range(channel_in)]
+                for cout in range(channel_out)
+            ]
+        )
+
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
     else:
@@ -1176,7 +1227,7 @@ def sim(
         )
         text_metric = f"R2: {metric}\n"
     else:
-        metric = np.all(output_default == output_fast)
+        metric = np.all(np.array(output_default) == np.array(output_fast))
         text_metric = f"Output default and fast are equals: {metric}\n"
 
     size = np.prod(output_default.shape)

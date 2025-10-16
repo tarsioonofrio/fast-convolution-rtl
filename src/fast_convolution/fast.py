@@ -185,10 +185,10 @@ def sliding1d_window_2d(in_arr, out_arr, out_shape, in_size=5, out_size=3):
     list_out = []
     for r in range(0, out_shape[0]):
         for c in range(0, out_shape[1], out_size):
-            f = in_arr[r, c : c + in_size]
+            f = np.array(in_arr[r, c : c + in_size])
             if len(f) == in_size:
                 list_in.append(f.reshape(-1))
-                list_out.append(out_arr[r, c : c + out_size].reshape(-1))
+                list_out.append(np.array(out_arr[r, c : c + out_size]).reshape(-1))
             else:
                 tmp_in_size = in_size - len(f)
                 zeros = tmp_in_size * [0]
@@ -197,7 +197,7 @@ def sliding1d_window_2d(in_arr, out_arr, out_shape, in_size=5, out_size=3):
                 tmp_out_size = out_shape[0] - c
                 new_out = np.zeros((out_size), dtype=int)
                 new_out[:tmp_out_size] = out_arr[r, c : c + tmp_out_size]
-                list_out.append(new_out.reshape(-1))
+                list_out.append(np.array(new_out).reshape(-1))
     return list_in, list_out
 
 

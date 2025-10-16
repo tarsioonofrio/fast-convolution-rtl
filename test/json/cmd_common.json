@@ -5,6 +5,5 @@
   "sim_file": ["sim", "file"],
   "quant": ["quant", "shift", "-b", "8"],
   "sim_normal": ["sim", "normal", "-n", "quant"],
-  "sim_file_quant": ["sim", "file", "-n", "quant"],
   "show": ["show"]
 }
