@@ -1086,7 +1086,7 @@ def sim(
                 for cout in range(channel_out)
             ]
         )
-        bg = (
+        bg_quant = (
             bg
             if quant_data == 0
             else np.round(np.array(bg).astype(float)).astype(int)
@@ -1094,7 +1094,7 @@ def sim(
         fast_conv = [
             [
                 [
-                    fast.wrap_convolution(c, bg[cout][cin][i], a, quant_bits)
+                    fast.wrap_convolution(c, bg_quant[cout][cin][i], a, quant_bits)
                     for i in range(b_len)
                 ]
                 for cin in range(channel_in)
@@ -1161,7 +1161,7 @@ def sim(
                 for cout in range(channel_out)
             ]
         )
-        bg = (
+        bg_quant = (
             bg
             if quant_data == 0
             else np.round(np.array(bg).astype(float)).astype(int)
@@ -1169,7 +1169,7 @@ def sim(
         fast_conv = [
             [
                 fast.wrap_convolution2d(
-                    c[0], c[1], bg[cout][cin], a[0], a[1], quant_bits
+                    c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant_bits
                 )
                 for cin in range(channel_in)
             ]
@@ -1223,7 +1223,8 @@ def sim(
 
     if len(quant_data) != 0:
         metric = r2_score(
-            output_default_quant.reshape(-1), np.array(output_fast).reshape(-1)
+            output_default.reshape(-1),
+            np.array(output_fast).reshape(-1) / (2**quant_bits),
         )
         text_metric = f"R2: {metric}\n"
     else:
@@ -1275,21 +1276,29 @@ def sim(
         )
 
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    list_array = [
+    list_quant = [
         {
             "name": "weight",
             "value": wght_quant.reshape(-1, wght_quant.shape[-1]),
+        },
+        {"name": "weight_gg", "value": bg_quant.reshape(-1, bg_quant.shape[-1])},
+        {"name": "feat_in_quant", "value": feat_quant.reshape(-1, feat_quant.shape[-1])},
+        {
+            "name": "feat_out",
+            "value": output_fast.reshape(-1, output_fast.shape[-1]),
+        },
+    ]
+    list_float = [
+        {
+            "name": "weight",
+            "value": wght_arr.reshape(-1, wght_arr.shape[-1]),
         },
         {"name": "weight_gg", "value": bg.reshape(-1, bg.shape[-1])},
         # {"name": "weight_gg_quant", "value": bg_quant},
         {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
         {
-            "name": "gold",
+            "name": "feat_out",
             "value": output_default.reshape(-1, output_default.shape[-1]),
-        },
-        {
-            "name": "gold_quant",
-            "value": output_fast.reshape(-1, output_fast.shape[-1]),
         },
     ]
     dict_def = {
@@ -1299,16 +1308,16 @@ def sim(
         "FOUT_SIZE": output_default.shape[-1],
     }
     # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
-    arr = [{**r, "type": "int"} for r in list_array]
+    arr = [{**r, "type": "int"} for r in list_quant]
     utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
-    arr_float = [{**r, "type": "float"} for r in list_array]
+    arr_float = [{**r, "type": "float"} for r in list_float]
     repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
     utils.c_header(
         repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
 
-    weight_sv = bg.reshape(-1, bg.shape[-1] * bg.shape[-2])
+    weight_sv = bg_quant.reshape(-1, bg_quant.shape[-1] * bg_quant.shape[-2])
     feat_list_sv = feat_list_sv.reshape(-1, feat_list_sv.shape[-1])
     out_feat_list_sv = out_feat_list_sv.reshape(-1, out_feat_list_sv.shape[-1])
     output_fast_list_sv = output_fast.reshape(-1, output_fast.shape[-1])
