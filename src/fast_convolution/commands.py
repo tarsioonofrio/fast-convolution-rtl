@@ -1094,7 +1094,9 @@ def sim(
         fast_conv = [
             [
                 [
-                    fast.wrap_convolution(c, bg_quant[cout][cin][i], a, quant_bits)
+                    fast.wrap_convolution(
+                        c, bg_quant[cout][cin][i], a, quant_bits
+                    )
                     for i in range(b_len)
                 ]
                 for cin in range(channel_in)
@@ -1281,8 +1283,14 @@ def sim(
             "name": "weight",
             "value": wght_quant.reshape(-1, wght_quant.shape[-1]),
         },
-        {"name": "weight_gg", "value": bg_quant.reshape(-1, bg_quant.shape[-1])},
-        {"name": "feat_in_quant", "value": feat_quant.reshape(-1, feat_quant.shape[-1])},
+        {
+            "name": "weight_gg",
+            "value": bg_quant.reshape(-1, bg_quant.shape[-1]),
+        },
+        {
+            "name": "feat_in_quant",
+            "value": feat_quant.reshape(-1, feat_quant.shape[-1]),
+        },
         {
             "name": "feat_out",
             "value": output_fast.reshape(-1, output_fast.shape[-1]),
@@ -1294,7 +1302,6 @@ def sim(
             "value": wght_arr.reshape(-1, wght_arr.shape[-1]),
         },
         {"name": "weight_gg", "value": bg.reshape(-1, bg.shape[-1])},
-        # {"name": "weight_gg_quant", "value": bg_quant},
         {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
         {
             "name": "feat_out",
