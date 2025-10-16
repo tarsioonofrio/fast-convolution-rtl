@@ -337,7 +337,7 @@ def sim_file(ctx, feature, weight, name, standard):
 
 
 @sim.command(name="int", help="Simulation with integers")
-@click.option("--image-side", "-i", default=32, help="Image side.")
+@click.option("--image-side", "-s", default=32, help="Image side.")
 @click.option(
     "--feature",
     "-f",
@@ -350,6 +350,8 @@ def sim_file(ctx, feature, weight, name, standard):
     default=0,
     help="Minimal and maximal value of kernel.",
 )
+@click.option("--channel-in", "-i", default=1, help="Channel input size.")
+@click.option("--channel-out", "-o", default=1, help="Channel output size.")
 @click.option(
     "--random",
     "-r",
@@ -369,12 +371,32 @@ def sim_file(ctx, feature, weight, name, standard):
     help="Standard convolution.",
 )
 @click.pass_context
-def sim_rand(ctx, feature, weight, random, image_side, name, seed, standard):
+def sim_rand(
+    ctx,
+    feature,
+    weight,
+    channel_in,
+    channel_out,
+    random,
+    image_side,
+    name,
+    seed,
+    standard,
+):
     from .commands import cmd_sim_int
 
     repo = ctx.obj
     output = cmd_sim_int(
-        repo, feature, weight, random, image_side, name, seed, standard
+        repo,
+        feature,
+        weight,
+        channel_in,
+        channel_out,
+        random,
+        image_side,
+        name,
+        seed,
+        standard,
     )
     ctx.exit(0)
     click.echo(output["text"])
@@ -386,6 +408,8 @@ def sim_rand(ctx, feature, weight, random, image_side, name, seed, standard):
 )
 @click.option("--image-side", "-i", default=32, help="Image side.")
 @click.option("--name", "-n", default="", help="Suffix of output file name.")
+@click.option("--channel-in", "-i", default=1, help="Channel input size.")
+@click.option("--channel-out", "-o", default=1, help="Channel output size.")
 @click.option(
     "--seed", "-d", default=0, help="Seed to random number generator."
 )
@@ -397,11 +421,13 @@ def sim_rand(ctx, feature, weight, random, image_side, name, seed, standard):
     help="Standard convolution.",
 )
 @click.pass_context
-def sim_normal(ctx, image_side, name, seed, standard):
+def sim_normal(ctx, image_side, name, channel_in, channel_out, seed, standard):
     from .commands import cmd_sim_normal
 
     repo = ctx.obj
-    output = cmd_sim_normal(repo, image_side, name, seed, standard)
+    output = cmd_sim_normal(
+        repo, image_side, channel_in, channel_out, name, seed, standard
+    )
     ctx.exit(0)
     click.echo(output["text"])
 

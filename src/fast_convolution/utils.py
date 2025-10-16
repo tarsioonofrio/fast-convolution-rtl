@@ -167,7 +167,7 @@ def c_header(path, list_array, dict_defs):
         f.write(source)
 
 
-def sv_pkg(name, path, list_array, dict_defs):
+def sv_pkg(name, path, list1d, list2d, dict_defs):
     source_str = (
         f"package {name};\n\n"
         "  timeunit 1ns;\n"
@@ -184,8 +184,22 @@ def sv_pkg(name, path, list_array, dict_defs):
             list_def.append(definition)
 
     list_data = []
-    if len(list_array) > 0:
-        for array in list_array:
+    if len(list1d) > 0:
+        for array in list1d:
+            typ = array["type"]
+            name = array["name"]
+            value = array["value"]
+            value_str = (",\n\n").join(
+                [
+                    (",\n").join("    " + ", ".join(map(str, v)) for v in v0)
+                    for v0 in value
+                ]
+            )
+            array = array_str.format(type=typ, name=name, value=value_str)
+            list_data.append(array)
+
+    if len(list2d) > 0:
+        for array in list2d:
             typ = array["type"]
             name = array["name"]
             np_arr = np.array(array["value"]).astype(typ)
@@ -197,10 +211,7 @@ def sv_pkg(name, path, list_array, dict_defs):
                 value_str = (",\n").join(
                     ["    '{" + ", ".join(map(str, v)) + "}" for v in value]
                 )
-            size = "*".join(map(str, shape))
-            array = array_str.format(
-                type=typ, name=name, value=value_str, size=size
-            )
+            array = array_str.format(type=typ, name=name, value=value_str)
             list_data.append(array)
 
     list_def_data = list_def + ["\n"] + list_data

@@ -1,3 +1,4 @@
+from bdb import Breakpoint
 import json
 import shutil
 from datetime import datetime
@@ -380,7 +381,9 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         "C_SIZE": c_len,
         "M_SIZE": len(q),
     }
-    utils.sv_pkg("pack_param", repo.dir_sv / "pack_param.sv", [], dict_param)
+    utils.sv_pkg(
+        "pack_param", repo.dir_sv / "pack_param.sv", [], [], dict_param
+    )
 
 
 def cmd_build_toom_cook2d(repo, points1d, points2d):
@@ -535,7 +538,7 @@ def build2d(
         "M2_SIZE": len(q1),
     }
     utils.sv_pkg(
-        "pack_param", repo.dir_sv / "pack_param.sv", list_array, dict_param
+        "pack_param", repo.dir_sv / "pack_param.sv", [], list_array, dict_param
     )
 
 
@@ -846,14 +849,19 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     quant_data = read_quant_if_exists(repo)
     with open(feature_info) as f:
         image = Image.open(feature_info).convert("L")
-        feat_arr = np.array(image)
-        image_side = feat_arr.shape[0]
     with open(weight) as f:
         w_arr = np.array(json.load(f))
-        if dim == 1:
-            wght_arr = w_arr.reshape(b_len, b_len)
-        else:
-            wght_arr = w_arr.reshape(b_len[0], b_len[1])
+    if dim == 1:
+        wght_arr = w_arr.reshape(b_len, b_len)
+    else:
+        wght_arr = w_arr.reshape(b_len[0], b_len[1])
+    if image.mode == "L":
+        feat_arr = np.expand_dims(image, axis=(0, 1))
+        wght_arr = np.expand_dims(wght_arr, axis=(0, 1))
+    elif image.mode == "RGB":
+        feat_arr = np.expand_dims(image, axis=0)
+        wght_arr = np.expand_dims(wght_arr, axis=0)
+    image_side = feat_arr.shape[-1]
     if standard:
         return sim_default(
             a_len,
@@ -883,35 +891,48 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
             suffix,
             weight,
             wght_arr,
+            feat_arr.shape[1],
+            1,
         )
 
 
 def cmd_sim_int(
-    repo, feature_info, weight, random, image_side, suffix, seed, standard
+    repo,
+    feature_info,
+    weight,
+    channel_in,
+    channel_out,
+    random,
+    image_side,
+    suffix,
+    seed,
+    standard,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     np.random.seed(seed)
     if random:
-        feat = np.random.randint(
-            feature_info, feature_info + image_side, size=image_side**2
+        feat_arr = np.random.randint(
+            feature_info,
+            feature_info + image_side,
+            size=(channel_out, channel_in, image_side, image_side),
         )
     else:
-        feat = np.arange(feature_info, feature_info + image_side**2)
-    feat_arr = feat.reshape(image_side, image_side)
-
-    if dim == 1:
-        if random:
-            wght = np.random.randint(weight, weight + b_len, size=b_len**2)
-        else:
-            wght = np.arange(weight, weight + b_len**2)
-        wght_arr = wght.reshape(b_len, b_len)
+        feat = np.arange(
+            feature_info,
+            feature_info + channel_in * channel_out * image_side**2,
+        )
+        feat_arr = feat.reshape(channel_out, channel_in, image_side, image_side)
+    w_len = b_len[0] if dim == 1 else b_len[0]
+    if random:
+        wght_arr = np.random.randint(
+            weight,
+            weight + channel_out * channel_in * w_len**2,
+            size=(channel_out, channel_in, w_len, w_len),
+        )
     else:
-        if random:
-            wght = np.random.randint(weight, weight + b_len, size=b_len**2)
-        else:
-            wght = np.arange(weight, weight + b_len[0] ** 2)
-        wght_arr = wght.reshape(b_len[0], b_len[1])
+        wght = np.arange(weight, weight + channel_out * channel_in * w_len**2)
+        wght_arr = wght.reshape(channel_out, channel_in, w_len, w_len)
 
     if standard:
         return sim_default(
@@ -942,34 +963,36 @@ def cmd_sim_int(
             suffix,
             weight,
             wght_arr,
+            channel_in,
+            channel_out,
         )
 
 
-def cmd_sim_normal(repo, image_side, suffix, seed, standard):
+def cmd_sim_normal(
+    repo, image_side, channel_in, channel_out, suffix, seed, standard
+):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
-    quant_bits = quant_data["bits"] if "bits" in quant_data else 0
+    # quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     np.random.seed(seed)
-    feat = np.random.normal(0, 1, size=image_side**2)
-    feat_arr = feat.reshape(image_side, image_side)
-    feat_quant = (
-        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
-    ).astype(int)
+    feat_arr = np.random.normal(
+        0, 1, size=(channel_out, channel_in, image_side, image_side)
+    )
+    # feat_quant = (
+    #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    # ).astype(int)
 
-    if dim == 1:
-        wght = np.random.normal(0, 1, size=b_len**2)
-        wght_arr = wght.reshape(b_len, b_len)
-    else:
-        wght = np.random.normal(0, 1, size=b_len[0] * b_len[1])
-        wght_arr = wght.reshape(b_len[0], b_len[1])
-
+    w_len = b_len[0] if dim == 1 else b_len[0]
+    wght_arr = np.random.normal(
+        0, 1, size=(channel_out, channel_in, w_len, w_len)
+    )
     if standard:
         return sim_default(
             a_len,
             b_len,
             c_len,
             dim,
-            feat_quant,
+            feat_arr,
             None,
             image_side,
             quant_data,
@@ -984,7 +1007,7 @@ def cmd_sim_normal(repo, image_side, suffix, seed, standard):
             b_len,
             c_len,
             dim,
-            feat_quant,
+            feat_arr,
             None,
             image_side,
             quant_data,
@@ -992,6 +1015,8 @@ def cmd_sim_normal(repo, image_side, suffix, seed, standard):
             suffix,
             None,
             wght_arr,
+            channel_in,
+            channel_out,
         )
 
 
@@ -1008,26 +1033,45 @@ def sim(
     suffix,
     weight,
     wght_arr,
+    channel_in=1,
+    channel_out=1,
 ):
-    output_default = signal.convolve2d(
-        feat_arr, wght_arr[::-1, ::-1], mode="valid"
+    import torch
+    from torch import nn
+    from torch.nn import functional as F
+
+    # output_default = signal.convolve2d(
+    #     feat_arr, wght_arr[::-1, ::-1], mode="valid"
+    # )
+    output_default = F.conv2d(
+        torch.tensor(feat_arr),
+        torch.tensor(wght_arr),
+        stride=1,
     )
-    output_naive = naive_convolve(feat_arr, wght_arr)
-    compare_naive = np.all(output_default == output_naive)
-    text_equal = f"Output default and naive are equals: {compare_naive}\n"
+    # output_default = np.squeeze(output_default.numpy())
+    # output_naive = naive_convolve(feat_arr, wght_arr)
+    # compare_naive = np.all(output_default == output_naive)
+    # text_equal = f"Output default and naive are equals: {compare_naive}\n"
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     # output_default_quant = (
     #     output_default if len(quant_data) == 0 else output_default * (2**quant_bits)
     # )
-    output_default_quant = output_default
-    # feat_quant = (
-    #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
-    # ).astype(int)
-    feat_quant = feat_arr
+    # output_default_quant = output_default
+    # feat_quant = feat_arr
+    feat_quant = (
+        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    ).astype(int)
+
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     ).astype(int)
 
+    output_default_quant = F.conv2d(
+        torch.tensor(feat_quant),
+        torch.tensor(wght_quant),
+        stride=1,
+    )
+    output_shape = [output_default.shape[-1], output_default.shape[-2]]
     if dim == 1:
         points, c, b, a, q = read_build_1d(repo)
         bg_ = (
@@ -1055,41 +1099,93 @@ def sim(
         count_mult = count_nest * len(points) * len(fast_conv)
     else:
         points, c, b, a, q = read_build_2d(repo)
-        bg_ = fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant)
+        bg = np.array(
+            [
+                [
+                    fast.g_to_bg2d(
+                        q[0], b[0], q[1], b[1], wght_quant[cout, cin]
+                    )
+                    for cin in range(channel_in)
+                ]
+                for cout in range(channel_out)
+            ]
+        )
         bg = (
-            bg_
+            bg
             if quant_data == 0
-            else np.round(np.array(bg_).astype(float)).astype(int)
+            else np.round(np.array(bg).astype(float)).astype(int)
         )
-        fast_conv = fast.wrap_convolution2d(
-            c[0], c[1], bg, a[0], a[1], quant_bits
+        fast_conv = [
+            [
+                fast.wrap_convolution2d(
+                    c[0], c[1], bg[cout][cin], a[0], a[1], quant_bits
+                )
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+
+        output_fast = np.array(
+            [
+                [
+                    fast.filter2d_slide2d(
+                        fast_conv[cout][cin],
+                        feat_quant[cout][cin],
+                        output_shape,
+                        c_len,
+                        a_len,
+                    )
+                    for cin in range(channel_in)
+                ]
+                for cout in range(channel_out)
+            ]
         )
-        output_fast = fast.filter2d_slide2d(
-            fast_conv, feat_quant, output_default.shape, c_len, a_len
+
+        sliding_window = [
+            [
+                fast.sliding2d_window2d(
+                    feat_quant[cout][cin],
+                    output_fast[cout][cin],
+                    output_shape,
+                    c_len,
+                    a_len,
+                )
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+        # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0
+        feat_list_sv = np.array(
+            [
+                [sliding_window[cout][cin][0] for cin in range(channel_in)]
+                for cout in range(channel_out)
+            ]
         )
-        feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
-            feat_quant, output_fast, output_default.shape, c_len, a_len
+        out_feat_list_sv = np.array(
+            [
+                [sliding_window[cout][cin][1] for cin in range(channel_in)]
+                for cout in range(channel_out)
+            ]
         )
-        # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0]
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
 
     if len(quant_data) != 0:
         metric = r2_score(
-            output_default_quant.reshape(-1), output_fast.reshape(-1)
+            output_default_quant.reshape(-1), np.array(output_fast).reshape(-1)
         )
         text_metric = f"R2: {metric}\n"
     else:
         metric = np.all(output_default == output_fast)
         text_metric = f"Output default and fast are equals: {metric}\n"
 
-    size = output_default.size
+    size = np.prod(output_default.shape)
     text = (
         f"Feature: {feature_info}\n"
         f"Weights: {weight}\n"
         f"Image side: {image_side}\n"
         f"Quantization bits: {quant_bits}\n"
-        f"{text_equal}\n"
+        # f"{text_equal}\n"
         f"{text_metric}\n"
         "Totals\n"
         "Naive\n"
@@ -1101,9 +1197,9 @@ def sim(
         f"Multiplications: {count_mult}\n"
     )
     if len(suffix) > 0:
-        path = repo.dir_sim / f"file-{suffix}"
+        path = repo.dir_sim / f"sim-{suffix}"
     else:
-        path = repo.dir_sim / "file"
+        path = repo.dir_sim / "sim"
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
@@ -1111,28 +1207,45 @@ def sim(
         [feat_quant, wght_quant, output_fast, output_default_quant],
         ["d", "g", "s", "s_default_quant"],
     ):
-        np.savetxt(path / f"{name}.txt", arr, fmt="%d")
+        np.savetxt(
+            path / f"{name}.txt",
+            np.array(arr).reshape(-1, arr.shape[-1]),
+            fmt="%d",
+        )
 
     for arr, name in zip(
         [feat_arr, wght_arr, output_default],
         ["d_default", "g_default", "s_default"],
     ):
-        np.savetxt(path / f"{name}.txt", arr, fmt="%f")
+        np.savetxt(
+            path / f"{name}.txt",
+            np.array(arr).reshape(-1, arr.shape[-1]),
+            fmt="%f",
+        )
 
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
-        {"name": "weight", "value": wght_quant},
-        {"name": "weight_gg", "value": bg},
+        {
+            "name": "weight",
+            "value": wght_quant.reshape(-1, wght_quant.shape[-1]),
+        },
+        {"name": "weight_gg", "value": bg.reshape(-1, bg.shape[-1])},
         # {"name": "weight_gg_quant", "value": bg_quant},
-        {"name": "feat_in", "value": feat_arr},
-        {"name": "gold", "value": output_default},
-        {"name": "gold_quant", "value": output_fast},
+        {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
+        {
+            "name": "gold",
+            "value": output_default.reshape(-1, output_default.shape[-1]),
+        },
+        {
+            "name": "gold_quant",
+            "value": output_fast.reshape(-1, output_fast.shape[-1]),
+        },
     ]
     dict_def = {
         "QUANT_BITS": quant_bits,
-        "W_SIZE": wght_quant.shape[0],
-        "FIN_SIZE": feat_arr.shape[0],
-        "FOUT_SIZE": output_default.shape[0],
+        "W_SIZE": wght_quant.shape[-1],
+        "FIN_SIZE": feat_arr.shape[-1],
+        "FOUT_SIZE": output_default.shape[-1],
     }
     # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
     arr = [{**r, "type": "int"} for r in list_array]
@@ -1144,51 +1257,57 @@ def sim(
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
 
-    weight_sv = np.array(bg).reshape(1, -1)
-    w_size = (len(weight_sv), len(weight_sv[0]))
-    fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
-    fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
+    weight_sv = bg.reshape(-1, bg.shape[-1] * bg.shape[-2])
+    feat_list_sv = feat_list_sv.reshape(-1, feat_list_sv.shape[-1])
+    out_feat_list_sv = out_feat_list_sv.reshape(-1, out_feat_list_sv.shape[-1])
+    output_fast_list_sv = output_fast.reshape(-1, output_fast.shape[-1])
 
-    const_data_sv = (
-        [0]
-        + weight_sv.reshape(-1).tolist()
-        + np.array(feat_quant).reshape(-1).tolist()
+    const_data_size = (
+        1
+        + weight_sv.reshape(-1).shape[0]
+        + np.array(feat_quant).reshape(-1).shape[0]
     )
+    const_data_sv = [[[0]], weight_sv.tolist(), np.array(feat_list_sv).tolist()]
 
     list_array = [
         {
-            "name": f"const_weight[{w_size[0]}][{w_size[1]}]",
+            "name": f"const_weight[{weight_sv.shape[0]}][{weight_sv.shape[1]}]",
             "value": weight_sv,
         },
         {
-            "name": f"const_feat_in[{fin_size[0]}][{fin_size[1]}]",
+            "name": f"const_feat_in[{feat_list_sv.shape[0]}][{feat_list_sv.shape[1]}]",
             "value": feat_list_sv,
         },
         {
-            "name": f"const_data[{len(const_data_sv)}]",
-            "value": const_data_sv,
-        },
-        {
-            "name": f"const_feat_out_batch[{fout_size[0]}][{fout_size[1]}]",
+            "name": f"const_feat_out_batch[{out_feat_list_sv.shape[0]}][{out_feat_list_sv.shape[1]}]",
             "value": out_feat_list_sv,
         },
         {
-            "name": f"const_feat_out[{output_fast.shape[0]}][{output_fast.shape[1]}]",
-            "value": output_fast,
+            "name": f"const_feat_out[{output_fast_list_sv.shape[0]}][{output_fast_list_sv.shape[1]}]",
+            "value": output_fast_list_sv,
         },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
+
+    list1d = [
+        {
+            "name": f"const_data[{const_data_size}]",
+            "value": const_data_sv,
+            "type": "int",
+        }
+    ]
     dict_def = {
         "QUANT_BITS": quant_bits,
-        "W1_SIZE": w_size[0],
-        "W2_SIZE": w_size[1],
-        "FIN1_SIZE": fin_size[0],
-        "FIN2_SIZE": fin_size[1],
-        "FOUT1_SIZE": fout_size[0],
-        "FOUT2_SIZE": fout_size[1],
+        "FIN1_SIZE": feat_list_sv.shape[0],
+        "FIN2_SIZE": feat_list_sv.shape[1],
+        "FOUT1_SIZE": out_feat_list_sv.shape[0],
+        "FOUT2_SIZE": out_feat_list_sv.shape[1],
+        "FEAT_INPUT_SIZE": feat_arr.shape[-1],
+        "FEAT_OUTPUT_SIZE": output_fast.shape[-1],
+        "N_WINDOW": output_fast.shape[-1] // (a_len if dim == 1 else a_len[0]),
         # **dict_dim,
     }
-    utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
+    utils.sv_pkg("pack_data", path / "pack_data.sv", list1d, arr, dict_def)
     return out_dict
 
 
@@ -1245,9 +1364,9 @@ def sim_default(
         f"Additions: {size * 8}\n"
     )
     if len(suffix) > 0:
-        path = repo.dir_sim / f"file-{suffix}"
+        path = repo.dir_sim / f"sim-{suffix}"
     else:
-        path = repo.dir_sim / "file"
+        path = repo.dir_sim / "sim"
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
@@ -1300,16 +1419,15 @@ def sim_default(
     arr = [{**r, "type": "int"} for r in list_array]
     dict_def = {
         "QUANT_BITS": quant_bits,
-        "W1_SIZE": w_size[0],
-        "W2_SIZE": w_size[1],
         "FIN1_SIZE": fin_size[0],
+        "N_WINDOW": output_fast.shape[0] // (a_len if dim == 1 else a_len[0]),
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
         # **dict_dim,
     }
     if len(quant_data) != 0:
-        utils.sv_pkg("pack_data", path / "pack_data.sv", arr, dict_def)
+        utils.sv_pkg("pack_data", path / "pack_data.sv", [], arr, dict_def)
     return out_dict
 
 
