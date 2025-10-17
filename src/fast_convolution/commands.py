@@ -915,14 +915,14 @@ def cmd_sim_int(
         feat_arr = np.random.randint(
             feature_info,
             feature_info + image_side,
-            size=(channel_out, channel_in, image_side, image_side),
+            size=(1, channel_in, image_side, image_side),
         )
     else:
         feat = np.arange(
             feature_info,
-            feature_info + channel_in * channel_out * image_side**2,
+            feature_info + channel_in * 1 * image_side**2,
         )
-        feat_arr = feat.reshape(channel_out, channel_in, image_side, image_side)
+        feat_arr = feat.reshape(1, channel_in, image_side, image_side)
     w_len = b_len if dim == 1 else b_len[0]
     if random:
         wght_arr = np.random.randint(
@@ -976,7 +976,7 @@ def cmd_sim_normal(
     # quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     np.random.seed(seed)
     feat_arr = np.random.normal(
-        0, 1, size=(channel_out, channel_in, image_side, image_side)
+        0, 1, size=(1, channel_in, image_side, image_side)
     )
     # feat_quant = (
     #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
@@ -1178,12 +1178,12 @@ def sim(
             for cout in range(channel_out)
         ]
 
-        output_fast = np.array(
+        output_fast_ = np.array(
             [
                 [
                     fast.filter2d_slide2d(
                         fast_conv[cout][cin],
-                        feat_quant[cout][cin],
+                        feat_quant[0][cin],
                         output_shape,
                         c_len,
                         a_len,
@@ -1193,33 +1193,33 @@ def sim(
                 for cout in range(channel_out)
             ]
         )
-
-        sliding_window = [
-            [
-                fast.sliding2d_window2d(
-                    feat_quant[cout][cin],
-                    output_fast[cout][cin],
-                    output_shape,
-                    c_len,
-                    a_len,
-                )
-                for cin in range(channel_in)
-            ]
+        output_fast = np.sum(output_fast_, axis=1)
+        feat_list_sv = [
+            fast.sliding2d_window2d(
+                feat_quant[0][cin],
+                output_fast[0],
+                output_shape,
+                c_len,
+                a_len,
+                False,
+            )
+            for cin in range(channel_in)
+        ]
+        feat_list_sv = np.array(feat_list_sv)
+        out_feat_list_sv = [
+            fast.sliding2d_window2d(
+                feat_quant[0][0],
+                output_fast[cout],
+                output_shape,
+                c_len,
+                a_len,
+                True,
+            )
             for cout in range(channel_out)
         ]
+        out_feat_list_sv = np.array(out_feat_list_sv)
+        # breakpoint()
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0
-        feat_list_sv = np.array(
-            [
-                [sliding_window[cout][cin][0] for cin in range(channel_in)]
-                for cout in range(channel_out)
-            ]
-        )
-        out_feat_list_sv = np.array(
-            [
-                [sliding_window[cout][cin][1] for cin in range(channel_in)]
-                for cout in range(channel_out)
-            ]
-        )
         count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points[0]) * len(points[1])
 

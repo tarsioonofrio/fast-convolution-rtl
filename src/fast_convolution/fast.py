@@ -188,7 +188,9 @@ def sliding1d_window_2d(in_arr, out_arr, out_shape, in_size=5, out_size=3):
             f = np.array(in_arr[r, c : c + in_size])
             if len(f) == in_size:
                 list_in.append(f.reshape(-1))
-                list_out.append(np.array(out_arr[r, c : c + out_size]).reshape(-1))
+                list_out.append(
+                    np.array(out_arr[r, c : c + out_size]).reshape(-1)
+                )
             else:
                 tmp_in_size = in_size - len(f)
                 zeros = tmp_in_size * [0]
@@ -241,23 +243,23 @@ def filter2d_slide2d_count(out_shape, out_size):
 
 
 def sliding2d_window2d(
-    in_arr, out_arr, out_shape, in_size=(5, 5), out_size=(3, 3)
+    in_arr, out_arr, out_shape, in_size=(5, 5), out_size=(3, 3), return_output=True
 ):
-    list_in = []
-    list_out = []
+    list_data = []
     for r in range(0, out_shape[0], out_size[0]):
         for c in range(0, out_shape[1], out_size[1]):
             feat = in_arr[r : r + in_size[0], c : c + in_size[1]]
             if tuple(feat.shape) == tuple(in_size):
-                list_in.append(feat.reshape(-1))
                 new_out = out_arr[r : r + out_size[0], c : c + out_size[1]]
-                list_out.append(new_out.reshape(-1))
+                if return_output:
+                    list_data.append(new_out.reshape(-1))
+                else:
+                    list_data.append(feat.reshape(-1))
             else:
                 row_in = feat.shape[0]
                 col_in = feat.shape[1]
                 new_feat = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new_feat[:row_in, :col_in] = feat
-                list_in.append(new_feat.reshape(-1))
                 new_out = np.zeros((out_size[0], out_size[1]), dtype=int)
                 row_out, col_out = out_arr[
                     r : r + out_size[0], c : c + out_size[1]
@@ -265,8 +267,11 @@ def sliding2d_window2d(
                 new_out[:row_out, :col_out] = out_arr[
                     r : r + row_out, c : c + col_out
                 ]
-                list_out.append(new_out.reshape(-1))
-    return list_in, list_out
+                if return_output:
+                    list_data.append(new_out.reshape(-1))
+                else:
+                    list_data.append(new_feat.reshape(-1))
+    return list_data
 
 
 def c3x3_5m20a9e(g):
