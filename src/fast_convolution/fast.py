@@ -180,27 +180,32 @@ def filter1d_slide2d(
     return out_arr
 
 
-def sliding1d_window_2d(in_arr, out_arr, out_shape, in_size=5, out_size=3):
-    list_in = []
-    list_out = []
+def sliding1d_window2d(
+    in_arr, out_arr, out_shape, in_size=5, out_size=3, return_output=False
+):
+    list_data = []
     for r in range(0, out_shape[0]):
         for c in range(0, out_shape[1], out_size):
             f = np.array(in_arr[r, c : c + in_size])
             if len(f) == in_size:
-                list_in.append(f.reshape(-1))
-                list_out.append(
-                    np.array(out_arr[r, c : c + out_size]).reshape(-1)
-                )
+                if return_output:
+                    list_data.append(
+                        np.array(out_arr[r, c : c + out_size]).reshape(-1)
+                    )
+                else:
+                    list_data.append(f.reshape(-1))
             else:
                 tmp_in_size = in_size - len(f)
                 zeros = tmp_in_size * [0]
                 f2 = np.array(f.tolist() + zeros)
-                list_in.append(f2.reshape(-1))
                 tmp_out_size = out_shape[0] - c
                 new_out = np.zeros((out_size), dtype=int)
                 new_out[:tmp_out_size] = out_arr[r, c : c + tmp_out_size]
-                list_out.append(np.array(new_out).reshape(-1))
-    return list_in, list_out
+                if return_output:
+                    list_data.append(np.array(new_out).reshape(-1))
+                else:
+                    list_data.append(f2.reshape(-1))
+    return list_data
 
 
 def filter1d_slide2d_count(out_shape, out_size):
@@ -243,7 +248,12 @@ def filter2d_slide2d_count(out_shape, out_size):
 
 
 def sliding2d_window2d(
-    in_arr, out_arr, out_shape, in_size=(5, 5), out_size=(3, 3), return_output=True
+    in_arr,
+    out_arr,
+    out_shape,
+    in_size=(5, 5),
+    out_size=(3, 3),
+    return_output=True,
 ):
     list_data = []
     for r in range(0, out_shape[0], out_size[0]):

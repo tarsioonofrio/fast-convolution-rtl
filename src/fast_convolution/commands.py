@@ -1109,7 +1109,7 @@ def sim(
                 [
                     fast.filter1d_slide2d(
                         fast_conv[cout][cin][i],
-                        feat_quant[cout][cin],
+                        feat_quant[0][cin],
                         output_shape,
                         i,
                         c_len,
@@ -1121,32 +1121,31 @@ def sim(
             ]
             for cout in range(channel_out)
         ]
-        output_fast = np.sum(axis=2, a=output_fast_)
-        sliding_window = [
-            [
-                fast.sliding1d_window_2d(
-                    feat_quant[cout][cin],
-                    output_default[cout][cin],
-                    output_shape,
-                    c_len,
-                    a_len,
-                )
-                for cin in range(channel_in)
-            ]
+        output_fast = np.sum(axis=(1, 2), a=output_fast_)
+        feat_list_sv = [
+            fast.sliding1d_window2d(
+                feat_quant[0][cin],
+                output_fast[0],
+                output_shape,
+                c_len,
+                a_len,
+                False,
+            )
+            for cin in range(channel_in)
+        ]
+        feat_list_sv = np.array(feat_list_sv)
+        out_feat_list_sv = [
+            fast.sliding1d_window2d(
+                feat_quant[0][0],
+                output_fast[cout],
+                output_shape,
+                c_len,
+                a_len,
+                True,
+            )
             for cout in range(channel_out)
         ]
-        feat_list_sv = np.array(
-            [
-                [sliding_window[cout][cin][0] for cin in range(channel_in)]
-                for cout in range(channel_out)
-            ]
-        )
-        out_feat_list_sv = np.array(
-            [
-                [sliding_window[cout][cin][1] for cin in range(channel_in)]
-                for cout in range(channel_out)
-            ]
-        )
+        out_feat_list_sv = np.array(out_feat_list_sv)
 
         count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
         count_mult = count_nest * len(points) * len(fast_conv)
