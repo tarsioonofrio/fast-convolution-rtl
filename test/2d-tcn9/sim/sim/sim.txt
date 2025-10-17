@@ -10,5 +10,5 @@ Convolutions: 900
 Multiplications: 8100
 Additions: 7200
 Fast
-Convolutions: 1
-Multiplications: 25
+Convolutions: 100
+Multiplications: 2500

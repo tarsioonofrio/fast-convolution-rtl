@@ -1,8 +1,8 @@
 {
   "ex_seq": ["example", "seq"],
   "ex_rand": ["example", "rand"],
-  "sim_int": ["sim", "int"],
   "sim_file": ["sim", "file"],
+  "sim_int": ["sim", "int", "-i", "2", "-o", "2"],
   "quant": ["quant", "shift", "-b", "8"],
   "sim_normal": ["sim", "normal", "-n", "quant"],
   "show": ["show"]

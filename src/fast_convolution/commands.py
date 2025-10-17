@@ -1148,9 +1148,7 @@ def sim(
         out_feat_list_sv = np.array(out_feat_list_sv)
 
         count_nest = np.prod(out_feat_list_sv.shape[:-1])
-        count_mult = count_nest * np.prod(
-            [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
-        )
+        count_mult = int(count_nest * len(q) * b_len)
     else:
         points, c, b, a, q = read_build_2d(repo)
         bg = np.array(
@@ -1222,8 +1220,11 @@ def sim(
         # breakpoint()
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0
         count_nest = np.prod(out_feat_list_sv.shape[:-1])
-        count_mult = count_nest * np.prod(
-            [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
+        count_mult = int(
+            count_nest
+            * np.prod(
+                [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
+            )
         )
 
     if len(quant_data) != 0:
