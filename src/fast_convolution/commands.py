@@ -1147,8 +1147,10 @@ def sim(
         ]
         out_feat_list_sv = np.array(out_feat_list_sv)
 
-        count_nest = fast.filter1d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_nest * len(points) * len(fast_conv)
+        count_nest = np.prod(out_feat_list_sv.shape[:-1])
+        count_mult = count_nest * np.prod(
+            [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
+        )
     else:
         points, c, b, a, q = read_build_2d(repo)
         bg = np.array(
@@ -1219,8 +1221,10 @@ def sim(
         out_feat_list_sv = np.array(out_feat_list_sv)
         # breakpoint()
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0
-        count_nest = fast.filter2d_slide2d_count(output_default.shape, a_len)
-        count_mult = count_nest * len(points[0]) * len(points[1])
+        count_nest = np.prod(out_feat_list_sv.shape[:-1])
+        count_mult = count_nest * np.prod(
+            [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
+        )
 
     if len(quant_data) != 0:
         metric = r2_score(
