@@ -1,4 +1,3 @@
-from bdb import Breakpoint
 import json
 import shutil
 from datetime import datetime
@@ -1217,7 +1216,6 @@ def sim(
             for cout in range(channel_out)
         ]
         out_feat_list_sv = np.array(out_feat_list_sv)
-        # breakpoint()
         # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0
         count_nest = np.prod(out_feat_list_sv.shape[:-1])
         count_mult = int(
