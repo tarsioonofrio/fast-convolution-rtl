@@ -1336,8 +1336,7 @@ def sim(
         + weight_sv.reshape(-1).shape[0]
         + np.array(feat_quant).reshape(-1).shape[0]
     )
-    const_data_sv = [[[0]], weight_sv.tolist(), np.array(feat_list_sv).tolist()]
-
+    const_data_sv = [[[0]], weight_sv.tolist(), feat_quant.reshape(-1, feat_quant.shape[-1]).tolist()]
     list_array = [
         {
             "name": f"const_weight[{weight_sv.shape[0]}][{weight_sv.shape[1]}]",
@@ -1374,7 +1373,8 @@ def sim(
         "FEAT_INPUT_SIZE": feat_arr.shape[-1],
         "FEAT_OUTPUT_SIZE": output_fast.shape[-1],
         "N_WINDOW": output_fast.shape[-1] // (a_len if dim == 1 else a_len[0]),
-        # **dict_dim,
+        "N_CHANNEL_IN": channel_in,
+        "N_CHANNEL_OUT": channel_out,
     }
     utils.sv_pkg("pack_data", path / "pack_data.sv", list1d, arr, dict_def)
     return out_dict
