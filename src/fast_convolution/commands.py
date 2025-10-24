@@ -862,7 +862,7 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
         wght_arr = np.expand_dims(wght_arr, axis=0)
     image_side = feat_arr.shape[-1]
     if standard:
-        return sim_default(
+        return sim_naive(
             a_len,
             b_len,
             c_len,
@@ -883,12 +883,14 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
             c_len,
             dim,
             feat_arr,
+            feat_arr,
             feature_info,
             image_side,
             quant_data,
             repo,
             suffix,
             weight,
+            wght_arr,
             wght_arr,
             feat_arr.shape[1],
             1,
@@ -908,7 +910,6 @@ def cmd_sim_int(
     standard,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
-    quant_data = read_quant_if_exists(repo)
     np.random.seed(seed)
     if random:
         feat_arr = np.random.randint(
@@ -933,8 +934,14 @@ def cmd_sim_int(
         wght = np.arange(weight, weight + channel_out * channel_in * w_len**2)
         wght_arr = wght.reshape(channel_out, channel_in, w_len, w_len)
 
+    quant_data = read_quant_if_exists(repo)
+    quant_bits = quant_data["bits"] if "bits" in quant_data else 0
+    wght_quant = (
+        wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
+    ).astype(int)
+
     if standard:
-        return sim_default(
+        return sim_naive(
             a_len,
             b_len,
             c_len,
@@ -955,6 +962,7 @@ def cmd_sim_int(
             c_len,
             dim,
             feat_arr,
+            feat_arr,
             feature_info,
             image_side,
             quant_data,
@@ -962,6 +970,7 @@ def cmd_sim_int(
             suffix,
             weight,
             wght_arr,
+            wght_quant,
             channel_in,
             channel_out,
         )
@@ -971,8 +980,6 @@ def cmd_sim_normal(
     repo, image_side, channel_in, channel_out, suffix, seed, standard
 ):
     dim, c_len, b_len, a_len = read_init(repo)
-    quant_data = read_quant_if_exists(repo)
-    # quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     np.random.seed(seed)
     feat_arr = np.random.normal(
         0, 1, size=(1, channel_in, image_side, image_side)
@@ -985,8 +992,18 @@ def cmd_sim_normal(
     wght_arr = np.random.normal(
         0, 1, size=(channel_out, channel_in, w_len, w_len)
     )
+
+    quant_data = read_quant_if_exists(repo)
+    quant_bits = quant_data["bits"] if "bits" in quant_data else 0
+    feat_quant = (
+        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    ).astype(int)
+    wght_quant = (
+        wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
+    ).astype(int)
+
     if standard:
-        return sim_default(
+        return sim_naive(
             a_len,
             b_len,
             c_len,
@@ -1007,6 +1024,7 @@ def cmd_sim_normal(
             c_len,
             dim,
             feat_arr,
+            feat_quant,
             None,
             image_side,
             quant_data,
@@ -1014,6 +1032,7 @@ def cmd_sim_normal(
             suffix,
             None,
             wght_arr,
+            wght_quant,
             channel_in,
             channel_out,
         )
@@ -1025,6 +1044,7 @@ def sim(
     c_len,
     dim,
     feat_arr,
+    feat_quant,
     feature_info,
     image_side,
     quant_data,
@@ -1032,6 +1052,7 @@ def sim(
     suffix,
     weight,
     wght_arr,
+    wght_quant,
     channel_in=1,
     channel_out=1,
 ):
@@ -1047,23 +1068,14 @@ def sim(
         torch.tensor(wght_arr),
         stride=1,
     )
-    # output_default = np.squeeze(output_default.numpy())
-    # output_naive = naive_convolve(feat_arr, wght_arr)
-    # compare_naive = np.all(output_default == output_naive)
-    # text_equal = f"Output default and naive are equals: {compare_naive}\n"
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
-    # output_default_quant = (
-    #     output_default if len(quant_data) == 0 else output_default * (2**quant_bits)
-    # )
-    # output_default_quant = output_default
-    # feat_quant = feat_arr
-    feat_quant = (
-        feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
-    ).astype(int)
+    # feat_quant = (
+    #     feat_arr if len(quant_data) == 0 else feat_arr * (2**quant_bits)
+    # ).astype(int)
 
-    wght_quant = (
-        wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
-    ).astype(int)
+    # wght_quant = (
+    #     wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
+    # ).astype(int)
 
     output_default_quant = F.conv2d(
         torch.tensor(feat_quant),
@@ -1336,7 +1348,11 @@ def sim(
         + weight_sv.reshape(-1).shape[0]
         + np.array(feat_quant).reshape(-1).shape[0]
     )
-    const_data_sv = [[[0]], weight_sv.tolist(), feat_quant.reshape(-1, feat_quant.shape[-1]).tolist()]
+    const_data_sv = [
+        [[0]],
+        weight_sv.tolist(),
+        feat_quant.reshape(-1, feat_quant.shape[-1]).tolist(),
+    ]
     list_array = [
         {
             "name": f"const_weight[{weight_sv.shape[0]}][{weight_sv.shape[1]}]",
@@ -1380,7 +1396,7 @@ def sim(
     return out_dict
 
 
-def sim_default(
+def sim_naive(
     a_len,
     b_len,
     c_len,

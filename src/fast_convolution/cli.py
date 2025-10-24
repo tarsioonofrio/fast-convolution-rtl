@@ -342,13 +342,13 @@ def sim_file(ctx, feature, weight, name, standard):
     "--feature",
     "-f",
     default=0,
-    help="Minimal and maximal value of feature.",
+    help="Minimal value of feature.",
 )
 @click.option(
     "--weight",
     "-w",
     default=0,
-    help="Minimal and maximal value of kernel.",
+    help="Minimal value of kernel.",
 )
 @click.option("--channel-in", "-i", default=1, help="Channel input size.")
 @click.option("--channel-out", "-o", default=1, help="Channel output size.")
@@ -371,7 +371,7 @@ def sim_file(ctx, feature, weight, name, standard):
     help="Standard convolution.",
 )
 @click.pass_context
-def sim_rand(
+def sim_int(
     ctx,
     feature,
     weight,
