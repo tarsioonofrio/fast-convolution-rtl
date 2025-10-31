@@ -1,14 +1,30 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
 import traceback
 from pathlib import Path
+from typing import Iterable, List, Optional, Sequence, Union
 
-import click
 import ipdb as pdb
 
 from .commands import (
+    cmd_build2d_bind_kron,
+    cmd_build2d_bind_nest,
+    cmd_build_manual_factorization1d,
+    cmd_build_manual_factorization2d,
+    cmd_build_toom_cook1d,
+    cmd_build_toom_cook2d,
+    cmd_example_list,
+    cmd_example_random,
+    cmd_example_sequential,
+    cmd_init,
+    cmd_quant_none,
+    cmd_quant_shift,
+    cmd_sim_file,
+    cmd_sim_int,
+    cmd_sim_normal,
     default_toom_cook_points1d,
     default_toom_cook_points2d,
     num_points1d,
@@ -17,24 +33,25 @@ from .commands import (
 )
 
 
-def excepthook(type, value, tb):
-    traceback.print_exception(type, value, tb)
+def excepthook(exc_type, value, tb):
+    """Drop into ipdb whenever an uncaught exception happens."""
+    traceback.print_exception(exc_type, value, tb)
     pdb.post_mortem(tb)
 
 
 sys.excepthook = excepthook
 
 
-def example_path():
+def example_path() -> Path:
     return Path(__file__).resolve().parent.parent.parent / "images"
 
 
-def ctx_fn():
-    return click.get_current_context().info_name
-
-
-class Repo(object):
-    def __init__(self, path=None, debug=False):
+class Repo:
+    def __init__(
+        self,
+        path: Union[str, os.PathLike, None] = None,
+        debug: bool = False,
+    ):
         self.root = Path(os.path.abspath(path or "."))
         self.debug = debug
         self.dir_config = self.root / "config"
@@ -56,458 +73,406 @@ class Repo(object):
         self.dir_clib_data_float = self.dir_clib / "data_float"
 
 
-@click.group()
-@click.option("-p", "--path", envvar="PATH_REPO", default=".")
-@click.pass_context
-def main(ctx, path):
-    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
-    # by means other than the `if` block below)
-    ctx.ensure_object(dict)
-    ctx.obj = Repo(path)
-    # init_data = read_init_if_exists()
-    # ctx.obj['init'] = init_data
-    # example_path = Path(__file__).resolve().parent.parent.parent / "images"
-    # ctx.obj['example_path'] = example_path
+def _ensure_sequence(value: Union[Sequence, int, str]) -> List:
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value]
 
 
-@main.group(
-    short_help="Initialize fast convolution repo.",
-    help="Size of two vectors to be convoluted. The two sizes must be in "
-    "format Out = In - W + 1 or In = Out + W - 1 where In is the number of"
-    "elements in the input, Out is the number of elements in the the "
-    "the output, and W is the number of elements of weights or kernel.",
-)
-def init():
-    pass
+def _require_points(
+    points: Optional[Sequence[str]],
+    expected: int,
+    label: str,
+) -> List[str]:
+    if points is None:
+        return []
+    if expected > 0 and len(points) != expected:
+        raise SystemExit(f"{label} expects {expected} values, got {len(points)}")
+    return list(points)
 
 
-@init.command(name="1d")
-@click.option("-i", "--in-len", default=None, type=int)
-@click.option("-o", "--out-len", default=None, type=int)
-@click.option("-w", default=3, type=int)
-@click.pass_context
-def init1d(ctx, in_len, out_len, w):
-    from .commands import cmd_init
-
-    repo = ctx.obj
-    msg = cmd_init(repo, 1, in_len, out_len, w)
-    if msg is not None:
-        click.echo(msg)
+def _comma_separated_to_ints(values: str) -> List[int]:
+    return [int(item.strip()) for item in values.split(",") if item.strip()]
 
 
-@init.command(name="2d")
-@click.option("-i", "--in-len", default=None, type=int)
-@click.option("-o", "--out-len", default=None, type=int)
-@click.option("-w", default=3)
-@click.pass_context
-def init2d(ctx, in_len, out_len, w):
-    from .commands import cmd_init
-
-    repo = ctx.obj
-    cmd_init(repo, 2, in_len, out_len, w)
+def handle_init_1d(args):
+    message = cmd_init(args.repo, 1, args.in_len, args.out_len, args.kernel)
+    if message is not None:
+        print(message)
+    return 0
 
 
-# @main.command(help="Show config files")
-# @click.option('-i', '--init', name="init_", flag_value=True)
-# @click.option('-b', '--build', name="build_", flag_value=True)
-# @click.option('-q', '--quant', name="quant_", flag_value=True)
-# @click.pass_context
-# def show(repo, init_, build_, quant_):
-#     from .commands import cmd_show
-#     msg = cmd_show(repo, init_, build_, quant_)
-#     if msg is not None:
-#         click.echo(msg)
+def handle_init_2d(args):
+    message = cmd_init(args.repo, 2, args.in_len, args.out_len, args.kernel)
+    if message is not None:
+        print(message)
+    return 0
 
 
-@main.group(help="Build fast convolution")
-def build():
-    pass
+def handle_build_toom_cook1d(args):
+    init_data = read_init_if_exists(args.repo)
+    size = init_data.get("c", 1)
+    expected = num_points1d(size)
+    points = _require_points(args.points, expected, "--points")
+    if not points:
+        default_points = _ensure_sequence(default_toom_cook_points1d(size))
+        points = [str(p) for p in default_points]
+    cmd_build_toom_cook1d(args.repo, points)
+    print("Build 1D Toom Cook")
+    return 0
 
 
-# @build.group(name="1d", hidden=init_data.get("dim", 1) == 2)
-@build.group(name="1d")
-def build_d1():
-    pass
+def handle_build_manual1d(args):
+    cmd_build_manual_factorization1d(args.repo)
+    print("Build 1D manual factorization")
+    return 0
 
 
-@build_d1.command(name="toom-cook")
-@click.option(
-    "--points",
-    "-p",
-    type=str,
-    # default=default_toom_cook_points1d(read_init_if_exists(repo).get("c", 1)), show_default=True,
-    # nargs=num_points1d(read_init_if_exists(repo).get("c", 1)),
-    help="List of points to be interpolate for Toom-Cook.",
-)
-@click.pass_context
-def toom_cook1d(ctx, points):
-    # TODO break if user was trying to use for 2D
-    from .commands import cmd_build_toom_cook1d
+def handle_build_toom_cook2d(args):
+    init_data = read_init_if_exists(args.repo)
+    size = init_data.get("c", 1)
+    expected_first = num_points2d(size, 0)
+    expected_second = num_points2d(size, 1)
 
-    repo = ctx.obj
-    nargs = num_points1d(read_init_if_exists(repo).get("c", 1))
-    if points is not None:
-        if len(points) != nargs:
-            click.Abort()
-    default = default_toom_cook_points1d(read_init_if_exists(repo).get("c", 1))
-    points_ = points if points is not None else default
+    points_1d = _require_points(args.points_1d, expected_first, "--points-1d/--p1")
+    points_2d = _require_points(args.points_2d, expected_second, "--points-2d/--p2")
+    if not points_1d:
+        default_first = _ensure_sequence(default_toom_cook_points2d(size, 0))
+        points_1d = [str(p) for p in default_first]
+    if not points_2d:
+        default_second = _ensure_sequence(default_toom_cook_points2d(size, 1))
+        points_2d = [str(p) for p in default_second]
 
-    cmd_build_toom_cook1d(repo, points_)
-    click.echo("Build 1D Toom Cook")
+    cmd_build_toom_cook2d(args.repo, points_1d, points_2d)
+    print("Build 2D Toom Cook dimension.")
+    return 0
 
 
-@build_d1.command(name="manual", help="6 multiplications")
-@click.pass_context
-def manual1d(ctx):
-    # TODO break if user was trying to use for 2D
-    from .commands import cmd_build_manual_factorization1d
-
-    repo = ctx.obj
-    cmd_build_manual_factorization1d(repo)
-    click.echo("Build 1D manual factorization")
+def handle_build_manual2d(args):
+    cmd_build_manual_factorization2d(args.repo)
+    print("Build 2D manual factorization")
+    return 0
 
 
-@build_d1.command()
-@click.option(
-    "--s", "-s", default=[5, 5], show_default=True, help="Not implemented."
-)
-def cyclic_to_linear(points):
-    pass
+def handle_bind_nest(args):
+    cmd_build2d_bind_nest(args.repo)
+    return 0
 
 
-# @build.group(name="2d", hidden=init_data.get("dim", 2) == 1)
-@build.group(name="2d")
-def build_d2():
-    pass
+def handle_bind_kron(args):
+    cmd_build2d_bind_kron(args.repo)
+    return 0
 
 
-@build_d2.command(name="toom-cook")
-@click.option(
-    "--points-1d",
-    "--p1",
-    type=str,
-    # default=default_toom_cook_points2d(read_init_if_exists(repo).get("c", 1), 0), show_default=True,
-    # nargs=num_points2d(read_init_if_exists(repo).get("c", 1), 0),
-    help="List of points to be interpolate for Toom-Cook first dimension.",
-)
-@click.option(
-    "--points-2d",
-    "--p2",
-    type=str,
-    # default=default_toom_cook_points2d(read_init_if_exists(repo).get("c", 1), 1), show_default=True,
-    # nargs=num_points2d(read_init_if_exists(repo).get("c", 1), 1),
-    help="List of points to be interpolate for Toom-Cook second dimension.",
-)
-@click.pass_context
-def toom_cook2d(ctx, points_1d, points_2d):
-    from .commands import cmd_build_toom_cook2d
+def handle_quant_none(args):
+    cmd_quant_none(args.repo)
+    return 0
 
-    repo = ctx.obj
-    nargs1 = num_points2d(read_init_if_exists(repo).get("c", 1), 0)
-    nargs2 = num_points2d(read_init_if_exists(repo).get("c", 1), 1)
-    if points_1d is not None:
-        if len(points_1d) != nargs1:
-            click.Abort()
-    if points_2d is not None:
-        if len(points_2d) != nargs2:
-            click.Abort()
-    default1 = default_toom_cook_points2d(
-        read_init_if_exists(repo).get("c", 1), 0
+
+def handle_quant_shift(args):
+    cmd_quant_shift(args.repo, args.bits)
+    print("Shift quantization")
+    return 0
+
+
+def handle_sim_file(args):
+    output = cmd_sim_file(
+        args.repo,
+        args.feature,
+        args.weight,
+        args.name,
+        args.standard,
     )
-    default2 = default_toom_cook_points2d(
-        read_init_if_exists(repo).get("c", 1), 1
-    )
-    points_1d_ = points_1d if points_1d is not None else default1
-    points_2d_ = points_2d if points_2d is not None else default2
-    cmd_build_toom_cook2d(repo, points_1d_, points_2d_)
-    click.echo("Build 2D Toom Cook dimension.")
+    if isinstance(output, dict) and "text" in output:
+        print(output["text"])
+    return 0
 
 
-@build_d2.command(name="manual", help="6x6 multiplications")
-@click.pass_context
-def manual2d(ctx):
-    # TODO break if user was trying to use for 2D
-    from .commands import cmd_build_manual_factorization2d
-
-    repo = ctx.obj
-    cmd_build_manual_factorization2d(repo)
-    click.echo("Build 2D manual factorization")
-
-
-# @build_d2.command()
-# @click.option(
-#     '--s', '-s', default=[5, 5], nargs=2, show_default=True,
-#     help="Not implemented.")
-# )
-# def cyclic_to_linear(points): pass
-
-
-@build_d2.group(help="Bind multiple dimensions")
-def bind():
-    pass
-
-
-@bind.command(name="nest", help="Nestedted multidimensional bind")
-@click.pass_context
-def nest(ctx):
-    from .commands import cmd_build2d_bind_nest
-
-    repo = ctx.obj
-    cmd_build2d_bind_nest(repo)
-
-
-@bind.command(help="Kronecker multidimensional bind")
-@click.pass_context
-def kron(ctx):
-    from .commands import cmd_build2d_bind_kron
-
-    repo = ctx.obj
-    cmd_build2d_bind_kron(repo)
-
-
-@main.group(help="Quantization")
-# @click.option(
-#     "--constant", "--const", "-c", type=int, default=1,
-#     help="Constant to multiply the weight.")
-# )
-# @click.option("--integer", "--int", "-i", flag_value=True)
-# @click.option("--fixed-point", "-x", flag_value=True)
-# @click.option("--float-point", "-l", flag_value=True)
-# @click.pass_context
-def quant():
-    pass
-
-
-@quant.command(help="Set quantization to none", name="none")
-@click.pass_context
-def no_quant(ctx):
-    from .commands import cmd_quant_none
-
-    repo = ctx.obj
-    cmd_quant_none(repo)
-
-
-@quant.command(help="Shift quantization")
-@click.option(
-    "--bits",
-    "-b",
-    default=4,
-    show_default=True,
-    help="Number of bits to be shifted.",
-)
-@click.pass_context
-def shift(ctx, bits):
-    from .commands import cmd_quant_shift
-
-    repo = ctx.obj
-    cmd_quant_shift(repo, bits)
-    click.echo("Shift quantization")
-
-
-@main.group(help="Simulation")
-def sim():
-    pass
-
-
-@sim.command(name="file", help="Simulation using file")
-@click.option(
-    "--feature",
-    "-f",
-    default=example_path() / "karatsuba032.jpg",
-    help="Feature file, can be a image or json list file.",
-)
-@click.option(
-    "--weight",
-    "-w",
-    default=example_path() / "laplace.json",
-    help="Weight file, need to be a json list file.",
-)
-@click.option("--name", "-n", default="", help="Suffix of output file name.")
-@click.option(
-    "--standard", "-s", is_flag=True, default=False, help="Standar convolution."
-)
-@click.pass_context
-def sim_file(ctx, feature, weight, name, standard):
-    from .commands import cmd_sim_file
-
-    repo = ctx.obj
-    output = cmd_sim_file(repo, feature, weight, name, standard)
-    ctx.exit(0)
-    click.echo(output["text"])
-
-
-@sim.command(name="int", help="Simulation with integers")
-@click.option("--image-side", "-s", default=32, help="Image side.")
-@click.option(
-    "--feature",
-    "-f",
-    default=0,
-    help="Minimal value of feature.",
-)
-@click.option(
-    "--weight",
-    "-w",
-    default=0,
-    help="Minimal value of kernel.",
-)
-@click.option("--channel-in", "-i", default=1, help="Channel input size.")
-@click.option("--channel-out", "-o", default=1, help="Channel output size.")
-@click.option(
-    "--random",
-    "-r",
-    is_flag=True,
-    default=False,
-    help="Random integers.",
-)
-@click.option("--name", "-n", default="", help="Suffix of output file name.")
-@click.option(
-    "--seed", "-d", default=0, help="Seed to random number generator."
-)
-@click.option(
-    "--standard",
-    "-s",
-    is_flag=True,
-    default=False,
-    help="Standard convolution.",
-)
-@click.pass_context
-def sim_int(
-    ctx,
-    feature,
-    weight,
-    channel_in,
-    channel_out,
-    random,
-    image_side,
-    name,
-    seed,
-    standard,
-):
-    from .commands import cmd_sim_int
-
-    repo = ctx.obj
+def handle_sim_int(args):
     output = cmd_sim_int(
-        repo,
-        feature,
-        weight,
-        channel_in,
-        channel_out,
-        random,
-        image_side,
-        name,
-        seed,
-        standard,
+        args.repo,
+        args.feature,
+        args.weight,
+        args.channel_in,
+        args.channel_out,
+        args.random,
+        args.image_side,
+        args.name,
+        args.seed,
+        args.standard,
     )
-    ctx.exit(0)
-    click.echo(output["text"])
+    if isinstance(output, dict) and "text" in output:
+        print(output["text"])
+    return 0
 
 
-@sim.command(
-    name="normal",
-    help="Simulation with data from normal distribution with mean 0 and standard deviation 1",
-)
-@click.option("--image-side", "-i", default=32, help="Image side.")
-@click.option("--name", "-n", default="", help="Suffix of output file name.")
-@click.option("--channel-in", "-i", default=1, help="Channel input size.")
-@click.option("--channel-out", "-o", default=1, help="Channel output size.")
-@click.option(
-    "--seed", "-d", default=0, help="Seed to random number generator."
-)
-@click.option(
-    "--standard",
-    "-s",
-    is_flag=True,
-    default=False,
-    help="Standard convolution.",
-)
-@click.pass_context
-def sim_normal(ctx, image_side, name, channel_in, channel_out, seed, standard):
-    from .commands import cmd_sim_normal
-
-    repo = ctx.obj
+def handle_sim_normal(args):
     output = cmd_sim_normal(
-        repo, image_side, channel_in, channel_out, name, seed, standard
+        args.repo,
+        args.image_side,
+        args.channel_in,
+        args.channel_out,
+        args.name,
+        args.seed,
+        args.standard,
     )
-    ctx.exit(0)
-    click.echo(output["text"])
+    if isinstance(output, dict) and "text" in output:
+        print(output["text"])
+    return 0
 
 
-@main.group(help="Create example")
-def example():
-    pass
+def handle_example_rand(args):
+    cmd_example_random(args.repo, args.feature, args.weight, args.suffix, args.quant)
+    print("Random example")
+    return 0
 
 
-@example.command(name="rand", help="Example with random numbers")
-@click.option(
-    "--feature",
-    "-f",
-    nargs=2,
-    default=[0, 127],
-    help="Minimal and maximal value of feature random data.",
-)
-@click.option(
-    "--weight",
-    "-w",
-    nargs=2,
-    default=[0, 127],
-    help="Minimal and maximal value of weight random data.",
-)
-@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
-@click.option("--quant", "-q", is_flag=True, default=False)
-@click.pass_context
-def ex_rand(ctx, feature, weight, suffix, quant):
-    from .commands import cmd_example_random
-
-    repo = ctx.obj
-    cmd_example_random(repo, feature, weight, suffix, quant)
-    click.echo("Random example")
+def handle_example_seq(args):
+    cmd_example_sequential(args.repo, args.feature, args.weight, args.suffix, args.quant)
+    print("Sequential example")
+    return 0
 
 
-@example.command(name="seq", help="Example with sequential numbers")
-@click.option(
-    "--feature",
-    "-f",
-    default=0,
-    help="Minimal value of sequential feature data.",
-)
-@click.option(
-    "--weight", "-w", default=0, help="Minimal value of sequential weight data."
-)
-@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
-@click.option("--quant", "-q", is_flag=True, default=False)
-@click.pass_context
-def ex_seq(ctx, feature, weight, suffix, quant):
-    from .commands import cmd_example_sequential
-
-    repo = ctx.obj
-    cmd_example_sequential(repo, feature, weight, suffix, quant)
-    click.echo("Sequential example")
+def handle_example_list(args):
+    if args.feature is None or args.weight is None:
+        raise SystemExit("--feature and --weight are required")
+    feature_values = _comma_separated_to_ints(args.feature)
+    weight_values = _comma_separated_to_ints(args.weight)
+    cmd_example_list(args.repo, feature_values, weight_values, args.suffix, args.quant)
+    print("Sequential example")
+    return 0
 
 
-@example.command(name="list", help="Example from list of numbers")
-@click.option(
-    "--feature",
-    "-f",
-    type=str,
-    help="List of features.",
-)
-@click.option("--weight", "-w", type=str, help="List of weights.")
-@click.option("--suffix", "-x", default="", help="Suffix of output file name.")
-@click.option("--quant", "-q", is_flag=True, default=False)
-@click.pass_context
-def ex_list(ctx, feature, weight, suffix, quant):
-    from .commands import cmd_example_list
-
-    repo = ctx.obj
-    cmd_example_list(
-        repo,
-        list(map(int, feature.split(","))),
-        list(map(int, weight.split(","))),
-        suffix,
-        quant,
+def _build_init_parser(subparsers):
+    init_help = (
+        "Size of two vectors to be convoluted. The two sizes must be in "
+        "format Out = In - W + 1 or In = Out + W - 1 where In is the number of "
+        "elements in the input, Out is the number of elements in the output, "
+        "and W is the number of elements of weights or kernel."
     )
-    click.echo("Sequential example")
+    init_parser = subparsers.add_parser("init", help="Initialize fast convolution repo.", description=init_help)
+    init_sub = init_parser.add_subparsers(dest="init_command", metavar="subcommand")
+    init_sub.required = True
+
+    init_1d = init_sub.add_parser("1d", help="Initialize 1D configuration.")
+    init_1d.add_argument("-i", "--in-len", type=int, default=None, help="Input length.")
+    init_1d.add_argument("-o", "--out-len", type=int, default=None, help="Output length.")
+    init_1d.add_argument("-w", "--kernel", type=int, default=3, help="Kernel size (default: 3).")
+    init_1d.set_defaults(func=handle_init_1d)
+
+    init_2d = init_sub.add_parser("2d", help="Initialize 2D configuration.")
+    init_2d.add_argument("-i", "--in-len", type=int, default=None, help="Input length.")
+    init_2d.add_argument("-o", "--out-len", type=int, default=None, help="Output length.")
+    init_2d.add_argument("-w", "--kernel", type=int, default=3, help="Kernel size (default: 3).")
+    init_2d.set_defaults(func=handle_init_2d)
+
+
+def _build_1d_build_parser(build_sub):
+    build_1d = build_sub.add_parser("1d", help="1D build commands.")
+    build_1d_sub = build_1d.add_subparsers(dest="build_1d_command", metavar="command")
+    build_1d_sub.required = True
+
+    toom_cook = build_1d_sub.add_parser("toom-cook", help="Build 1D Toom-Cook interpolation.")
+    toom_cook.add_argument(
+        "--points",
+        "-p",
+        nargs="+",
+        default=None,
+        help="List of points to interpolate for Toom-Cook.",
+    )
+    toom_cook.set_defaults(func=handle_build_toom_cook1d)
+
+    manual = build_1d_sub.add_parser("manual", help="Build 1D manual factorization (6 multiplications).")
+    manual.set_defaults(func=handle_build_manual1d)
+
+
+def _build_2d_build_parser(build_sub):
+    build_2d = build_sub.add_parser("2d", help="2D build commands.")
+    build_2d_sub = build_2d.add_subparsers(dest="build_2d_command", metavar="command")
+    build_2d_sub.required = True
+
+    toom_cook = build_2d_sub.add_parser("toom-cook", help="Build 2D Toom-Cook interpolation.")
+    toom_cook.add_argument(
+        "--points-1d",
+        "--p1",
+        nargs="+",
+        default=None,
+        dest="points_1d",
+        help="List of points for Toom-Cook first dimension.",
+    )
+    toom_cook.add_argument(
+        "--points-2d",
+        "--p2",
+        nargs="+",
+        default=None,
+        dest="points_2d",
+        help="List of points for Toom-Cook second dimension.",
+    )
+    toom_cook.set_defaults(func=handle_build_toom_cook2d)
+
+    manual = build_2d_sub.add_parser("manual", help="Build 2D manual factorization (6x6 multiplications).")
+    manual.set_defaults(func=handle_build_manual2d)
+
+    bind = build_2d_sub.add_parser("bind", help="Bind multiple dimensions.")
+    bind_sub = bind.add_subparsers(dest="bind_command", metavar="method")
+    bind_sub.required = True
+
+    nest = bind_sub.add_parser("nest", help="Nested multidimensional bind.")
+    nest.set_defaults(func=handle_bind_nest)
+
+    kron = bind_sub.add_parser("kron", help="Kronecker multidimensional bind.")
+    kron.set_defaults(func=handle_bind_kron)
+
+
+def _build_build_parser(subparsers):
+    build_parser = subparsers.add_parser("build", help="Build fast convolution.")
+    build_sub = build_parser.add_subparsers(dest="build_dimension", metavar="dimension")
+    build_sub.required = True
+
+    _build_1d_build_parser(build_sub)
+    _build_2d_build_parser(build_sub)
+
+
+def _build_quant_parser(subparsers):
+    quant_parser = subparsers.add_parser("quant", help="Quantization configuration.")
+    quant_sub = quant_parser.add_subparsers(dest="quant_command", metavar="command")
+    quant_sub.required = True
+
+    none = quant_sub.add_parser("none", help="Set quantization to none.")
+    none.set_defaults(func=handle_quant_none)
+
+    shift = quant_sub.add_parser("shift", help="Shift quantization.")
+    shift.add_argument("-b", "--bits", type=int, default=4, help="Number of bits to shift (default: 4).")
+    shift.set_defaults(func=handle_quant_shift)
+
+
+def _build_sim_parser(subparsers):
+    sim_parser = subparsers.add_parser("sim", help="Simulation helpers.")
+    sim_sub = sim_parser.add_subparsers(dest="sim_command", metavar="command")
+    sim_sub.required = True
+
+    sim_file = sim_sub.add_parser("file", help="Simulation using input files.")
+    sim_file.add_argument(
+        "-f",
+        "--feature",
+        type=Path,
+        default=example_path() / "karatsuba032.jpg",
+        help="Feature file (image or JSON list).",
+    )
+    sim_file.add_argument(
+        "-w",
+        "--weight",
+        type=Path,
+        default=example_path() / "laplace.json",
+        help="Weight JSON file.",
+    )
+    sim_file.add_argument("-n", "--name", default="", help="Suffix of output file name.")
+    sim_file.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
+    sim_file.set_defaults(func=handle_sim_file)
+
+    sim_int = sim_sub.add_parser("int", help="Simulation with integers.")
+    sim_int.add_argument("--image-side", type=int, default=32, help="Image side length.")
+    sim_int.add_argument("-f", "--feature", type=int, default=0, help="Minimal value of feature.")
+    sim_int.add_argument("-w", "--weight", type=int, default=0, help="Minimal value of kernel.")
+    sim_int.add_argument("-i", "--channel-in", type=int, default=1, help="Channel input size.")
+    sim_int.add_argument("-o", "--channel-out", type=int, default=1, help="Channel output size.")
+    sim_int.add_argument("-r", "--random", action="store_true", help="Use random integers.")
+    sim_int.add_argument("-n", "--name", default="", help="Suffix of output file name.")
+    sim_int.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
+    sim_int.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
+    sim_int.set_defaults(func=handle_sim_int)
+
+    sim_normal = sim_sub.add_parser(
+        "normal",
+        help="Simulation with normal distribution (mean 0, std 1).",
+    )
+    sim_normal.add_argument("--image-side", type=int, default=32, help="Image side length.")
+    sim_normal.add_argument("-n", "--name", default="", help="Suffix of output file name.")
+    sim_normal.add_argument("--channel-in", type=int, default=1, help="Channel input size.")
+    sim_normal.add_argument("-o", "--channel-out", type=int, default=1, help="Channel output size.")
+    sim_normal.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
+    sim_normal.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
+    sim_normal.set_defaults(func=handle_sim_normal)
+
+
+def _build_example_parser(subparsers):
+    example_parser = subparsers.add_parser("example", help="Create examples.")
+    example_sub = example_parser.add_subparsers(dest="example_command", metavar="command")
+    example_sub.required = True
+
+    rand = example_sub.add_parser("rand", help="Example with random numbers.")
+    rand.add_argument(
+        "-f",
+        "--feature",
+        nargs=2,
+        type=int,
+        default=[0, 127],
+        metavar=("MIN", "MAX"),
+        help="Range of feature random data.",
+    )
+    rand.add_argument(
+        "-w",
+        "--weight",
+        nargs=2,
+        type=int,
+        default=[0, 127],
+        metavar=("MIN", "MAX"),
+        help="Range of weight random data.",
+    )
+    rand.add_argument("-x", "--suffix", default="", help="Suffix of output file name.")
+    rand.add_argument("-q", "--quant", action="store_true", help="Use quantized representation.")
+    rand.set_defaults(func=handle_example_rand)
+
+    seq = example_sub.add_parser("seq", help="Example with sequential numbers.")
+    seq.add_argument("-f", "--feature", type=int, default=0, help="Minimal value of sequential feature data.")
+    seq.add_argument("-w", "--weight", type=int, default=0, help="Minimal value of sequential weight data.")
+    seq.add_argument("-x", "--suffix", default="", help="Suffix of output file name.")
+    seq.add_argument("-q", "--quant", action="store_true", help="Use quantized representation.")
+    seq.set_defaults(func=handle_example_seq)
+
+    lst = example_sub.add_parser("list", help="Example from list of numbers.")
+    lst.add_argument("-f", "--feature", type=str, help="Comma separated list of features.")
+    lst.add_argument("-w", "--weight", type=str, help="Comma separated list of weights.")
+    lst.add_argument("-x", "--suffix", default="", help="Suffix of output file name.")
+    lst.add_argument("-q", "--quant", action="store_true", help="Use quantized representation.")
+    lst.set_defaults(func=handle_example_list)
+
+
+def create_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="fast-convolution",
+        description="Command line interface for fast convolution utilities.",
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        default=os.environ.get("PATH_REPO", "."),
+        help="Path to the repository root (defaults to current directory or PATH_REPO).",
+    )
+
+    subparsers = parser.add_subparsers(dest="command", metavar="command")
+    subparsers.required = True
+
+    _build_init_parser(subparsers)
+    _build_build_parser(subparsers)
+    _build_quant_parser(subparsers)
+    _build_sim_parser(subparsers)
+    _build_example_parser(subparsers)
+
+    return parser
+
+
+def main(argv: Optional[Iterable[str]] = None):
+    parser = create_parser()
+    args = parser.parse_args(argv)
+    args.repo = Repo(args.path)
+
+    handler = getattr(args, "func", None)
+    if handler is None:
+        parser.print_help()
+        return 1
+    return handler(args) or 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
