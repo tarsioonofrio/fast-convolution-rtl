@@ -920,9 +920,12 @@ def cmd_sim_int(
     else:
         feat = np.arange(
             feature_info,
-            feature_info + channel_in * 1 * image_side**2,
+            feature_info + image_side**2,
         )
-        feat_arr = feat.reshape(1, channel_in, image_side, image_side)
+        feat_arr = feat.reshape(1, 1, image_side, image_side).repeat(
+            channel_in, axis=1
+        )
+
     w_len = b_len if dim == 1 else b_len[0]
     if random:
         wght_arr = np.random.randint(
@@ -931,8 +934,12 @@ def cmd_sim_int(
             size=(channel_out, channel_in, w_len, w_len),
         )
     else:
-        wght = np.arange(weight, weight + channel_out * channel_in * w_len**2)
-        wght_arr = wght.reshape(channel_out, channel_in, w_len, w_len)
+        wght = np.arange(weight, weight + w_len**2)
+        wght_arr = (
+            wght.reshape(1, 1, w_len, w_len)
+            .repeat(channel_out, axis=0)
+            .repeat(channel_in, axis=1)
+        )
 
     quant_data = read_quant_if_exists(repo)
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
