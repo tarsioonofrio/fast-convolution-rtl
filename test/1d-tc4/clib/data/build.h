@@ -1,7 +1,6 @@
 #ifndef C_BUILD_H
 #define C_BUILD_H
 
-
 const int mct[6*6] = {
 	4, 0, -5, 0, 1, 0,
 	0, -4, -4, 1, 1, 0,

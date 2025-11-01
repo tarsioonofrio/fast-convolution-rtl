@@ -6,5 +6,4 @@
 #define C_SIZE 4
 #define M_SIZE 4
 
-
 #endif //C_INIT_H

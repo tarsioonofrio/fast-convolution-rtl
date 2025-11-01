@@ -60,7 +60,6 @@ module MatrixC0
   );
   timeunit 1ns;
   timeprecision 1ps;
-
   logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12, sp13, sp14, sp15;
   logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7, sn8, sn9, sn10, sn11, sn12, sn13, sn14, sn15;
 
@@ -119,7 +118,6 @@ module MatrixC1
   );
   timeunit 1ns;
   timeprecision 1ps;
-
   logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12, sp13, sp14, sp15;
   logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7, sn8, sn9, sn10, sn11, sn12, sn13, sn14, sn15;
 
@@ -178,7 +176,6 @@ module MatrixA1
   );
   timeunit 1ns;
   timeprecision 1ps;
-
   logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7;
   logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7;
 
@@ -213,7 +210,6 @@ module MatrixA0
   );
   timeunit 1ns;
   timeprecision 1ps;
-
   logic_vector sp0, sp1, sp2, sp3;
   logic_vector sn0, sn1, sn2, sn3;
 
