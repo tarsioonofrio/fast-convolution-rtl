@@ -41,10 +41,220 @@ class SimulationPayload:
     channel_out: int
 
 
+@dataclass
+class SimulationCore:
+    output_fast: np.ndarray
+    feat_list_sv: np.ndarray
+    out_feat_list_sv: np.ndarray
+    bg_quant: np.ndarray
+    bg: np.ndarray
+    count_nest: int
+    count_mult: int
+
+
 def run_simulation(payload: SimulationPayload, standard: bool):
     if standard:
         return sim_naive(payload)
     return sim(payload)
+
+
+def _simulate_1d_core(
+    payload: SimulationPayload,
+    wght_quant: np.ndarray,
+    output_shape,
+    quant_bits: int,
+) -> SimulationCore:
+    repo = payload.repo
+    channel_in = payload.channel_in
+    channel_out = payload.channel_out
+    b_len = int(payload.b_len)
+    points, c, b, a, q = read_build_1d(repo)
+    bg = np.array(
+        [
+            [
+                [
+                    fast.g_to_bg(q, b, wght_quant[cout][cin][i]).T
+                    for i in range(b_len)
+                ]
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+    )
+    bg_quant = (
+        bg
+        if payload.quant_data == 0
+        else np.round(np.array(bg).astype(float)).astype(int)
+    )
+    fast_conv = [
+        [
+            [
+                fast.wrap_convolution(c, bg_quant[cout][cin][i], a, quant_bits)
+                for i in range(b_len)
+            ]
+            for cin in range(channel_in)
+        ]
+        for cout in range(channel_out)
+    ]
+
+    output_fast_ = [
+        [
+            [
+                fast.filter1d_slide2d(
+                    fast_conv[cout][cin][i],
+                    payload.feature_quant[0][cin],
+                    output_shape,
+                    i,
+                    payload.c_len,
+                    payload.a_len,
+                )
+                for i in range(b_len)
+            ]
+            for cin in range(channel_in)
+        ]
+        for cout in range(channel_out)
+    ]
+    output_fast = np.sum(axis=(1, 2), a=output_fast_)
+    feat_list_sv = [
+        fast.sliding1d_window2d(
+            payload.feature_quant[0][cin],
+            output_fast[0],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            False,
+        )
+        for cin in range(channel_in)
+    ]
+    feat_list_sv = np.array(feat_list_sv)
+    out_feat_list_sv = [
+        fast.sliding1d_window2d(
+            payload.feature_quant[0][0],
+            output_fast[cout],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            True,
+        )
+        for cout in range(channel_out)
+    ]
+    out_feat_list_sv = np.array(out_feat_list_sv)
+    count_nest = np.prod(out_feat_list_sv.shape[:-1])
+    count_mult = int(count_nest * len(q) * b_len)
+    return SimulationCore(
+        output_fast=output_fast,
+        feat_list_sv=feat_list_sv,
+        out_feat_list_sv=out_feat_list_sv,
+        bg_quant=bg_quant,
+        bg=bg,
+        count_nest=count_nest,
+        count_mult=count_mult,
+    )
+
+
+def _simulate_2d_core(
+    payload: SimulationPayload,
+    wght_quant: np.ndarray,
+    output_shape,
+    quant_bits: int,
+) -> SimulationCore:
+    repo = payload.repo
+    channel_in = payload.channel_in
+    channel_out = payload.channel_out
+    points, c, b, a, q = read_build_2d(repo)
+    bg = np.array(
+        [
+            [
+                fast.g_to_bg2d(
+                    q[0], b[0], q[1], b[1], wght_quant[cout, cin]
+                )
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+    )
+    bg_quant = (
+        bg
+        if payload.quant_data == 0
+        else np.round(np.array(bg).astype(float)).astype(int)
+    )
+    fast_conv = [
+        [
+            fast.wrap_convolution2d(
+                c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant_bits
+            )
+            for cin in range(channel_in)
+        ]
+        for cout in range(channel_out)
+    ]
+
+    output_fast_ = np.array(
+        [
+            [
+                fast.filter2d_slide2d(
+                    fast_conv[cout][cin],
+                    payload.feature_quant[0][cin],
+                    output_shape,
+                    payload.c_len,
+                    payload.a_len,
+                )
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+    )
+    output_fast = np.sum(output_fast_, axis=1)
+    feat_list_sv = [
+        fast.sliding2d_window2d(
+            payload.feature_quant[0][cin],
+            output_fast[0],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            False,
+        )
+        for cin in range(channel_in)
+    ]
+    feat_list_sv = np.array(feat_list_sv)
+    out_feat_list_sv = [
+        fast.sliding2d_window2d(
+            payload.feature_quant[0][0],
+            output_fast[cout],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            True,
+        )
+        for cout in range(channel_out)
+    ]
+    out_feat_list_sv = np.array(out_feat_list_sv)
+    count_nest = np.prod(out_feat_list_sv.shape[:-1])
+    count_mult = int(
+        count_nest
+        * np.prod(
+            [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
+        )
+    )
+    return SimulationCore(
+        output_fast=output_fast,
+        feat_list_sv=feat_list_sv,
+        out_feat_list_sv=out_feat_list_sv,
+        bg_quant=bg_quant,
+        bg=bg,
+        count_nest=count_nest,
+        count_mult=count_mult,
+    )
+
+
+def _simulate_core(
+    payload: SimulationPayload,
+    wght_quant: np.ndarray,
+    output_shape,
+    quant_bits: int,
+) -> SimulationCore:
+    if payload.dim == 1:
+        return _simulate_1d_core(payload, wght_quant, output_shape, quant_bits)
+    return _simulate_2d_core(payload, wght_quant, output_shape, quant_bits)
 
 def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     dim, c_len, b_len, a_len = read_init(repo)
@@ -245,168 +455,18 @@ def sim(payload: SimulationPayload):
         stride=1,
     )
     output_shape = [output_default.shape[-1], output_default.shape[-2]]
-    if dim == 1:
-        points, c, b, a, q = read_build_1d(repo)
-        bg = np.array(
-            [
-                [
-                    [
-                        fast.g_to_bg(q, b, wght_quant[cout][cin][i]).T
-                        for i in range(b_len)
-                    ]
-                    for cin in range(channel_in)
-                ]
-                for cout in range(channel_out)
-            ]
-        )
-        bg_quant = (
-            bg
-            if quant_data == 0
-            else np.round(np.array(bg).astype(float)).astype(int)
-        )
-        fast_conv = [
-            [
-                [
-                    fast.wrap_convolution(
-                        c, bg_quant[cout][cin][i], a, quant_bits
-                    )
-                    for i in range(b_len)
-                ]
-                for cin in range(channel_in)
-            ]
-            for cout in range(channel_out)
-        ]
-
-        output_fast_ = [
-            [
-                [
-                    fast.filter1d_slide2d(
-                        fast_conv[cout][cin][i],
-                        feat_quant[0][cin],
-                        output_shape,
-                        i,
-                        c_len,
-                        a_len,
-                    )
-                    for i in range(b_len)
-                ]
-                for cin in range(channel_in)
-            ]
-            for cout in range(channel_out)
-        ]
-        output_fast = np.sum(axis=(1, 2), a=output_fast_)
-        feat_list_sv = [
-            fast.sliding1d_window2d(
-                feat_quant[0][cin],
-                output_fast[0],
-                output_shape,
-                c_len,
-                a_len,
-                False,
-            )
-            for cin in range(channel_in)
-        ]
-        feat_list_sv = np.array(feat_list_sv)
-        out_feat_list_sv = [
-            fast.sliding1d_window2d(
-                feat_quant[0][0],
-                output_fast[cout],
-                output_shape,
-                c_len,
-                a_len,
-                True,
-            )
-            for cout in range(channel_out)
-        ]
-        out_feat_list_sv = np.array(out_feat_list_sv)
-
-        count_nest = np.prod(out_feat_list_sv.shape[:-1])
-        count_mult = int(count_nest * len(q) * b_len)
-    else:
-        points, c, b, a, q = read_build_2d(repo)
-        bg = np.array(
-            [
-                [
-                    fast.g_to_bg2d(
-                        q[0], b[0], q[1], b[1], wght_quant[cout, cin]
-                    )
-                    for cin in range(channel_in)
-                ]
-                for cout in range(channel_out)
-            ]
-        )
-        bg_quant = (
-            bg
-            if quant_data == 0
-            else np.round(np.array(bg).astype(float)).astype(int)
-        )
-        fast_conv = [
-            [
-                fast.wrap_convolution2d(
-                    c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant_bits
-                )
-                for cin in range(channel_in)
-            ]
-            for cout in range(channel_out)
-        ]
-
-        output_fast_ = np.array(
-            [
-                [
-                    fast.filter2d_slide2d(
-                        fast_conv[cout][cin],
-                        feat_quant[0][cin],
-                        output_shape,
-                        c_len,
-                        a_len,
-                    )
-                    for cin in range(channel_in)
-                ]
-                for cout in range(channel_out)
-            ]
-        )
-        output_fast = np.sum(output_fast_, axis=1)
-        feat_list_sv = [
-            fast.sliding2d_window2d(
-                feat_quant[0][cin],
-                output_fast[0],
-                output_shape,
-                c_len,
-                a_len,
-                False,
-            )
-            for cin in range(channel_in)
-        ]
-        feat_list_sv = np.array(feat_list_sv)
-        out_feat_list_sv = [
-            fast.sliding2d_window2d(
-                feat_quant[0][0],
-                output_fast[cout],
-                output_shape,
-                c_len,
-                a_len,
-                True,
-            )
-            for cout in range(channel_out)
-        ]
-        out_feat_list_sv = np.array(out_feat_list_sv)
-        # feat_list_sv = ["\n".join(f.tolist()) for f in feat_list_sv0
-        count_nest = np.prod(out_feat_list_sv.shape[:-1])
-        count_mult = int(
-            count_nest
-            * np.prod(
-                [np.prod(np.array(q[0]).shape), np.prod(np.array(q[1]).shape)]
-            )
-        )
+    core = _simulate_core(payload, wght_quant, output_shape, quant_bits)
 
     if len(quant_data) != 0:
         metric = r2_score(
             output_default.reshape(-1),
-            np.array(output_fast).reshape(-1) / (2**quant_bits),
+            np.array(core.output_fast).reshape(-1) / (2**quant_bits),
         )
         text_metric = f"R2: {metric}\n"
     else:
-        metric = np.all(np.array(output_default) == np.array(output_fast))
+        metric = np.all(
+            np.array(output_default) == np.array(core.output_fast)
+        )
         text_metric = f"Output default and fast are equals: {metric}\n"
 
     size = np.prod(output_default.shape)
@@ -423,8 +483,8 @@ def sim(payload: SimulationPayload):
         f"Multiplications: {size * 9}\n"
         f"Additions: {size * 8}\n"
         "Fast\n"
-        f"Convolutions: {count_nest}\n"
-        f"Multiplications: {count_mult}\n"
+        f"Convolutions: {core.count_nest}\n"
+        f"Multiplications: {core.count_mult}\n"
     )
     if len(suffix) > 0:
         path = repo.dir_sim / f"sim-{suffix}"
@@ -434,7 +494,7 @@ def sim(payload: SimulationPayload):
     with open(path / "sim.txt", "w") as f:
         f.write(text)
     for arr, name in zip(
-        [feat_quant, wght_quant, output_fast, output_default_quant],
+        [feat_quant, wght_quant, core.output_fast, output_default_quant],
         ["d", "g", "s", "s_default_quant"],
     ):
         np.savetxt(
@@ -461,7 +521,7 @@ def sim(payload: SimulationPayload):
         },
         {
             "name": "weight_gg",
-            "value": bg_quant.reshape(-1, bg_quant.shape[-1]),
+            "value": core.bg_quant.reshape(-1, core.bg_quant.shape[-1]),
         },
         {
             "name": "feat_in_quant",
@@ -469,7 +529,9 @@ def sim(payload: SimulationPayload):
         },
         {
             "name": "feat_out",
-            "value": output_fast.reshape(-1, output_fast.shape[-1]),
+            "value": core.output_fast.reshape(
+                -1, core.output_fast.shape[-1]
+            ),
         },
     ]
     list_float = [
@@ -477,7 +539,7 @@ def sim(payload: SimulationPayload):
             "name": "weight",
             "value": wght_arr.reshape(-1, wght_arr.shape[-1]),
         },
-        {"name": "weight_gg", "value": bg.reshape(-1, bg.shape[-1])},
+        {"name": "weight_gg", "value": core.bg.reshape(-1, core.bg.shape[-1])},
         {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
         {
             "name": "feat_out",
@@ -500,10 +562,18 @@ def sim(payload: SimulationPayload):
     )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
 
-    weight_sv = bg_quant.reshape(-1, bg_quant.shape[-1] * bg_quant.shape[-2])
-    feat_list_sv = feat_list_sv.reshape(-1, feat_list_sv.shape[-1])
-    out_feat_list_sv = out_feat_list_sv.reshape(-1, out_feat_list_sv.shape[-1])
-    output_fast_list_sv = output_fast.reshape(-1, output_fast.shape[-1])
+    weight_sv = core.bg_quant.reshape(
+        -1, core.bg_quant.shape[-1] * core.bg_quant.shape[-2]
+    )
+    feat_list_sv = core.feat_list_sv.reshape(
+        -1, core.feat_list_sv.shape[-1]
+    )
+    out_feat_list_sv = core.out_feat_list_sv.reshape(
+        -1, core.out_feat_list_sv.shape[-1]
+    )
+    output_fast_list_sv = core.output_fast.reshape(
+        -1, core.output_fast.shape[-1]
+    )
 
     const_data_size = (
         1
@@ -549,8 +619,9 @@ def sim(payload: SimulationPayload):
         "FOUT1_SIZE": out_feat_list_sv.shape[0],
         "FOUT2_SIZE": out_feat_list_sv.shape[1],
         "FEAT_INPUT_SIZE": feat_arr.shape[-1],
-        "FEAT_OUTPUT_SIZE": output_fast.shape[-1],
-        "N_WINDOW": output_fast.shape[-1] // (a_len if dim == 1 else a_len[0]),
+        "FEAT_OUTPUT_SIZE": core.output_fast.shape[-1],
+        "N_WINDOW": core.output_fast.shape[-1]
+        // (a_len if dim == 1 else a_len[0]),
         "N_CHANNEL_IN": channel_in,
         "N_CHANNEL_OUT": channel_out,
     }
