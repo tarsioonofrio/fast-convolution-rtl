@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
+from typing import Any, Optional
+
 import numpy as np
 from PIL import Image
 from scipy import signal
@@ -15,6 +18,33 @@ from .config import (
     read_quant_if_exists,
 )
 from .naive import naive_convolve
+from .repo import Repo
+
+
+@dataclass
+class SimulationPayload:
+    repo: Repo
+    dim: int
+    a_len: Any
+    b_len: Any
+    c_len: Any
+    feature: np.ndarray
+    feature_quant: np.ndarray
+    feature_info: Optional[str]
+    image_side: int
+    quant_data: dict
+    suffix: str
+    weight_info: Optional[str]
+    weight: np.ndarray
+    weight_quant: np.ndarray
+    channel_in: int
+    channel_out: int
+
+
+def run_simulation(payload: SimulationPayload, standard: bool):
+    if standard:
+        return sim_naive(payload)
+    return sim(payload)
 
 def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     dim, c_len, b_len, a_len = read_init(repo)
@@ -34,40 +64,25 @@ def cmd_sim_file(repo, feature_info, weight, suffix, standard):
         feat_arr = np.expand_dims(image, axis=0).astype(int)
         wght_arr = np.expand_dims(wght_arr, axis=0)
     image_side = feat_arr.shape[-1]
-    if standard:
-        return sim_naive(
-            a_len,
-            b_len,
-            c_len,
-            dim,
-            feat_arr,
-            feature_info,
-            image_side,
-            quant_data,
-            repo,
-            suffix,
-            weight,
-            wght_arr,
-        )
-    else:
-        return sim(
-            a_len,
-            b_len,
-            c_len,
-            dim,
-            feat_arr,
-            feat_arr,
-            feature_info,
-            image_side,
-            quant_data,
-            repo,
-            suffix,
-            weight,
-            wght_arr,
-            wght_arr,
-            feat_arr.shape[1],
-            1,
-        )
+    payload = SimulationPayload(
+        repo=repo,
+        dim=dim,
+        a_len=a_len,
+        b_len=b_len,
+        c_len=c_len,
+        feature=feat_arr,
+        feature_quant=feat_arr,
+        feature_info=str(feature_info) if feature_info is not None else None,
+        image_side=image_side,
+        quant_data=quant_data,
+        suffix=suffix,
+        weight_info=str(weight) if weight is not None else None,
+        weight=wght_arr,
+        weight_quant=wght_arr,
+        channel_in=int(feat_arr.shape[1]),
+        channel_out=int(wght_arr.shape[0]),
+    )
+    return run_simulation(payload, standard)
 
 
 def cmd_sim_int(
@@ -119,41 +134,25 @@ def cmd_sim_int(
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     ).astype(int)
-
-    if standard:
-        return sim_naive(
-            a_len,
-            b_len,
-            c_len,
-            dim,
-            feat_arr,
-            feature_info,
-            image_side,
-            quant_data,
-            repo,
-            suffix,
-            weight,
-            wght_arr,
-        )
-    else:
-        return sim(
-            a_len,
-            b_len,
-            c_len,
-            dim,
-            feat_arr,
-            feat_arr,
-            feature_info,
-            image_side,
-            quant_data,
-            repo,
-            suffix,
-            weight,
-            wght_arr,
-            wght_quant,
-            channel_in,
-            channel_out,
-        )
+    payload = SimulationPayload(
+        repo=repo,
+        dim=dim,
+        a_len=a_len,
+        b_len=b_len,
+        c_len=c_len,
+        feature=feat_arr,
+        feature_quant=feat_arr,
+        feature_info=str(feature_info) if feature_info is not None else None,
+        image_side=image_side,
+        quant_data=quant_data,
+        suffix=suffix,
+        weight_info=str(weight) if weight is not None else None,
+        weight=wght_arr,
+        weight_quant=wght_quant,
+        channel_in=channel_in,
+        channel_out=channel_out,
+    )
+    return run_simulation(payload, standard)
 
 
 def cmd_sim_normal(
@@ -181,61 +180,44 @@ def cmd_sim_normal(
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     ).astype(int)
-
-    if standard:
-        return sim_naive(
-            a_len,
-            b_len,
-            c_len,
-            dim,
-            feat_arr,
-            None,
-            image_side,
-            quant_data,
-            repo,
-            suffix,
-            None,
-            wght_arr,
-        )
-    else:
-        return sim(
-            a_len,
-            b_len,
-            c_len,
-            dim,
-            feat_arr,
-            feat_quant,
-            None,
-            image_side,
-            quant_data,
-            repo,
-            suffix,
-            None,
-            wght_arr,
-            wght_quant,
-            channel_in,
-            channel_out,
-        )
+    payload = SimulationPayload(
+        repo=repo,
+        dim=dim,
+        a_len=a_len,
+        b_len=b_len,
+        c_len=c_len,
+        feature=feat_arr,
+        feature_quant=feat_quant,
+        feature_info=None,
+        image_side=image_side,
+        quant_data=quant_data,
+        suffix=suffix,
+        weight_info=None,
+        weight=wght_arr,
+        weight_quant=wght_quant,
+        channel_in=channel_in,
+        channel_out=channel_out,
+    )
+    return run_simulation(payload, standard)
 
 
-def sim(
-    a_len,
-    b_len,
-    c_len,
-    dim,
-    feat_arr,
-    feat_quant,
-    feature_info,
-    image_side,
-    quant_data,
-    repo,
-    suffix,
-    weight,
-    wght_arr,
-    wght_quant,
-    channel_in=1,
-    channel_out=1,
-):
+def sim(payload: SimulationPayload):
+    a_len = payload.a_len
+    b_len = payload.b_len
+    c_len = payload.c_len
+    dim = payload.dim
+    feat_arr = payload.feature
+    feat_quant = payload.feature_quant
+    feature_info = payload.feature_info
+    image_side = payload.image_side
+    quant_data = payload.quant_data
+    repo = payload.repo
+    suffix = payload.suffix
+    weight = payload.weight_info
+    wght_arr = payload.weight
+    wght_quant = payload.weight_quant
+    channel_in = payload.channel_in
+    channel_out = payload.channel_out
     import torch
     from torch import nn
     from torch.nn import functional as F
@@ -576,20 +558,19 @@ def sim(
     return out_dict
 
 
-def sim_naive(
-    a_len,
-    b_len,
-    c_len,
-    dim,
-    feat_arr,
-    feature_info,
-    image_side,
-    quant_data,
-    repo,
-    suffix,
-    weight,
-    wght_arr,
-):
+def sim_naive(payload: SimulationPayload):
+    a_len = payload.a_len
+    b_len = payload.b_len
+    c_len = payload.c_len
+    dim = payload.dim
+    feat_arr = payload.feature
+    feature_info = payload.feature_info
+    image_side = payload.image_side
+    quant_data = payload.quant_data
+    repo = payload.repo
+    suffix = payload.suffix
+    weight = payload.weight_info
+    wght_arr = payload.weight
     output_default = signal.convolve2d(
         feat_arr, wght_arr[::-1, ::-1], mode="valid"
     )
@@ -694,4 +675,3 @@ def sim_naive(
     if len(quant_data) != 0:
         utils.sv_pkg("pack_data", path / "pack_data.sv", [], arr, dict_def)
     return out_dict
-
