@@ -58,6 +58,131 @@ def run_simulation(payload: SimulationPayload, standard: bool):
     return sim(payload)
 
 
+def _compute_bg_1d(
+    wght_quant: np.ndarray,
+    q,
+    b,
+    channel_out: int,
+    channel_in: int,
+    length: int,
+):
+    return np.array(
+        [
+            [
+                [
+                    fast.g_to_bg(q, b, wght_quant[cout][cin][i]).T
+                    for i in range(length)
+                ]
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+    )
+
+
+def _fast_convolutions_1d(bg_quant, channel_out, channel_in, b_len, c, a, quant):
+    return [
+        [
+            [
+                fast.wrap_convolution(c, bg_quant[cout][cin][i], a, quant)
+                for i in range(b_len)
+            ]
+            for cin in range(channel_in)
+        ]
+        for cout in range(channel_out)
+    ]
+
+
+def _collect_windows_1d(payload, output_fast, output_shape):
+    channel_in = payload.channel_in
+    channel_out = payload.channel_out
+    feat_windows = [
+        fast.sliding1d_window2d(
+            payload.feature_quant[0][cin],
+            output_fast[0],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            False,
+        )
+        for cin in range(channel_in)
+    ]
+    out_windows = [
+        fast.sliding1d_window2d(
+            payload.feature_quant[0][0],
+            output_fast[cout],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            True,
+        )
+        for cout in range(channel_out)
+    ]
+    return np.array(feat_windows), np.array(out_windows)
+
+
+def _compute_bg_2d(wght_quant, q, b, channel_out, channel_in):
+    return np.array(
+        [
+            [
+                fast.g_to_bg2d(q[0], b[0], q[1], b[1], wght_quant[cout, cin])
+                for cin in range(channel_in)
+            ]
+            for cout in range(channel_out)
+        ]
+    )
+
+
+def _fast_convolutions_2d(bg_quant, channel_out, channel_in, c, a, quant):
+    return [
+        [
+            fast.wrap_convolution2d(
+                c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant
+            )
+            for cin in range(channel_in)
+        ]
+        for cout in range(channel_out)
+    ]
+
+
+def _collect_windows_2d(payload, output_fast, output_shape):
+    channel_in = payload.channel_in
+    channel_out = payload.channel_out
+    feat_windows = [
+        fast.sliding2d_window2d(
+            payload.feature_quant[0][cin],
+            output_fast[0],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            False,
+        )
+        for cin in range(channel_in)
+    ]
+    out_windows = [
+        fast.sliding2d_window2d(
+            payload.feature_quant[0][0],
+            output_fast[cout],
+            output_shape,
+            payload.c_len,
+            payload.a_len,
+            True,
+        )
+        for cout in range(channel_out)
+    ]
+    return np.array(feat_windows), np.array(out_windows)
+
+
+def _save_arrays(base_path, entries, fmt):
+    for name, array in entries:
+        np.savetxt(base_path / f"{name}.txt", array, fmt=fmt)
+
+
+def _flatten_last_axis(arr: np.ndarray) -> np.ndarray:
+    arr_np = np.array(arr)
+    return arr_np.reshape(-1, arr_np.shape[-1])
+
+
 def _simulate_1d_core(
     payload: SimulationPayload,
     wght_quant: np.ndarray,
@@ -69,33 +194,15 @@ def _simulate_1d_core(
     channel_out = payload.channel_out
     b_len = int(payload.b_len)
     points, c, b, a, q = read_build_1d(repo)
-    bg = np.array(
-        [
-            [
-                [
-                    fast.g_to_bg(q, b, wght_quant[cout][cin][i]).T
-                    for i in range(b_len)
-                ]
-                for cin in range(channel_in)
-            ]
-            for cout in range(channel_out)
-        ]
-    )
+    bg = _compute_bg_1d(wght_quant, q, b, channel_out, channel_in, b_len)
     bg_quant = (
         bg
         if payload.quant_data == 0
         else np.round(np.array(bg).astype(float)).astype(int)
     )
-    fast_conv = [
-        [
-            [
-                fast.wrap_convolution(c, bg_quant[cout][cin][i], a, quant_bits)
-                for i in range(b_len)
-            ]
-            for cin in range(channel_in)
-        ]
-        for cout in range(channel_out)
-    ]
+    fast_conv = _fast_convolutions_1d(
+        bg_quant, channel_out, channel_in, b_len, c, a, quant_bits
+    )
 
     output_fast_ = [
         [
@@ -115,30 +222,9 @@ def _simulate_1d_core(
         for cout in range(channel_out)
     ]
     output_fast = np.sum(axis=(1, 2), a=output_fast_)
-    feat_list_sv = [
-        fast.sliding1d_window2d(
-            payload.feature_quant[0][cin],
-            output_fast[0],
-            output_shape,
-            payload.c_len,
-            payload.a_len,
-            False,
-        )
-        for cin in range(channel_in)
-    ]
-    feat_list_sv = np.array(feat_list_sv)
-    out_feat_list_sv = [
-        fast.sliding1d_window2d(
-            payload.feature_quant[0][0],
-            output_fast[cout],
-            output_shape,
-            payload.c_len,
-            payload.a_len,
-            True,
-        )
-        for cout in range(channel_out)
-    ]
-    out_feat_list_sv = np.array(out_feat_list_sv)
+    feat_list_sv, out_feat_list_sv = _collect_windows_1d(
+        payload, output_fast, output_shape
+    )
     count_nest = np.prod(out_feat_list_sv.shape[:-1])
     count_mult = int(count_nest * len(q) * b_len)
     return SimulationCore(
@@ -162,31 +248,15 @@ def _simulate_2d_core(
     channel_in = payload.channel_in
     channel_out = payload.channel_out
     points, c, b, a, q = read_build_2d(repo)
-    bg = np.array(
-        [
-            [
-                fast.g_to_bg2d(
-                    q[0], b[0], q[1], b[1], wght_quant[cout, cin]
-                )
-                for cin in range(channel_in)
-            ]
-            for cout in range(channel_out)
-        ]
-    )
+    bg = _compute_bg_2d(wght_quant, q, b, channel_out, channel_in)
     bg_quant = (
         bg
         if payload.quant_data == 0
         else np.round(np.array(bg).astype(float)).astype(int)
     )
-    fast_conv = [
-        [
-            fast.wrap_convolution2d(
-                c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant_bits
-            )
-            for cin in range(channel_in)
-        ]
-        for cout in range(channel_out)
-    ]
+    fast_conv = _fast_convolutions_2d(
+        bg_quant, channel_out, channel_in, c, a, quant_bits
+    )
 
     output_fast_ = np.array(
         [
@@ -204,30 +274,9 @@ def _simulate_2d_core(
         ]
     )
     output_fast = np.sum(output_fast_, axis=1)
-    feat_list_sv = [
-        fast.sliding2d_window2d(
-            payload.feature_quant[0][cin],
-            output_fast[0],
-            output_shape,
-            payload.c_len,
-            payload.a_len,
-            False,
-        )
-        for cin in range(channel_in)
-    ]
-    feat_list_sv = np.array(feat_list_sv)
-    out_feat_list_sv = [
-        fast.sliding2d_window2d(
-            payload.feature_quant[0][0],
-            output_fast[cout],
-            output_shape,
-            payload.c_len,
-            payload.a_len,
-            True,
-        )
-        for cout in range(channel_out)
-    ]
-    out_feat_list_sv = np.array(out_feat_list_sv)
+    feat_list_sv, out_feat_list_sv = _collect_windows_2d(
+        payload, output_fast, output_shape
+    )
     count_nest = np.prod(out_feat_list_sv.shape[:-1])
     count_mult = int(
         count_nest
@@ -493,25 +542,20 @@ def sim(payload: SimulationPayload):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
-    for arr, name in zip(
-        [feat_quant, wght_quant, core.output_fast, output_default_quant],
-        ["d", "g", "s", "s_default_quant"],
-    ):
-        np.savetxt(
-            path / f"{name}.txt",
-            np.array(arr).reshape(-1, arr.shape[-1]),
-            fmt="%d",
-        )
+    dense_exports = [
+        ("d", _flatten_last_axis(feat_quant)),
+        ("g", _flatten_last_axis(wght_quant)),
+        ("s", _flatten_last_axis(core.output_fast)),
+        ("s_default_quant", _flatten_last_axis(output_default_quant)),
+    ]
+    _save_arrays(path, dense_exports, fmt="%d")
 
-    for arr, name in zip(
-        [feat_arr, wght_arr, output_default],
-        ["d_default", "g_default", "s_default"],
-    ):
-        np.savetxt(
-            path / f"{name}.txt",
-            np.array(arr).reshape(-1, arr.shape[-1]),
-            fmt="%f",
-        )
+    float_exports = [
+        ("d_default", _flatten_last_axis(feat_arr)),
+        ("g_default", _flatten_last_axis(wght_arr)),
+        ("s_default", _flatten_last_axis(output_default)),
+    ]
+    _save_arrays(path, float_exports, fmt="%f")
 
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_quant = [
@@ -687,11 +731,16 @@ def sim_naive(payload: SimulationPayload):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
-    for arr, name in zip(
-        [feat_arr, wght_quant, output_default, output_quant],
-        ["d", "g", "s_default", "s"],
-    ):
-        np.savetxt(path / f"{name}.txt", arr, fmt="%d")
+    _save_arrays(
+        path,
+        [
+            ("d", feat_arr),
+            ("g", wght_quant),
+            ("s_default", output_default),
+            ("s", output_quant),
+        ],
+        fmt="%d",
+    )
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_array = [
         {"name": "weight", "value": wght_quant},
