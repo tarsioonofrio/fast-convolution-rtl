@@ -36,3 +36,4 @@ rand-quant/
 example-random.tex
 example-random/
 **/sim/file/data.sv
+*.aux
