@@ -364,7 +364,7 @@ def _build_sim_parser(subparsers):
     )
     sim_normal.add_argument("--image-side", type=int, default=32, help="Image side length.")
     sim_normal.add_argument("-n", "--name", default="", help="Suffix of output file name.")
-    sim_normal.add_argument("--channel-in", type=int, default=1, help="Channel input size.")
+    sim_normal.add_argument("-i", "--channel-in", type=int, default=1, help="Channel input size.")
     sim_normal.add_argument("-o", "--channel-out", type=int, default=1, help="Channel output size.")
     sim_normal.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
     sim_normal.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")

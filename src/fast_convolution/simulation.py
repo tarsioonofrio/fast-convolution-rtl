@@ -11,7 +11,6 @@ from sklearn.metrics import r2_score
 
 from . import fast, utils
 from .config import (
-    read_bind_if_exists,
     read_build_1d,
     read_build_2d,
     read_init,
@@ -80,7 +79,9 @@ def _compute_bg_1d(
     )
 
 
-def _fast_convolutions_1d(bg_quant, channel_out, channel_in, b_len, c, a, quant):
+def _fast_convolutions_1d(
+    bg_quant, channel_out, channel_in, b_len, c, a, quant
+):
     return [
         [
             [
@@ -305,6 +306,7 @@ def _simulate_core(
         return _simulate_1d_core(payload, wght_quant, output_shape, quant_bits)
     return _simulate_2d_core(payload, wght_quant, output_shape, quant_bits)
 
+
 def cmd_sim_file(repo, feature_info, weight, suffix, standard):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -513,9 +515,7 @@ def sim(payload: SimulationPayload):
         )
         text_metric = f"R2: {metric}\n"
     else:
-        metric = np.all(
-            np.array(output_default) == np.array(core.output_fast)
-        )
+        metric = np.all(np.array(output_default) == np.array(core.output_fast))
         text_metric = f"Output default and fast are equals: {metric}\n"
 
     size = np.prod(output_default.shape)
@@ -573,9 +573,7 @@ def sim(payload: SimulationPayload):
         },
         {
             "name": "feat_out",
-            "value": core.output_fast.reshape(
-                -1, core.output_fast.shape[-1]
-            ),
+            "value": core.output_fast.reshape(-1, core.output_fast.shape[-1]),
         },
     ]
     list_float = [
@@ -609,23 +607,20 @@ def sim(payload: SimulationPayload):
     weight_sv = core.bg_quant.reshape(
         -1, core.bg_quant.shape[-1] * core.bg_quant.shape[-2]
     )
-    feat_list_sv = core.feat_list_sv.reshape(
-        -1, core.feat_list_sv.shape[-1]
-    )
+    feat_list_sv = core.feat_list_sv.reshape(-1, core.feat_list_sv.shape[-1])
     out_feat_list_sv = core.out_feat_list_sv.reshape(
         -1, core.out_feat_list_sv.shape[-1]
     )
     output_fast_list_sv = core.output_fast.reshape(
         -1, core.output_fast.shape[-1]
     )
-
     const_data_size = (
-        1
+        weight_sv.shape[0]
         + weight_sv.reshape(-1).shape[0]
         + np.array(feat_quant).reshape(-1).shape[0]
     )
     const_data_sv = [
-        [[0]],
+        [np.zeros(weight_sv.shape[0], dtype=int).tolist()],
         weight_sv.tolist(),
         feat_quant.reshape(-1, feat_quant.shape[-1]).tolist(),
     ]
