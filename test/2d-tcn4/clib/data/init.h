@@ -10,5 +10,4 @@
 #define C2_SIZE 4
 #define M2_SIZE 4
 
-
 #endif //C_INIT_H

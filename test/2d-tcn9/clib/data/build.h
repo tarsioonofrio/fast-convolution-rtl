@@ -1,7 +1,6 @@
 #ifndef C_BUILD_H
 #define C_BUILD_H
 
-
 const int mc1t[5*5] = {
 	2, -1, -2, 1, 0,
 	0, -2, -1, 1, 0,

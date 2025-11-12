@@ -1,7 +1,6 @@
 #ifndef C_EXAMPLE_H
 #define C_EXAMPLE_H
 
-
 const int md[4*1] = {
 	0,
 	1,

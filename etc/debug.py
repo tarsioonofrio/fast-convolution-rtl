@@ -5,6 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from fast_convolution import cli, commands
+from fast_convolution.repo import Repo
 
 repo_name = "2d2_iter"
 function_name = "test_bind"
@@ -14,4 +15,4 @@ file_path = root / f"{repo_name}.py"
 repo_path = root / repo_name
 
 
-commands.cmd_build2d_bind_iterate(cli.Repo(repo_path))
+commands.cmd_build2d_bind_iterate(Repo(repo_path))

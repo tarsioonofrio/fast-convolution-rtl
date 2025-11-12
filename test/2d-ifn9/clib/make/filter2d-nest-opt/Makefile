@@ -1,5 +1,5 @@
 TARGET   ?= filter2d-nest
-OPTIM    ?= 3
+OPTIM    ?= 1
 GCCOPT   ?= O2
 ARCH     ?= rv32im_zicsr
 MEM_SIZE ?= 65536
