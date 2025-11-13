@@ -38,6 +38,8 @@ class SimulationPayload:
     weight_quant: np.ndarray
     channel_in: int
     channel_out: int
+    bias: Optional[np.ndarray] = None
+    bias_quant: Optional[np.ndarray] = None
 
 
 @dataclass
@@ -49,6 +51,29 @@ class SimulationCore:
     bg: np.ndarray
     count_nest: int
     count_mult: int
+
+
+def _reshape_bias(bias: np.ndarray, target: np.ndarray) -> np.ndarray:
+    if bias.ndim != 1:
+        raise ValueError("Bias must be a 1D array.")
+    shape = (bias.shape[0],) + (1,) * (target.ndim - 1)
+    return bias.reshape(shape)
+
+
+def _apply_bias(output: np.ndarray, bias: Optional[np.ndarray]) -> np.ndarray:
+    if bias is None:
+        return output
+    return output + _reshape_bias(bias, output)
+
+
+def _quantize_bias(
+    bias: Optional[np.ndarray], quant_bits: int, has_quant: bool
+) -> Optional[np.ndarray]:
+    if bias is None:
+        return None
+    if has_quant:
+        return np.round(bias * (2**quant_bits)).astype(int)
+    return bias.astype(int)
 
 
 def run_simulation(payload: SimulationPayload, standard: bool):
@@ -223,6 +248,7 @@ def _simulate_1d_core(
         for cout in range(channel_out)
     ]
     output_fast = np.sum(axis=(1, 2), a=output_fast_)
+    output_fast = _apply_bias(output_fast, payload.bias_quant)
     feat_list_sv, out_feat_list_sv = _collect_windows_1d(
         payload, output_fast, output_shape
     )
@@ -275,6 +301,7 @@ def _simulate_2d_core(
         ]
     )
     output_fast = np.sum(output_fast_, axis=1)
+    output_fast = _apply_bias(output_fast, payload.bias_quant)
     feat_list_sv, out_feat_list_sv = _collect_windows_2d(
         payload, output_fast, output_shape
     )
@@ -356,6 +383,7 @@ def cmd_sim_int(
     image_side,
     suffix,
     seed,
+    bias_value,
     standard,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
@@ -395,6 +423,19 @@ def cmd_sim_int(
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     ).astype(int)
+    bias = None
+    bias_quant = None
+    if bias_value is not None:
+        if random:
+            high = bias_value + max(channel_out, 1)
+            bias = np.random.randint(
+                bias_value, high, size=(channel_out,)
+            ).astype(int)
+        else:
+            bias = np.arange(bias_value, bias_value + channel_out).astype(int)
+        bias_quant = _quantize_bias(
+            bias, quant_bits, has_quant=len(quant_data) > 0
+        )
     payload = SimulationPayload(
         repo=repo,
         dim=dim,
@@ -412,12 +453,21 @@ def cmd_sim_int(
         weight_quant=wght_quant,
         channel_in=channel_in,
         channel_out=channel_out,
+        bias=bias,
+        bias_quant=bias_quant,
     )
     return run_simulation(payload, standard)
 
 
 def cmd_sim_normal(
-    repo, image_side, channel_in, channel_out, suffix, seed, standard
+    repo,
+    image_side,
+    channel_in,
+    channel_out,
+    suffix,
+    seed,
+    bias_mean,
+    standard,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -441,6 +491,13 @@ def cmd_sim_normal(
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     ).astype(int)
+    bias = None
+    bias_quant = None
+    if bias_mean is not None:
+        bias = np.random.normal(bias_mean, 1.0, size=(channel_out,))
+        bias_quant = _quantize_bias(
+            bias, quant_bits, has_quant=len(quant_data) > 0
+        )
     payload = SimulationPayload(
         repo=repo,
         dim=dim,
@@ -458,6 +515,8 @@ def cmd_sim_normal(
         weight_quant=wght_quant,
         channel_in=channel_in,
         channel_out=channel_out,
+        bias=bias,
+        bias_quant=bias_quant,
     )
     return run_simulation(payload, standard)
 
@@ -479,6 +538,8 @@ def sim(payload: SimulationPayload):
     wght_quant = payload.weight_quant
     channel_in = payload.channel_in
     channel_out = payload.channel_out
+    bias = payload.bias
+    bias_quant = payload.bias_quant
     import torch
     from torch import nn
     from torch.nn import functional as F
@@ -486,9 +547,15 @@ def sim(payload: SimulationPayload):
     # output_default = signal.convolve2d(
     #     feat_arr, wght_arr[::-1, ::-1], mode="valid"
     # )
+    feat_tensor = torch.tensor(feat_arr)
+    wght_tensor = torch.tensor(wght_arr)
+    bias_tensor = None
+    if bias is not None:
+        bias_tensor = torch.tensor(bias).to(wght_tensor.dtype)
     output_default = F.conv2d(
-        torch.tensor(feat_arr),
-        torch.tensor(wght_arr),
+        feat_tensor,
+        wght_tensor,
+        bias=bias_tensor,
         stride=1,
     )
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
@@ -500,9 +567,17 @@ def sim(payload: SimulationPayload):
     #     wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
     # ).astype(int)
 
+    feat_quant_tensor = torch.tensor(feat_quant)
+    wght_quant_tensor = torch.tensor(wght_quant)
+    bias_quant_tensor = None
+    if bias_quant is not None:
+        bias_quant_tensor = torch.tensor(bias_quant).to(
+            wght_quant_tensor.dtype
+        )
     output_default_quant = F.conv2d(
-        torch.tensor(feat_quant),
-        torch.tensor(wght_quant),
+        feat_quant_tensor,
+        wght_quant_tensor,
+        bias=bias_quant_tensor,
         stride=1,
     )
     output_shape = [output_default.shape[-1], output_default.shape[-2]]
@@ -522,6 +597,7 @@ def sim(payload: SimulationPayload):
     text = (
         f"Feature: {feature_info}\n"
         f"Weights: {weight}\n"
+        f"Bias enabled: {bias is not None}\n"
         f"Image side: {image_side}\n"
         f"Quantization bits: {quant_bits}\n"
         # f"{text_equal}\n"
@@ -548,6 +624,8 @@ def sim(payload: SimulationPayload):
         ("s", _flatten_last_axis(core.output_fast)),
         ("s_default_quant", _flatten_last_axis(output_default_quant)),
     ]
+    if bias_quant is not None:
+        dense_exports.append(("bias", _flatten_last_axis(bias_quant)))
     _save_arrays(path, dense_exports, fmt="%d")
 
     float_exports = [
@@ -555,6 +633,8 @@ def sim(payload: SimulationPayload):
         ("g_default", _flatten_last_axis(wght_arr)),
         ("s_default", _flatten_last_axis(output_default)),
     ]
+    if bias is not None:
+        float_exports.append(("bias_default", _flatten_last_axis(bias)))
     _save_arrays(path, float_exports, fmt="%f")
 
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
@@ -576,6 +656,13 @@ def sim(payload: SimulationPayload):
             "value": core.output_fast.reshape(-1, core.output_fast.shape[-1]),
         },
     ]
+    if bias_quant is not None:
+        list_quant.append(
+            {
+                "name": "bias",
+                "value": bias_quant.reshape(1, -1),
+            }
+        )
     list_float = [
         {
             "name": "weight",
@@ -588,6 +675,13 @@ def sim(payload: SimulationPayload):
             "value": output_default.reshape(-1, output_default.shape[-1]),
         },
     ]
+    if bias is not None:
+        list_float.append(
+            {
+                "name": "bias",
+                "value": bias.reshape(1, -1),
+            }
+        )
     dict_def = {
         "QUANT_BITS": quant_bits,
         "W_SIZE": wght_quant.shape[-1],

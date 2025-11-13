@@ -7,7 +7,10 @@ import traceback
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Union
 
-import ipdb as pdb
+try:
+    import ipdb as pdb
+except ModuleNotFoundError:  # pragma: no cover - fallback when ipdb missing
+    import pdb
 
 from .commands import (
     cmd_build2d_bind_kron,
@@ -175,6 +178,7 @@ def handle_sim_int(args):
         args.image_side,
         args.name,
         args.seed,
+        args.bias,
         args.standard,
     )
     if isinstance(output, dict) and "text" in output:
@@ -190,6 +194,7 @@ def handle_sim_normal(args):
         args.channel_out,
         args.name,
         args.seed,
+        args.bias,
         args.standard,
     )
     if isinstance(output, dict) and "text" in output:
@@ -355,6 +360,13 @@ def _build_sim_parser(subparsers):
     sim_int.add_argument("-r", "--random", action="store_true", help="Use random integers.")
     sim_int.add_argument("-n", "--name", default="", help="Suffix of output file name.")
     sim_int.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
+    sim_int.add_argument(
+        "-b",
+        "--bias",
+        type=int,
+        default=None,
+        help="Minimal bias value per output channel (omit to disable bias).",
+    )
     sim_int.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
     sim_int.set_defaults(func=handle_sim_int)
 
@@ -367,6 +379,13 @@ def _build_sim_parser(subparsers):
     sim_normal.add_argument("-i", "--channel-in", type=int, default=1, help="Channel input size.")
     sim_normal.add_argument("-o", "--channel-out", type=int, default=1, help="Channel output size.")
     sim_normal.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
+    sim_normal.add_argument(
+        "-b",
+        "--bias",
+        type=float,
+        default=None,
+        help="Mean of the normal distribution used to sample bias (omit to disable bias).",
+    )
     sim_normal.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
     sim_normal.set_defaults(func=handle_sim_normal)
 
