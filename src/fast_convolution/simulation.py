@@ -228,6 +228,18 @@ def _bias_or_zeros(
     return np.array(bias).astype(dtype, copy=False)
 
 
+def _expand_bias_for_export(
+    bias: Optional[np.ndarray],
+    channel_out: int,
+    repeat: int,
+    dtype: np.dtype,
+) -> np.ndarray:
+    if bias is None:
+        return np.zeros(channel_out * repeat, dtype=dtype)
+    bias_arr = np.array(bias).astype(dtype, copy=False).reshape(-1)
+    return np.repeat(bias_arr, repeat)
+
+
 def _flatten_last_axis(arr: np.ndarray) -> np.ndarray:
     arr_np = np.array(arr)
     return arr_np.reshape(-1, arr_np.shape[-1])
@@ -664,8 +676,13 @@ def sim(payload: SimulationPayload):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
-    bias_dense = _bias_or_zeros(bias_quant, channel_out, wght_quant.dtype)
-    bias_float = _bias_or_zeros(bias, channel_out, wght_arr.dtype)
+    bias_repeat = channel_in * int(b_len) if dim == 1 else channel_in
+    bias_dense = _expand_bias_for_export(
+        bias_quant, channel_out, bias_repeat, wght_quant.dtype
+    )
+    bias_float = _expand_bias_for_export(
+        bias, channel_out, bias_repeat, wght_arr.dtype
+    )
     dense_exports = [
         ("d", feat_quant),
         ("g", _prepend_bias(wght_quant, bias_dense)),
@@ -838,8 +855,10 @@ def sim_naive(payload: SimulationPayload):
         else np.left_shift(wght_arr, quant_bits)
     )
     bias_quant = payload.bias_quant
-    bias_dense = _bias_or_zeros(
-        bias_quant, payload.channel_out, wght_quant.dtype
+    channel_in = payload.channel_in
+    bias_repeat = channel_in * b_len if dim == 1 else channel_in
+    bias_dense = _expand_bias_for_export(
+        bias_quant, payload.channel_out, bias_repeat, wght_quant.dtype
     )
 
     output_quant = np.right_shift(
