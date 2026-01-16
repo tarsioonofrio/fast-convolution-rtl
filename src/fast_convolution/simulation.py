@@ -460,6 +460,11 @@ def cmd_sim_int(
         )
 
     quant_data = read_quant_if_exists(repo)
+    if quant_data:
+        raise SystemExit(
+            "sim int is disabled when quantization is enabled; run "
+            "`fast-conv quant none` or remove config/quant.json."
+        )
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
