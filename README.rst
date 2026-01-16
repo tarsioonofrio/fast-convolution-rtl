@@ -16,6 +16,15 @@ Features
 
 * TODO
 
+CLI
+---
+
+Bias is only enabled when passing ``--enable-bias`` to ``fast-conv sim`` subcommands.
+
+Example::
+
+    python -m fast_convolution.cli sim int --enable-bias --bias 4
+
 
 RS5
 ---

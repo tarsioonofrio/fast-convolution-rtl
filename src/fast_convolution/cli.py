@@ -155,11 +155,13 @@ def handle_quant_shift(args):
 
 
 def handle_sim_file(args):
+    bias_value = args.bias if args.enable_bias else None
     output = cmd_sim_file(
         args.repo,
         args.feature,
         args.weight,
         args.name,
+        bias_value,
         args.standard,
     )
     if isinstance(output, dict) and "text" in output:
@@ -168,6 +170,7 @@ def handle_sim_file(args):
 
 
 def handle_sim_int(args):
+    bias_value = args.bias if args.enable_bias else None
     output = cmd_sim_int(
         args.repo,
         args.feature,
@@ -178,7 +181,7 @@ def handle_sim_int(args):
         args.image_side,
         args.name,
         args.seed,
-        args.bias,
+        bias_value,
         args.standard,
     )
     if isinstance(output, dict) and "text" in output:
@@ -187,6 +190,7 @@ def handle_sim_int(args):
 
 
 def handle_sim_normal(args):
+    bias_value = args.bias if args.enable_bias else None
     output = cmd_sim_normal(
         args.repo,
         args.image_side,
@@ -194,7 +198,7 @@ def handle_sim_normal(args):
         args.channel_out,
         args.name,
         args.seed,
-        args.bias,
+        bias_value,
         args.standard,
     )
     if isinstance(output, dict) and "text" in output:
@@ -348,6 +352,18 @@ def _build_sim_parser(subparsers):
         help="Weight JSON file.",
     )
     sim_file.add_argument("-n", "--name", default="", help="Suffix of output file name.")
+    sim_file.add_argument(
+        "--enable-bias",
+        action="store_true",
+        help="Allow non-zero bias values.",
+    )
+    sim_file.add_argument(
+        "-b",
+        "--bias",
+        type=int,
+        default=None,
+        help="Minimal bias value per output channel (requires --enable-bias).",
+    )
     sim_file.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
     sim_file.set_defaults(func=handle_sim_file)
 
@@ -361,11 +377,16 @@ def _build_sim_parser(subparsers):
     sim_int.add_argument("-n", "--name", default="", help="Suffix of output file name.")
     sim_int.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
     sim_int.add_argument(
+        "--enable-bias",
+        action="store_true",
+        help="Allow non-zero bias values.",
+    )
+    sim_int.add_argument(
         "-b",
         "--bias",
         type=int,
         default=None,
-        help="Minimal bias value per output channel (omit to disable bias).",
+        help="Minimal bias value per output channel (requires --enable-bias).",
     )
     sim_int.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
     sim_int.set_defaults(func=handle_sim_int)
@@ -380,11 +401,16 @@ def _build_sim_parser(subparsers):
     sim_normal.add_argument("-o", "--channel-out", type=int, default=1, help="Channel output size.")
     sim_normal.add_argument("-d", "--seed", type=int, default=0, help="Seed for random number generator.")
     sim_normal.add_argument(
+        "--enable-bias",
+        action="store_true",
+        help="Allow non-zero bias values.",
+    )
+    sim_normal.add_argument(
         "-b",
         "--bias",
         type=float,
         default=None,
-        help="Mean of the normal distribution used to sample bias (omit to disable bias).",
+        help="Mean of the normal distribution used to sample bias (requires --enable-bias).",
     )
     sim_normal.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
     sim_normal.set_defaults(func=handle_sim_normal)

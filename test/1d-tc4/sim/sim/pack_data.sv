@@ -13,8 +13,8 @@ package pack_data;
   localparam int N_WINDOW = 7;
   localparam int N_CHANNEL_IN = 1;
   localparam int N_CHANNEL_OUT = 1;
-  const int const_data[1045] = '{
-    0, 0, 0,
+  const int const_data[1043] = '{
+    0,
 
     0, 0, 0, 0, 0, 0,
     0, 0, -1, 0, 1, 1,
