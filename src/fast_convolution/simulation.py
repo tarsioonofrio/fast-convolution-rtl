@@ -472,11 +472,11 @@ def cmd_sim_int(
         )
 
     quant_data = read_quant_if_exists(repo)
-    if quant_data:
-        raise SystemExit(
-            "sim int is disabled when quantization is enabled; run "
-            "`fast-conv quant none` or remove config/quant.json."
-        )
+    # if quant_data:
+    #     raise SystemExit(
+    #         "sim int is disabled when quantization is enabled; run "
+    #         "`fast-conv quant none` or remove config/quant.json."
+    #     )
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     wght_quant = (
         wght_arr if len(quant_data) == 0 else wght_arr * (2**quant_bits)
@@ -629,9 +629,7 @@ def sim(payload: SimulationPayload):
     wght_quant_tensor = torch.tensor(wght_quant)
     bias_quant_tensor = None
     if bias_quant is not None:
-        bias_quant_tensor = torch.tensor(bias_quant).to(
-            wght_quant_tensor.dtype
-        )
+        bias_quant_tensor = torch.tensor(bias_quant).to(wght_quant_tensor.dtype)
     output_default_quant = F.conv2d(
         feat_quant_tensor,
         wght_quant_tensor,
@@ -643,8 +641,8 @@ def sim(payload: SimulationPayload):
 
     if len(quant_data) != 0:
         metric = r2_score(
-            output_default.reshape(-1),
-            np.array(core.output_fast).reshape(-1) / (2**quant_bits),
+            np.array(output_default_quant).reshape(-1) / (2**quant_bits),
+            np.array(core.output_fast).reshape(-1),
         )
         text_metric = f"R2: {metric}\n"
     else:
@@ -864,9 +862,7 @@ def sim_naive(payload: SimulationPayload):
     output_quant = np.right_shift(
         naive_convolve(feat_arr, wght_quant), quant_bits
     )
-    bias_quant = (
-        payload.bias_quant if len(quant_data) != 0 else payload.bias
-    )
+    bias_quant = payload.bias_quant if len(quant_data) != 0 else payload.bias
     output_quant = _apply_bias(output_quant, bias_quant)
     feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
         feat_arr, output_quant, output_default.shape, c_len, a_len

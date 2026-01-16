@@ -3,7 +3,7 @@ Weights: None
 Bias enabled: False
 Image side: 32
 Quantization bits: 8
-R2: 0.9999579744510654
+R2: 0.9999753043629233
 
 Totals
 Naive
