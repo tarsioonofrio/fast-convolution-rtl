@@ -204,6 +204,20 @@ def _save_arrays(base_path, entries, fmt):
         np.savetxt(base_path / f"{name}.txt", array, fmt=fmt)
 
 
+def _save_flat_arrays(base_path, entries, fmt):
+    for name, array in entries:
+        flat = np.array(array).reshape(-1)
+        np.savetxt(base_path / f"{name}.txt", flat, fmt=fmt)
+
+
+def _prepend_bias(values: np.ndarray, bias: Optional[np.ndarray]) -> np.ndarray:
+    if bias is None:
+        return np.array(values)
+    return np.concatenate(
+        [np.array(bias).reshape(-1), np.array(values).reshape(-1)]
+    )
+
+
 def _flatten_last_axis(arr: np.ndarray) -> np.ndarray:
     arr_np = np.array(arr)
     return arr_np.reshape(-1, arr_np.shape[-1])
@@ -619,23 +633,23 @@ def sim(payload: SimulationPayload):
     with open(path / "sim.txt", "w") as f:
         f.write(text)
     dense_exports = [
-        ("d", _flatten_last_axis(feat_quant)),
-        ("g", _flatten_last_axis(wght_quant)),
-        ("s", _flatten_last_axis(core.output_fast)),
-        ("s_default_quant", _flatten_last_axis(output_default_quant)),
+        ("d", feat_quant),
+        ("g", _prepend_bias(wght_quant, bias_quant)),
+        ("s", core.output_fast),
+        ("s_default_quant", output_default_quant),
     ]
     if bias_quant is not None:
-        dense_exports.append(("bias", _flatten_last_axis(bias_quant)))
-    _save_arrays(path, dense_exports, fmt="%d")
+        dense_exports.append(("bias", bias_quant))
+    _save_flat_arrays(path, dense_exports, fmt="%d")
 
     float_exports = [
-        ("d_default", _flatten_last_axis(feat_arr)),
-        ("g_default", _flatten_last_axis(wght_arr)),
-        ("s_default", _flatten_last_axis(output_default)),
+        ("d_default", feat_arr),
+        ("g_default", _prepend_bias(wght_arr, bias)),
+        ("s_default", output_default),
     ]
     if bias is not None:
-        float_exports.append(("bias_default", _flatten_last_axis(bias)))
-    _save_arrays(path, float_exports, fmt="%f")
+        float_exports.append(("bias_default", bias))
+    _save_flat_arrays(path, float_exports, fmt="%f")
 
     repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
     list_quant = [
@@ -787,6 +801,7 @@ def sim_naive(payload: SimulationPayload):
         if len(quant_data) == 0
         else np.left_shift(wght_arr, quant_bits)
     )
+    bias_quant = payload.bias_quant
 
     output_quant = np.right_shift(
         naive_convolve(feat_arr, wght_quant), quant_bits
@@ -820,11 +835,11 @@ def sim_naive(payload: SimulationPayload):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
-    _save_arrays(
+    _save_flat_arrays(
         path,
         [
             ("d", feat_arr),
-            ("g", wght_quant),
+            ("g", _prepend_bias(wght_quant, bias_quant)),
             ("s_default", output_default),
             ("s", output_quant),
         ],
