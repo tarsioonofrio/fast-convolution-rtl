@@ -1,5 +1,5 @@
 module Transform
-  import packConv::*;
+  import pack_typedef::*;
  #(
   parameter int QUANT = 8,
   parameter int NBITS = 20
@@ -26,7 +26,7 @@ endmodule
 
 
 module Inverse
-  import packConv::*;
+  import pack_typedef::*;
  #(
   parameter int QUANT = 8,
   parameter int NBITS = 20
