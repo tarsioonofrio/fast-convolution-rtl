@@ -11,7 +11,13 @@ CMD_COMMON = load_common_commands()
 
 @pytest.mark.parametrize("case", CASES_1D, ids=lambda case: case.name)
 def test_rm(case):
-    shutil.rmtree(case.repo_path, ignore_errors=True)
+    if not case.repo_path.exists():
+        return
+    for entry in case.repo_path.iterdir():
+        if entry.is_dir():
+            shutil.rmtree(entry, ignore_errors=True)
+        else:
+            entry.unlink(missing_ok=True)
 
 
 @pytest.mark.parametrize("case", CASES_1D, ids=lambda case: case.name)

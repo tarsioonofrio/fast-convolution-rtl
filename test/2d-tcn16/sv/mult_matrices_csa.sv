@@ -1,13 +1,9 @@
 module Transform
   import pack_typedef::*;
- #(
-  parameter int QUANT = 8,
-  parameter int NBITS = 20
-  )
   (
     input  type_input pin,
     output type_weight pout
- );
+  );
   timeunit 1ns;
   timeprecision 1ps;
 
@@ -25,12 +21,9 @@ module Transform
 endmodule
 
 
+
 module Inverse
   import pack_typedef::*;
- #(
-  parameter int QUANT = 8,
-  parameter int NBITS = 20
-  )
   (
     input  type_weight pin,
     output type_output pout
@@ -49,7 +42,6 @@ module Inverse
     .soma(pout)
   );
 endmodule
-
 
 
 module MatrixC0
