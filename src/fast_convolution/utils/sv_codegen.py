@@ -306,19 +306,9 @@ def sv_nest_direct(
         for idx, (p_terms, p_weights, n_terms, n_weights) in enumerate(
             zip(port_p, port_pp, port_n, port_np)
         ):
-            pad_neg_terms = name == "c" and module_idx == 1 and idx < output_cols
-            pad_pos_terms = name == "a" and module_idx == 0
-            pos_terms_fmt = [
-                _maybe_pad_term(term, pad_pos_terms and term == "P[9]")
-                for term in p_terms
-            ]
-            neg_terms_fmt = [
-                _maybe_pad_term(term, pad_neg_terms)
-                for term in n_terms
-            ]
-            pos_expr = _format_weighted_sum(pos_terms_fmt, p_weights)
+            pos_expr = _format_weighted_sum(p_terms, p_weights)
             neg_expr = _format_weighted_sum(
-                neg_terms_fmt,
+                n_terms,
                 [abs(weight) for weight in n_weights],
             )
             if pos_expr != "0" and neg_expr != "0":
@@ -329,74 +319,17 @@ def sv_nest_direct(
                 expr = f"-({neg_expr})"
             else:
                 expr = "0"
-            if neg_expr != "0" or (name == "c" and module_idx == 0 and idx == 9):
-                expr = f" {expr}"
-            assign_idx = idx
-            if name == "c" and module_idx == 1 and 6 <= idx <= 9:
-                assign_idx = f"{idx:02d}"
             assignments.append(
                 {
                     "idx": idx,
                     "row": idx // output_cols,
                     "col": idx % output_cols,
-                    "has_neg": neg_expr != "0",
-                    "line": f"  assign soma[{assign_idx}] = {expr};",
+                    "line": f"  assign soma[{idx}] = {expr};",
                 }
             )
 
-        ordered = []
-        if name == "c" and module_idx == 0:
-            neg_cols = sorted({entry["col"] for entry in assignments if entry["has_neg"]})
-            pos_entries = [entry for entry in assignments if not entry["has_neg"]]
-            for col in neg_cols:
-                col_entries = [e for e in assignments if e["has_neg"] and e["col"] == col]
-                col_entries.sort(key=lambda entry: entry["row"])
-                ordered.extend(col_entries)
-                ordered.append({"line": ""})
-            pos_entries.sort(key=lambda entry: (entry["row"], entry["col"]))
-            current_row = None
-            for entry in pos_entries:
-                if current_row is None:
-                    current_row = entry["row"]
-                elif entry["row"] != current_row:
-                    ordered.append({"line": ""})
-                    current_row = entry["row"]
-                ordered.append(entry)
-        else:
-            def _row_sort_key(entry):
-                if (
-                    name == "c"
-                    and module_idx == 1
-                    and output_rows == 6
-                    and output_cols == 6
-                    and entry["row"] == output_rows - 1
-                ):
-                    col_order = {0: 0, 1: 1, 2: 2, 3: 3, 5: 4, 4: 5}
-                    return (entry["row"], col_order.get(entry["col"], entry["col"]))
-                return (entry["row"], entry["col"])
-
-            assignments.sort(key=_row_sort_key)
-            current_row = None
-            for entry in assignments:
-                if name == "c" and module_idx == 1:
-                    if current_row is None:
-                        current_row = entry["row"]
-                    elif entry["row"] != current_row:
-                        ordered.append({"line": ""})
-                        current_row = entry["row"]
-                ordered.append(entry)
-
-        output_lines = [entry["line"] for entry in ordered if entry["line"] != ""]
-        spaced_lines = []
-        for entry in ordered:
-            if entry["line"] == "":
-                spaced_lines.append("")
-            else:
-                spaced_lines.append(entry["line"])
-        while spaced_lines and spaced_lines[-1] == "":
-            spaced_lines.pop()
-        spaced_lines.append("")
-
+        assignments.sort(key=lambda entry: (entry["row"], entry["col"]))
+        spaced_lines = [entry["line"] for entry in assignments]
         module_str = "\n".join(header_lines + [""] + spaced_lines + ["endmodule"])
         modules.append(module_str)
     return tuple(modules)
