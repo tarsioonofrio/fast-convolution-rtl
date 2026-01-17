@@ -34,6 +34,7 @@ from .sv_codegen import (
     matmul_sv2,
     sv_bitshift,
     sv_mux_mult,
+    sv_nest_direct,
     sv_nest,
     sv_pkg,
 )
@@ -69,6 +70,7 @@ __all__ = [
     "matmul_sv",
     "matmul_sv2",
     "sv_bitshift",
+    "sv_nest_direct",
     "sv_nest",
     "sv_mux_mult",
     "sv_pkg",

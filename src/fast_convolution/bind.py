@@ -57,12 +57,21 @@ def cmd_build2d_bind_nest(repo):
     dim, s_len, g_len, d_len = read_init(repo)
     c0_sv, c1_sv = utils.sv_nest(c1, s_len, "c")
     a1_sv, a0_sv = utils.sv_nest(a1, (q1.shape[0], q2.shape[0]), "a")
+    c0_sv_direct, c1_sv_direct = utils.sv_nest_direct(c1, s_len, "c")
+    a1_sv_direct, a0_sv_direct = utils.sv_nest_direct(
+        a1, (q1.shape[0], q2.shape[0]), "a"
+    )
     repo.dir_sv.mkdir(exist_ok=True)
     with open(Path(__file__).parent / "template/nest.sv") as f:
-        nest_sv = f.read()
-    with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
+        nest_sv = f.read().rstrip()
+    with open(repo.dir_sv / "mult_matrices_csa.sv", "w") as f:
         str_sv = "\n\n\n".join([nest_sv, c0_sv, c1_sv, a1_sv, a0_sv])
-        f.write(str_sv)
+        f.write(str_sv + "\n")
+    with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
+        str_sv = "\n\n\n".join(
+            [nest_sv, c0_sv_direct, c1_sv_direct, a1_sv_direct, a0_sv_direct]
+        )
+        f.write(str_sv + "\n")
 
     total_mults = q1.shape[0] ** 2
     for steps in sy.divisors(total_mults):
