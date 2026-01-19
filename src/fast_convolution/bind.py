@@ -16,7 +16,7 @@ def cmd_build2d_bind_nest(repo):
     path = repo.dir_build / "bind-nest"
     path.mkdir(parents=True, exist_ok=True)
     build_data = read_build_2d(repo)
-    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+    (_, _), (c1, _), (_, _), (a1, _), _ = build_data
 
     write_bind(repo, "nest")
     with open(repo.file_gen) as f:
@@ -178,109 +178,14 @@ def cmd_build2d_bind_kron(repo):
     (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
     write_bind(repo, "kron")
-    with open(repo.file_gen) as f:
-        generator = json.load(f)
-    gen_text = vars(readme)[generator["generator"]]
 
-    a = utils.tensorprod(a1, a2)
-    c = utils.tensorprod(c1, c2)
-    q = utils.tensorprod(q1, q2)
-    text = (
-        f"Total multiplications: {q.shape[0]}\n"
-        f"Sums:\n"
-        f"A: {utils.count_sums(a)}\n"
-        f"C: {utils.count_sums(c)}\n"
-        f"Total: {utils.count_sums(a) + utils.count_sums(c)}\n"
+    repo.dir_sv.mkdir(exist_ok=True)
+    c_sv, a_sv = utils.sv_kron_modules(
+        c1,
+        a1,
+        c_types=("type_input", "type_weight"),
+        a_types=("type_weight", "type_output"),
+        import_pkg="packConv",
     )
-    with open(f"{path}_info.txt", "w") as f:
-        f.write(text)
-
-    readme_str = (
-        "# Fast Convolution\n"
-        "## Generator\n"
-        f"{gen_text}\n"
-        "## Bind\n"
-        f"{readme.bind_kron}\n"
-        "## Operations\n"
-        f"{text}"
-    )
-    with open(repo.dir_clib / "README.md", "w") as f:
-        f.write(readme_str)
-
-    csa_config = utils.csa_config(a, c)
-    utils.write_csa_config(csa_config, path / "csa")
-    csa_parcels = utils.csa_parcels(a, c)
-    utils.write_csa_parcels(csa_parcels, path / "csa")
-
-    list_array = [
-        {"name": "ma_kron", "value": a.T},
-        {"name": "mc_kron", "value": c.T},
-    ]
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    arr = [{**r, "type": "int"} for r in list_array]
-    utils.c_header(repo.dir_clib_data / "build.h", arr, {})
-
-    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "build_float.h", arr, {})
-
-    arr = [{**r, "type": "int"} for r in list_array]
-    utils.c_header(repo.dir_clib_data / "bind_kron.h", arr, {})
-
-    arr = [{**r, "type": "float"} for r in list_array]
-    utils.c_header(repo.dir_clib_data_float / "bind_kron_float.h", arr, {})
-
-    repo.dir_clib_main.mkdir(parents=True, exist_ok=True)
-    shutil.copy(
-        package_clib() / "src/int/standard.c", repo.dir_clib_main / "standard.c"
-    )
-    shutil.copy(
-        package_clib() / "src/int/filter2d-kron.c",
-        repo.dir_clib_main / "filter2d-kron.c",
-    )
-
-    matmul_a = utils.c_matmul_shift_noloop(a.T, "a")
-    matmul_c = utils.c_matmul_shift_noloop(c.T, "c")
-    hadamart = utils.c_hadamart_product_nollop(a.shape[0])
-
-    c_fun = (
-        '#include "optim.h"\n\n'
-        f"{matmul_a['function']}\n"
-        f"{matmul_c['function']}\n"
-        f"{hadamart['function']}\n"
-    )
-    c_head = (
-        '#ifndef C_OPTIM_H\n'
-        '#define C_OPTIM_H\n\n'
-        f"{matmul_a['header']}\n"
-        f"{matmul_c['header']}\n"
-        f"{hadamart['header']}\n"
-        '#endif //C_OPTIM_H'
-    )
-
-    lib_opt = "filter2d-kron-opt"
-    dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
-    dir_lib_opt.mkdir(parents=True, exist_ok=True)
-    dir_lib_opt_inc = dir_lib_opt / "include"
-    dir_lib_opt_inc.mkdir(parents=True, exist_ok=True)
-
-    with open(dir_lib_opt / "optim.c", "w") as f:
-        f.write(c_fun)
-    with open(dir_lib_opt_inc / "optim.h", "w") as f:
-        f.write(c_head)
-
-    target_opt = [
-        ["standard", None, 0],
-        ["filter2d-kron", None, 0],
-        ["filter2d-kron", lib_opt, 1],
-    ]
-
-    for target, name, opt in target_opt:
-        source = "" if name is None else "$(CURDIR)/lib"
-        include = "" if name is None else "$(CURDIR)/lib/include"
-        makefile_str = makefile(target, opt, source, include)
-        name_ = target if name is None else lib_opt
-        dir_clib_make = repo.dir_clib_make / name_
-        dir_clib_make.mkdir(parents=True, exist_ok=True)
-        with open(dir_clib_make / "Makefile", "w") as f:
-            f.write(makefile_str)
+    with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
+        f.write(f"{a_sv}\n\n\n{c_sv}\n")
