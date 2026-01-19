@@ -175,8 +175,8 @@ def _module_header_named(
         f"module {name}",
         f"  import {import_pkg}::*;",
         "  (",
-        f"    input  {type_in} P,",
-        f"    output {type_out} soma",
+        f"    input  {type_in} pin,",
+        f"    output {type_out} pout",
         "  );",
         "  timeunit 1ns;",
         "  timeprecision 1ps;",
@@ -359,18 +359,19 @@ def sv_kron_modules(
     c_types: Tuple[str, str] = ("type_weight", "type_weight"),
     a_types: Tuple[str, str] = ("type_weight", "type_output"),
     import_pkg: str = "packConv",
+    names: Tuple[str, str] = ("MatrixC", "MatrixA"),
 ) -> Tuple[str, str]:
     c_kron = np.kron(np.array(c_matrix), np.array(c_matrix)).T
     a_kron = np.kron(np.array(a_matrix), np.array(a_matrix)).T
     c_module = _sv_kron_module(
-        "MatrixC",
+        names[0],
         c_kron,
         c_types[0],
         c_types[1],
         import_pkg,
     )
     a_module = _sv_kron_module(
-        "MatrixA",
+        names[1],
         a_kron,
         a_types[0],
         a_types[1],
@@ -385,18 +386,19 @@ def sv_kron_modules_direct(
     c_types: Tuple[str, str] = ("type_weight", "type_weight"),
     a_types: Tuple[str, str] = ("type_weight", "type_output"),
     import_pkg: str = "packConv",
+    names: Tuple[str, str] = ("MatrixC", "MatrixA"),
 ) -> Tuple[str, str]:
     c_kron = np.kron(np.array(c_matrix), np.array(c_matrix)).T
     a_kron = np.kron(np.array(a_matrix), np.array(a_matrix)).T
     c_module = _sv_kron_module_direct(
-        "MatrixC",
+        names[0],
         c_kron,
         c_types[0],
         c_types[1],
         import_pkg,
     )
     a_module = _sv_kron_module_direct(
-        "MatrixA",
+        names[1],
         a_kron,
         a_types[0],
         a_types[1],
@@ -425,7 +427,7 @@ def _sv_kron_module(
         for col, weight in enumerate(row):
             if weight == 0:
                 continue
-            term = f"P[{col}]"
+            term = f"pin[{col}]"
             if weight > 0:
                 pos_terms.append(term)
                 pos_weights.append(int(weight))
@@ -452,7 +454,7 @@ def _sv_kron_module(
             neg_inputs.extend(sv_bitshift(term, weight))
 
         if pos_inputs:
-            dest = f"cp[{idx}]" if has_neg else f"soma[{idx}]"
+            dest = f"cp[{idx}]" if has_neg else f"pout[{idx}]"
             lines.append(
                 f"  CSA_{len(pos_inputs)} sp{idx} ({', '.join(pos_inputs)},  {dest});"
             )
@@ -463,13 +465,13 @@ def _sv_kron_module(
             )
         if has_neg:
             if pos_inputs and neg_inputs:
-                lines.append(f"  assign soma[{idx}] =  cp[{idx}] - cn[{idx}];")
+                lines.append(f"  assign pout[{idx}] =  cp[{idx}] - cn[{idx}];")
             elif pos_inputs:
-                lines.append(f"  assign soma[{idx}] =  cp[{idx}];")
+                lines.append(f"  assign pout[{idx}] =  cp[{idx}];")
             elif neg_inputs:
-                lines.append(f"  assign soma[{idx}] = -cn[{idx}];")
+                lines.append(f"  assign pout[{idx}] = -cn[{idx}];")
             else:
-                lines.append(f"  assign soma[{idx}] = 0;")
+                lines.append(f"  assign pout[{idx}] = 0;")
         lines.append("")
 
     while lines and lines[-1] == "":
@@ -497,7 +499,7 @@ def _sv_kron_module_direct(
         for col, weight in enumerate(row):
             if weight == 0:
                 continue
-            term = f"P[{col}]"
+            term = f"pin[{col}]"
             if weight > 0:
                 pos_terms.append(term)
                 pos_weights.append(int(weight))
@@ -518,7 +520,7 @@ def _sv_kron_module_direct(
             expr = f"-({neg_expr})"
         else:
             expr = "0"
-        lines.append(f"  assign soma[{idx}] = {expr};")
+        lines.append(f"  assign pout[{idx}] = {expr};")
 
     module_str = "\n".join(header_lines + [""] + lines + ["endmodule"])
     return module_str
