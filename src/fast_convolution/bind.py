@@ -185,14 +185,14 @@ def cmd_build2d_bind_kron(repo):
         a1,
         c_types=("type_input", "type_weight"),
         a_types=("type_weight", "type_output"),
-        import_pkg="packConv",
+        import_pkg="pack_typedef",
     )
     c_sv_direct, a_sv_direct = utils.sv_kron_modules_direct(
         c1,
         a1,
         c_types=("type_input", "type_weight"),
         a_types=("type_weight", "type_output"),
-        import_pkg="packConv",
+        import_pkg="pack_typedef",
     )
     with open(repo.dir_sv / "mult_matrices_csa.sv", "w") as f:
         f.write(f"{a_sv}\n\n\n{c_sv}\n")
