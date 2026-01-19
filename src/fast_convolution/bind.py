@@ -175,7 +175,7 @@ def cmd_build2d_bind_kron(repo):
     path = repo.dir_build / "bind-kron"
     path.mkdir(parents=True, exist_ok=True)
     build_data = read_build_2d(repo)
-    (p1, p2), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
+    (_, _), (c1, _), (_, _), (a1, _), (q1, q2) = build_data
 
     write_bind(repo, "kron")
 
@@ -198,3 +198,9 @@ def cmd_build2d_bind_kron(repo):
         f.write(f"{a_sv}\n\n\n{c_sv}\n")
     with open(repo.dir_sv / "mult_matrices_kron.sv", "w") as f:
         f.write(f"{a_sv_direct}\n\n\n{c_sv_direct}\n")
+
+    total_mults = q1.shape[0] * q2.shape[0]
+    for steps in sy.divisors(total_mults):
+        sv_mux_mult = utils.sv_mux_mult(total_mults, steps)
+        with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
+            f.write(sv_mux_mult)
