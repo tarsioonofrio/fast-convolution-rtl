@@ -379,6 +379,32 @@ def sv_kron_modules(
     return c_module, a_module
 
 
+def sv_kron_modules_direct(
+    c_matrix: sy.Matrix,
+    a_matrix: sy.Matrix,
+    c_types: Tuple[str, str] = ("type_weight", "type_weight"),
+    a_types: Tuple[str, str] = ("type_weight", "type_output"),
+    import_pkg: str = "packConv",
+) -> Tuple[str, str]:
+    c_kron = np.kron(np.array(c_matrix), np.array(c_matrix)).T
+    a_kron = np.kron(np.array(a_matrix), np.array(a_matrix)).T
+    c_module = _sv_kron_module_direct(
+        "MatrixC",
+        c_kron,
+        c_types[0],
+        c_types[1],
+        import_pkg,
+    )
+    a_module = _sv_kron_module_direct(
+        "MatrixA",
+        a_kron,
+        a_types[0],
+        a_types[1],
+        import_pkg,
+    )
+    return c_module, a_module
+
+
 def _sv_kron_module(
     name: str,
     matrix: np.ndarray,
@@ -448,6 +474,51 @@ def _sv_kron_module(
 
     while lines and lines[-1] == "":
         lines.pop()
+
+    module_str = "\n".join(header_lines + [""] + lines + ["endmodule"])
+    return module_str
+
+
+def _sv_kron_module_direct(
+    name: str,
+    matrix: np.ndarray,
+    type_in: str,
+    type_out: str,
+    import_pkg: str,
+) -> str:
+    header_lines = _module_header_named(name, type_in, type_out, import_pkg)
+    arr = np.array(matrix)
+    lines = []
+    for idx, row in enumerate(arr):
+        pos_terms = []
+        pos_weights = []
+        neg_terms = []
+        neg_weights = []
+        for col, weight in enumerate(row):
+            if weight == 0:
+                continue
+            term = f"P[{col}]"
+            if weight > 0:
+                pos_terms.append(term)
+                pos_weights.append(int(weight))
+            else:
+                neg_terms.append(term)
+                neg_weights.append(int(weight))
+
+        pos_expr = _format_weighted_sum(pos_terms, pos_weights)
+        neg_expr = _format_weighted_sum(
+            neg_terms,
+            [abs(weight) for weight in neg_weights],
+        )
+        if pos_expr != "0" and neg_expr != "0":
+            expr = f"{pos_expr} - ({neg_expr})"
+        elif pos_expr != "0":
+            expr = pos_expr
+        elif neg_expr != "0":
+            expr = f"-({neg_expr})"
+        else:
+            expr = "0"
+        lines.append(f"  assign soma[{idx}] = {expr};")
 
     module_str = "\n".join(header_lines + [""] + lines + ["endmodule"])
     return module_str

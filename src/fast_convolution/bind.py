@@ -16,7 +16,7 @@ def cmd_build2d_bind_nest(repo):
     path = repo.dir_build / "bind-nest"
     path.mkdir(parents=True, exist_ok=True)
     build_data = read_build_2d(repo)
-    (_, _), (c1, _), (_, _), (a1, _), _ = build_data
+    (_, _), (c1, c2), (b1, b2), (a1, a2), (q1, q2) = build_data
 
     write_bind(repo, "nest")
     with open(repo.file_gen) as f:
@@ -187,5 +187,14 @@ def cmd_build2d_bind_kron(repo):
         a_types=("type_weight", "type_output"),
         import_pkg="packConv",
     )
-    with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
+    c_sv_direct, a_sv_direct = utils.sv_kron_modules_direct(
+        c1,
+        a1,
+        c_types=("type_input", "type_weight"),
+        a_types=("type_weight", "type_output"),
+        import_pkg="packConv",
+    )
+    with open(repo.dir_sv / "mult_matrices_kron_csa.sv", "w") as f:
         f.write(f"{a_sv}\n\n\n{c_sv}\n")
+    with open(repo.dir_sv / "mult_matrices_kron.sv", "w") as f:
+        f.write(f"{a_sv_direct}\n\n\n{c_sv_direct}\n")
