@@ -194,9 +194,9 @@ def cmd_build2d_bind_kron(repo):
         a_types=("type_weight", "type_output"),
         import_pkg="packConv",
     )
-    with open(repo.dir_sv / "mult_matrices_kron_csa.sv", "w") as f:
+    with open(repo.dir_sv / "mult_matrices_csa.sv", "w") as f:
         f.write(f"{a_sv}\n\n\n{c_sv}\n")
-    with open(repo.dir_sv / "mult_matrices_kron.sv", "w") as f:
+    with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
         f.write(f"{a_sv_direct}\n\n\n{c_sv_direct}\n")
 
     total_mults = q1.shape[0] * q2.shape[0]
