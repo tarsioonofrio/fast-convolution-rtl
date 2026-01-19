@@ -165,6 +165,24 @@ def _module_header(name: str, idx: int, type_in: str, type_out: str) -> List[str
     ]
 
 
+def _module_header_named(
+    name: str,
+    type_in: str,
+    type_out: str,
+    import_pkg: str,
+) -> List[str]:
+    return [
+        f"module {name}",
+        f"  import {import_pkg}::*;",
+        "  (",
+        f"    input  {type_in} P,",
+        f"    output {type_out} soma",
+        "  );",
+        "  timeunit 1ns;",
+        "  timeprecision 1ps;",
+    ]
+
+
 def _filter_terms_weights(terms, weights):
     filtered_terms = []
     filtered_weights = []
@@ -333,6 +351,106 @@ def sv_nest_direct(
         module_str = "\n".join(header_lines + [""] + spaced_lines + ["endmodule"])
         modules.append(module_str)
     return tuple(modules)
+
+
+def sv_kron_modules(
+    c_matrix: sy.Matrix,
+    a_matrix: sy.Matrix,
+    c_types: Tuple[str, str] = ("type_weight", "type_weight"),
+    a_types: Tuple[str, str] = ("type_weight", "type_output"),
+    import_pkg: str = "packConv",
+) -> Tuple[str, str]:
+    c_kron = np.kron(np.array(c_matrix), np.array(c_matrix)).T
+    a_kron = np.kron(np.array(a_matrix), np.array(a_matrix)).T
+    c_module = _sv_kron_module(
+        "MatrixC",
+        c_kron,
+        c_types[0],
+        c_types[1],
+        import_pkg,
+    )
+    a_module = _sv_kron_module(
+        "MatrixA",
+        a_kron,
+        a_types[0],
+        a_types[1],
+        import_pkg,
+    )
+    return c_module, a_module
+
+
+def _sv_kron_module(
+    name: str,
+    matrix: np.ndarray,
+    type_in: str,
+    type_out: str,
+    import_pkg: str,
+) -> str:
+    header_lines = _module_header_named(name, type_in, type_out, import_pkg)
+    arr = np.array(matrix)
+    pos_rows = []
+    neg_rows = []
+    has_neg = False
+    for row in arr:
+        pos_terms = []
+        pos_weights = []
+        neg_terms = []
+        neg_weights = []
+        for col, weight in enumerate(row):
+            if weight == 0:
+                continue
+            term = f"P[{col}]"
+            if weight > 0:
+                pos_terms.append(term)
+                pos_weights.append(int(weight))
+            else:
+                neg_terms.append(term)
+                neg_weights.append(int(weight))
+                has_neg = True
+        pos_rows.append((pos_terms, pos_weights))
+        neg_rows.append((neg_terms, neg_weights))
+
+    lines = []
+    if has_neg:
+        lines.append(f"  {type_out} cp, cn;")
+        lines.append("")
+
+    for idx, ((p_terms, p_weights), (n_terms, n_weights)) in enumerate(
+        zip(pos_rows, neg_rows)
+    ):
+        pos_inputs = []
+        for term, weight in zip(p_terms, p_weights):
+            pos_inputs.extend(sv_bitshift(term, weight))
+        neg_inputs = []
+        for term, weight in zip(n_terms, n_weights):
+            neg_inputs.extend(sv_bitshift(term, weight))
+
+        if pos_inputs:
+            dest = f"cp[{idx}]" if has_neg else f"soma[{idx}]"
+            lines.append(
+                f"  CSA_{len(pos_inputs)} sp{idx} ({', '.join(pos_inputs)},  {dest});"
+            )
+        if neg_inputs:
+            dest = f"cn[{idx}]"
+            lines.append(
+                f"  CSA_{len(neg_inputs)} sn{idx} ({', '.join(neg_inputs)}, {dest} );"
+            )
+        if has_neg:
+            if pos_inputs and neg_inputs:
+                lines.append(f"  assign soma[{idx}] =  cp[{idx}] - cn[{idx}];")
+            elif pos_inputs:
+                lines.append(f"  assign soma[{idx}] =  cp[{idx}];")
+            elif neg_inputs:
+                lines.append(f"  assign soma[{idx}] = -cn[{idx}];")
+            else:
+                lines.append(f"  assign soma[{idx}] = 0;")
+        lines.append("")
+
+    while lines and lines[-1] == "":
+        lines.pop()
+
+    module_str = "\n".join(header_lines + [""] + lines + ["endmodule"])
+    return module_str
 
 
 def sv_mux_mult(total: int, step: int) -> str:
