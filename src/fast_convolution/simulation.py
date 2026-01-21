@@ -636,6 +636,7 @@ def sim(payload: SimulationPayload):
         bias=bias_quant_tensor,
         stride=1,
     )
+    output_default_quant_relu = torch.relu(output_default_quant)
     output_shape = [output_default.shape[-1], output_default.shape[-2]]
     core = _simulate_core(payload, wght_quant, output_shape, quant_bits)
 
@@ -686,6 +687,7 @@ def sim(payload: SimulationPayload):
         ("g", _prepend_bias(wght_quant, bias_dense)),
         ("s", core.output_fast),
         ("s_default_quant", output_default_quant),
+        ("s_default_quant_relu", output_default_quant_relu),
     ]
     if bias_quant is not None:
         dense_exports.append(("bias", bias_quant))
