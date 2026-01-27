@@ -1,0 +1,59 @@
+\documentclass{article}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{amsmath}%
+%
+\usepackage[a3paper,landscape]{geometry}%
+\title{Numeric Nested 2D Convolution}%
+\author{Fast{-}Convolution Python Library}%
+\date{\today}%
+%
+\begin{document}%
+\normalsize%
+\maketitle%
+\[%
+s=a_1^t \{[(q_1 \odot b_1) g (q_2 \odot b_2)^t] \odot (c_1^t d c_2)\}a_2%
+\]%
+\[%
+d = \left[\begin{matrix}0 & 1 & 2 & 3 & 4 & 5\\6 & 7 & 8 & 9 & 10 & 11\\12 & 13 & 14 & 15 & 16 & 17\\18 & 19 & 20 & 21 & 22 & 23\\24 & 25 & 26 & 27 & 28 & 29\\30 & 31 & 32 & 33 & 34 & 35\end{matrix}\right]%
+\]%
+\[%
+g = \left[\begin{matrix}0 & 1 & 2\\3 & 4 & 5\\6 & 7 & 8\end{matrix}\right]%
+\]%
+\[%
+G = (q_1 \odot b_1) g (q_2 \odot b_2)^t%
+\]%
+\[%
+\left[\begin{matrix}\gamma_{0} & \gamma_{1} & \gamma_{2} & \gamma_{3} & \gamma_{4} & \gamma_{5} & \gamma_{6} & \gamma_{7}\\\gamma_{8} & \gamma_{9} & \gamma_{10} & \gamma_{11} & \gamma_{12} & \gamma_{13} & \gamma_{14} & \gamma_{15}\\\gamma_{16} & \gamma_{17} & \gamma_{18} & \gamma_{19} & \gamma_{20} & \gamma_{21} & \gamma_{22} & \gamma_{23}\end{matrix}\right] = \left[\begin{matrix}0 & 1 & \frac{3}{2} & \frac{1}{2} & -1 & - \frac{1}{2} & \frac{1}{2} & 2\\3 & 4 & 6 & 2 & -1 & 1 & 2 & 5\\6 & 7 & \frac{21}{2} & \frac{7}{2} & -1 & \frac{5}{2} & \frac{7}{2} & 8\end{matrix}\right] = \left[\begin{matrix}0 & 1 & 2\\3 & 4 & 5\\6 & 7 & 8\end{matrix}\right] \odot \left[\begin{matrix}1 & \frac{1}{2} & \frac{1}{2} & 0 & \frac{1}{2} & \frac{1}{2} & 0 & 0\\0 & 0 & \frac{1}{2} & \frac{1}{2} & 0 & \frac{1}{2} & \frac{1}{2} & 0\\0 & \frac{1}{2} & \frac{1}{2} & 0 & - \frac{1}{2} & - \frac{1}{2} & 0 & 1\end{matrix}\right] = \left[\begin{matrix}0 & 1 & 2\\3 & 4 & 5\\6 & 7 & 8\end{matrix}\right] \left( \left[\begin{matrix}1\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\1\end{matrix}\right] \odot \left[\begin{matrix}1 & 0 & 0\\1 & 0 & 1\\1 & 1 & 1\\0 & 1 & 0\\1 & 0 & -1\\1 & 1 & -1\\0 & 1 & 0\\0 & 0 & 1\end{matrix}\right] \right)^t%
+\]%
+\[%
+\left[\begin{matrix}G_{0} & G_{1} & G_{2} & G_{3} & G_{4} & G_{5} & G_{6} & G_{7}\\G_{8} & G_{9} & G_{10} & G_{11} & G_{12} & G_{13} & G_{14} & G_{15}\\G_{16} & G_{17} & G_{18} & G_{19} & G_{20} & G_{21} & G_{22} & G_{23}\\G_{24} & G_{25} & G_{26} & G_{27} & G_{28} & G_{29} & G_{30} & G_{31}\\G_{32} & G_{33} & G_{34} & G_{35} & G_{36} & G_{37} & G_{38} & G_{39}\\G_{40} & G_{41} & G_{42} & G_{43} & G_{44} & G_{45} & G_{46} & G_{47}\\G_{48} & G_{49} & G_{50} & G_{51} & G_{52} & G_{53} & G_{54} & G_{55}\\G_{56} & G_{57} & G_{58} & G_{59} & G_{60} & G_{61} & G_{62} & G_{63}\end{matrix}\right] = \left[\begin{matrix}0 & 1 & \frac{3}{2} & \frac{1}{2} & -1 & - \frac{1}{2} & \frac{1}{2} & 2\\3 & 4 & 6 & 2 & -1 & 1 & 2 & 5\\\frac{9}{2} & 6 & 9 & 3 & - \frac{3}{2} & \frac{3}{2} & 3 & \frac{15}{2}\\\frac{3}{2} & 2 & 3 & 1 & - \frac{1}{2} & \frac{1}{2} & 1 & \frac{5}{2}\\-3 & -3 & - \frac{9}{2} & - \frac{3}{2} & 0 & - \frac{3}{2} & - \frac{3}{2} & -3\\- \frac{3}{2} & -1 & - \frac{3}{2} & - \frac{1}{2} & - \frac{1}{2} & -1 & - \frac{1}{2} & - \frac{1}{2}\\\frac{3}{2} & 2 & 3 & 1 & - \frac{1}{2} & \frac{1}{2} & 1 & \frac{5}{2}\\6 & 7 & \frac{21}{2} & \frac{7}{2} & -1 & \frac{5}{2} & \frac{7}{2} & 8\end{matrix}\right] = \left[\begin{matrix}1 & 0 & 0\\\frac{1}{2} & 0 & \frac{1}{2}\\\frac{1}{2} & \frac{1}{2} & \frac{1}{2}\\0 & \frac{1}{2} & 0\\\frac{1}{2} & 0 & - \frac{1}{2}\\\frac{1}{2} & \frac{1}{2} & - \frac{1}{2}\\0 & \frac{1}{2} & 0\\0 & 0 & 1\end{matrix}\right] \odot \left[\begin{matrix}0 & 1 & \frac{3}{2} & \frac{1}{2} & -1 & - \frac{1}{2} & \frac{1}{2} & 2\\3 & 4 & 6 & 2 & -1 & 1 & 2 & 5\\6 & 7 & \frac{21}{2} & \frac{7}{2} & -1 & \frac{5}{2} & \frac{7}{2} & 8\end{matrix}\right] = \left( \left[\begin{matrix}1\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\\frac{1}{2}\\1\end{matrix}\right] \odot \left[\begin{matrix}1 & 0 & 0\\1 & 0 & 1\\1 & 1 & 1\\0 & 1 & 0\\1 & 0 & -1\\1 & 1 & -1\\0 & 1 & 0\\0 & 0 & 1\end{matrix}\right] \right) \left[\begin{matrix}\gamma_{0} & \gamma_{1} & \gamma_{2} & \gamma_{3} & \gamma_{4} & \gamma_{5} & \gamma_{6} & \gamma_{7}\\\gamma_{8} & \gamma_{9} & \gamma_{10} & \gamma_{11} & \gamma_{12} & \gamma_{13} & \gamma_{14} & \gamma_{15}\\\gamma_{16} & \gamma_{17} & \gamma_{18} & \gamma_{19} & \gamma_{20} & \gamma_{21} & \gamma_{22} & \gamma_{23}\end{matrix}\right]%
+\]%
+\[%
+D = c_1^t d c_2%
+\]%
+\[%
+\left[\begin{matrix}\delta_{0} & \delta_{1} & \delta_{2} & \delta_{3} & \delta_{4} & \delta_{5} & \delta_{6} & \delta_{7}\\\delta_{8} & \delta_{9} & \delta_{10} & \delta_{11} & \delta_{12} & \delta_{13} & \delta_{14} & \delta_{15}\\\delta_{16} & \delta_{17} & \delta_{18} & \delta_{19} & \delta_{20} & \delta_{21} & \delta_{22} & \delta_{23}\\\delta_{24} & \delta_{25} & \delta_{26} & \delta_{27} & \delta_{28} & \delta_{29} & \delta_{30} & \delta_{31}\\\delta_{32} & \delta_{33} & \delta_{34} & \delta_{35} & \delta_{36} & \delta_{37} & \delta_{38} & \delta_{39}\\\delta_{40} & \delta_{41} & \delta_{42} & \delta_{43} & \delta_{44} & \delta_{45} & \delta_{46} & \delta_{47}\end{matrix}\right] = \left[\begin{matrix}-4 & 2 & 4 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 16 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 28 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 40 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 52 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 64 & 2 & 4 & -2 & 0 & 4\end{matrix}\right] = \left[\begin{matrix}0 & 1 & 2 & 3 & 4 & 5\\6 & 7 & 8 & 9 & 10 & 11\\12 & 13 & 14 & 15 & 16 & 17\\18 & 19 & 20 & 21 & 22 & 23\\24 & 25 & 26 & 27 & 28 & 29\\30 & 31 & 32 & 33 & 34 & 35\end{matrix}\right] \left[\begin{matrix}1 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\0 & -1 & 1 & -1 & -1 & 1 & -1 & -1\\0 & 1 & 0 & 1 & -1 & 0 & 1 & 0\\0 & -1 & 1 & -1 & 1 & -1 & 1 & 0\\-1 & 1 & 0 & 1 & 1 & 0 & -1 & 0\\0 & 0 & 0 & 0 & 0 & 0 & 0 & 1\end{matrix}\right]%
+\]%
+\[%
+\left[\begin{matrix}D_{0} & D_{1} & D_{2} & D_{3} & D_{4} & D_{5} & D_{6} & D_{7}\\D_{8} & D_{9} & D_{10} & D_{11} & D_{12} & D_{13} & D_{14} & D_{15}\\D_{16} & D_{17} & D_{18} & D_{19} & D_{20} & D_{21} & D_{22} & D_{23}\\D_{24} & D_{25} & D_{26} & D_{27} & D_{28} & D_{29} & D_{30} & D_{31}\\D_{32} & D_{33} & D_{34} & D_{35} & D_{36} & D_{37} & D_{38} & D_{39}\\D_{40} & D_{41} & D_{42} & D_{43} & D_{44} & D_{45} & D_{46} & D_{47}\\D_{48} & D_{49} & D_{50} & D_{51} & D_{52} & D_{53} & D_{54} & D_{55}\\D_{56} & D_{57} & D_{58} & D_{59} & D_{60} & D_{61} & D_{62} & D_{63}\end{matrix}\right] = \left[\begin{matrix}0 & 0 & -48 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 24 & 0 & 0 & 0 & 0 & 0\\-8 & 4 & 56 & 4 & 8 & -4 & 0 & 8\\0 & 0 & 24 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 48 & 0 & 0 & 0 & 0 & 0\\0 & 0 & -24 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 48 & 0 & 0 & 0 & 0 & 0\end{matrix}\right] = \left[\begin{matrix}1 & 0 & 0 & 0 & -1 & 0\\0 & -1 & 1 & -1 & 1 & 0\\0 & 1 & 0 & 1 & 0 & 0\\0 & -1 & 1 & -1 & 1 & 0\\0 & -1 & -1 & 1 & 1 & 0\\0 & 1 & 0 & -1 & 0 & 0\\0 & -1 & 1 & 1 & -1 & 0\\0 & -1 & 0 & 0 & 0 & 1\end{matrix}\right] \left[\begin{matrix}-4 & 2 & 4 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 16 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 28 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 40 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 52 & 2 & 4 & -2 & 0 & 4\\-4 & 2 & 64 & 2 & 4 & -2 & 0 & 4\end{matrix}\right]%
+\]%
+\[%
+S = G \odot D%
+\]%
+\[%
+\left[\begin{matrix}0 & 0 & -72 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 144 & 0 & 0 & 0 & 0 & 0\\-36 & 24 & 504 & 12 & -12 & -6 & 0 & 60\\0 & 0 & 72 & 0 & 0 & 0 & 0 & 0\\0 & 0 & -216 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 36 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 504 & 0 & 0 & 0 & 0 & 0\end{matrix}\right] = \left[\begin{matrix}0 & 1 & \frac{3}{2} & \frac{1}{2} & -1 & - \frac{1}{2} & \frac{1}{2} & 2\\3 & 4 & 6 & 2 & -1 & 1 & 2 & 5\\\frac{9}{2} & 6 & 9 & 3 & - \frac{3}{2} & \frac{3}{2} & 3 & \frac{15}{2}\\\frac{3}{2} & 2 & 3 & 1 & - \frac{1}{2} & \frac{1}{2} & 1 & \frac{5}{2}\\-3 & -3 & - \frac{9}{2} & - \frac{3}{2} & 0 & - \frac{3}{2} & - \frac{3}{2} & -3\\- \frac{3}{2} & -1 & - \frac{3}{2} & - \frac{1}{2} & - \frac{1}{2} & -1 & - \frac{1}{2} & - \frac{1}{2}\\\frac{3}{2} & 2 & 3 & 1 & - \frac{1}{2} & \frac{1}{2} & 1 & \frac{5}{2}\\6 & 7 & \frac{21}{2} & \frac{7}{2} & -1 & \frac{5}{2} & \frac{7}{2} & 8\end{matrix}\right] \odot \left[\begin{matrix}0 & 0 & -48 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 24 & 0 & 0 & 0 & 0 & 0\\-8 & 4 & 56 & 4 & 8 & -4 & 0 & 8\\0 & 0 & 24 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 48 & 0 & 0 & 0 & 0 & 0\\0 & 0 & -24 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 48 & 0 & 0 & 0 & 0 & 0\end{matrix}\right]%
+\]%
+\[%
+s = a_1^t S a_2%
+\]%
+\[%
+\left[\begin{matrix}\sigma_{0} & \sigma_{1} & \sigma_{2} & \sigma_{3}\\\sigma_{4} & \sigma_{5} & \sigma_{6} & \sigma_{7}\\\sigma_{8} & \sigma_{9} & \sigma_{10} & \sigma_{11}\\\sigma_{12} & \sigma_{13} & \sigma_{14} & \sigma_{15}\\\sigma_{16} & \sigma_{17} & \sigma_{18} & \sigma_{19}\\\sigma_{20} & \sigma_{21} & \sigma_{22} & \sigma_{23}\\\sigma_{24} & \sigma_{25} & \sigma_{26} & \sigma_{27}\\\sigma_{28} & \sigma_{29} & \sigma_{30} & \sigma_{31}\end{matrix}\right] = \left[\begin{matrix}-72 & -72 & -72 & -72\\144 & 144 & 144 & 144\\474 & 510 & 546 & 582\\72 & 72 & 72 & 72\\-216 & -216 & -216 & -216\\36 & 36 & 36 & 36\\0 & 0 & 0 & 0\\504 & 504 & 504 & 504\end{matrix}\right] = \left[\begin{matrix}0 & 0 & -72 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 144 & 0 & 0 & 0 & 0 & 0\\-36 & 24 & 504 & 12 & -12 & -6 & 0 & 60\\0 & 0 & 72 & 0 & 0 & 0 & 0 & 0\\0 & 0 & -216 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 36 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\0 & 0 & 504 & 0 & 0 & 0 & 0 & 0\end{matrix}\right] \left[\begin{matrix}1 & 0 & 0 & 0\\1 & 0 & 1 & 0\\1 & 1 & 1 & 1\\0 & 1 & 0 & 1\\1 & 0 & -1 & 0\\1 & 1 & -1 & -1\\0 & 1 & 0 & -1\\0 & 0 & 0 & 1\end{matrix}\right]%
+\]%
+\[%
+\left[\begin{matrix}s_{0} & s_{1} & s_{2} & s_{3}\\s_{4} & s_{5} & s_{6} & s_{7}\\s_{8} & s_{9} & s_{10} & s_{11}\\s_{12} & s_{13} & s_{14} & s_{15}\end{matrix}\right] = \left[\begin{matrix}366 & 402 & 438 & 474\\582 & 618 & 654 & 690\\798 & 834 & 870 & 906\\1014 & 1050 & 1086 & 1122\end{matrix}\right] = \left[\begin{matrix}1 & 1 & 1 & 0 & 1 & 1 & 0 & 0\\0 & 0 & 1 & 1 & 0 & 1 & 1 & 0\\0 & 1 & 1 & 0 & -1 & -1 & 0 & 0\\0 & 0 & 1 & 1 & 0 & -1 & -1 & 1\end{matrix}\right] \left[\begin{matrix}-72 & -72 & -72 & -72\\144 & 144 & 144 & 144\\474 & 510 & 546 & 582\\72 & 72 & 72 & 72\\-216 & -216 & -216 & -216\\36 & 36 & 36 & 36\\0 & 0 & 0 & 0\\504 & 504 & 504 & 504\end{matrix}\right]%
+\]%
+\end{document}

@@ -43,6 +43,23 @@ def cmd_build_manual_factorization1d(repo):
         )
 
 
+def cmd_build_tolimlin_4x3(repo):
+    dim, c_len, b_len, a_len = read_init(repo)
+    list_points = [1]
+    c, q, b, a = fast.conv_tolimlin_4x3()
+    build1d(
+        repo, list_points, a, b, c, q, b_len, c_len, readme.tolimlin_4x3
+    )
+    header_init(repo, dim, a_len, b_len, c_len, len(q))
+    with open(repo.file_gen, "w", encoding="utf-8") as f:
+        json.dump(
+            {"generator": "tolimlin_4x3"},
+            f,
+            ensure_ascii=False,
+            indent=4,
+        )
+
+
 def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     d = sy.Matrix(sy.symbols(" ".join(f"d_{i}" for i in range(c_len))))
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(b_len))))
@@ -231,6 +248,37 @@ def cmd_build_manual_factorization2d(repo):
     with open(repo.file_gen, "w", encoding="utf-8") as f:
         json.dump(
             {"generator": "manual_factorization"},
+            f,
+            ensure_ascii=False,
+            indent=4,
+        )
+
+
+def cmd_build_tolimlin_4x3_2d(repo):
+    dim, c_len, b_len, a_len = read_init(repo)
+    list_points1d = [1]
+    list_points2d = [1]
+    c1, q1, b1, a1 = fast.conv_tolimlin_4x3()
+    c2, q2, b2, a2 = fast.conv_tolimlin_4x3()
+    build2d(
+        repo,
+        list_points2d,
+        list_points1d,
+        a1,
+        b1,
+        c1,
+        q1,
+        a2,
+        b2,
+        c2,
+        q2,
+        b_len,
+        c_len,
+    )
+    header_init(repo, dim, a_len[0], b_len[0], c_len[0], len(q1))
+    with open(repo.file_gen, "w", encoding="utf-8") as f:
+        json.dump(
+            {"generator": "tolimlin_4x3"},
             f,
             ensure_ascii=False,
             indent=4,

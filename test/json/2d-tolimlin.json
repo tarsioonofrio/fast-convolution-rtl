@@ -1,0 +1,5 @@
+{
+  "init": ["init", "2d", "-o", "4"],
+  "build": ["build", "2d", "tolimlin4x3"],
+  "bind": ["build", "2d", "bind", "nest"]
+}

@@ -16,7 +16,9 @@ from .commands import (
     cmd_build2d_bind_kron,
     cmd_build2d_bind_nest,
     cmd_build_manual_factorization1d,
+    cmd_build_tolimlin_4x3,
     cmd_build_manual_factorization2d,
+    cmd_build_tolimlin_4x3_2d,
     cmd_build_toom_cook1d,
     cmd_build_toom_cook2d,
     cmd_example_list,
@@ -107,6 +109,12 @@ def handle_build_manual1d(args):
     return 0
 
 
+def handle_build_tolimlin_4x3(args):
+    cmd_build_tolimlin_4x3(args.repo)
+    print("Build 1D Tolimieri 4x3")
+    return 0
+
+
 def handle_build_toom_cook2d(args):
     init_data = read_init_if_exists(args.repo)
     size = init_data.get("c", 1)
@@ -130,6 +138,12 @@ def handle_build_toom_cook2d(args):
 def handle_build_manual2d(args):
     cmd_build_manual_factorization2d(args.repo)
     print("Build 2D manual factorization")
+    return 0
+
+
+def handle_build_tolimlin_4x3_2d(args):
+    cmd_build_tolimlin_4x3_2d(args.repo)
+    print("Build 2D Tolimieri 4x3")
     return 0
 
 
@@ -270,6 +284,12 @@ def _build_1d_build_parser(build_sub):
     manual = build_1d_sub.add_parser("manual", help="Build 1D manual factorization (6 multiplications).")
     manual.set_defaults(func=handle_build_manual1d)
 
+    tolimlin = build_1d_sub.add_parser(
+        "tolimlin-4x3",
+        help="Build 1D Tolimieri linear convolution (4x3).",
+    )
+    tolimlin.set_defaults(func=handle_build_tolimlin_4x3)
+
 
 def _build_2d_build_parser(build_sub):
     build_2d = build_sub.add_parser("2d", help="2D build commands.")
@@ -297,6 +317,12 @@ def _build_2d_build_parser(build_sub):
 
     manual = build_2d_sub.add_parser("manual", help="Build 2D manual factorization (6x6 multiplications).")
     manual.set_defaults(func=handle_build_manual2d)
+
+    tolimlin = build_2d_sub.add_parser(
+        "tolimlin4x3",
+        help="Build 2D Tolimieri linear convolution (4x3).",
+    )
+    tolimlin.set_defaults(func=handle_build_tolimlin_4x3_2d)
 
     bind = build_2d_sub.add_parser("bind", help="Bind multiple dimensions.")
     bind_sub = bind.add_subparsers(dest="bind_command", metavar="method")

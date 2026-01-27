@@ -6,6 +6,8 @@ from .build import (
     build2d,
     cmd_build_manual_factorization1d,
     cmd_build_manual_factorization2d,
+    cmd_build_tolimlin_4x3,
+    cmd_build_tolimlin_4x3_2d,
     cmd_build_toom_cook1d,
     cmd_build_toom_cook2d,
 )
@@ -49,8 +51,10 @@ __all__ = [
     # build
     "cmd_build_toom_cook1d",
     "cmd_build_manual_factorization1d",
+    "cmd_build_tolimlin_4x3",
     "cmd_build_toom_cook2d",
     "cmd_build_manual_factorization2d",
+    "cmd_build_tolimlin_4x3_2d",
     "build1d",
     "build2d",
     # bind
