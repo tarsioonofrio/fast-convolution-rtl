@@ -29,6 +29,62 @@ def conv_manual_factorization():
     return c, q, b, a
 
 
+def conv_tolimlin_4x3():
+    """
+    Tolimieri linear convolution (4x3) exported from maple-pkg-convolution.
+
+    Construction:
+      factors = [x, x**2 - 1, x**2 + 1]
+      algorithm = conv.TolimLin(4, factors, x, rhs_length=3)
+
+    The matrix Q holds one denominator per column of C (factored out) so that
+    the Hadamard stage uses Q * diag(Bg).
+    """
+    _c = [
+        [1, 0, 0, 0, 0, 0, 0, 0],
+        [0, -1, 1, -1, -1, 1, -1, -1],
+        [0, 1, 0, 1, -1, 0, 1, 0],
+        [0, -1, 1, -1, 1, -1, 1, 0],
+        [-1, 1, 0, 1, 1, 0, -1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1],
+    ]
+    _q = [
+        1,
+        sy.Rational(1, 2),
+        sy.Rational(1, 2),
+        sy.Rational(1, 2),
+        sy.Rational(1, 2),
+        sy.Rational(1, 2),
+        sy.Rational(1, 2),
+        1,
+    ]
+    _b = [
+        [1, 0, 0],
+        [1, 0, 1],
+        [1, 1, 1],
+        [0, 1, 0],
+        [1, 0, -1],
+        [1, 1, -1],
+        [0, 1, 0],
+        [0, 0, 1],
+    ]
+    _a = [
+        [1, 0, 0, 0],
+        [1, 0, 1, 0],
+        [1, 1, 1, 1],
+        [0, 1, 0, 1],
+        [1, 0, -1, 0],
+        [1, 1, -1, -1],
+        [0, 1, 0, -1],
+        [0, 0, 0, 1],
+    ]
+    c = sy.Matrix(_c)
+    q = sy.Matrix(_q)
+    b = sy.Matrix(_b)
+    a = sy.Matrix(_a)
+    return c, q, b, a
+
+
 def wrap_conv_manual_factored(gv):
     a, b, c, q = conv_manual_factorization()
     g = sy.Matrix(sy.symbols(" ".join(f"g_{i}" for i in range(a.shape[0]))))
