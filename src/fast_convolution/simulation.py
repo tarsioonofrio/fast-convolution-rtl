@@ -245,6 +245,25 @@ def _flatten_last_axis(arr: np.ndarray) -> np.ndarray:
     return arr_np.reshape(-1, arr_np.shape[-1])
 
 
+def _transpose_last_two_axes(arr: np.ndarray) -> np.ndarray:
+    arr_np = np.array(arr)
+    if arr_np.ndim < 2:
+        return arr_np
+    return np.swapaxes(arr_np, -1, -2)
+
+
+def _transpose_square_rows(arr: np.ndarray) -> np.ndarray:
+    arr_np = np.array(arr)
+    if arr_np.ndim != 2:
+        return arr_np
+    side = int(np.sqrt(arr_np.shape[1]))
+    if side * side != arr_np.shape[1]:
+        return arr_np
+    return arr_np.reshape(arr_np.shape[0], side, side).transpose(0, 2, 1).reshape(
+        arr_np.shape[0], arr_np.shape[1]
+    )
+
+
 def _simulate_1d_core(
     payload: SimulationPayload,
     wght_quant: np.ndarray,
@@ -376,7 +395,14 @@ def _simulate_core(
     return _simulate_2d_core(payload, wght_quant, output_shape, quant_bits)
 
 
-def cmd_sim_file(repo, feature_info, weight, suffix, bias_value, standard):
+def cmd_sim_file(
+    repo,
+    feature_info,
+    weight,
+    suffix,
+    bias_value,
+    standard,
+):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
     with open(feature_info) as f:
@@ -766,13 +792,17 @@ def sim(payload: SimulationPayload):
     weight_sv = core.bg_quant.reshape(
         -1, core.bg_quant.shape[-1] * core.bg_quant.shape[-2]
     )
-    feat_list_sv = core.feat_list_sv.reshape(-1, core.feat_list_sv.shape[-1])
+    feat_list_sv = _transpose_square_rows(
+        core.feat_list_sv.reshape(-1, core.feat_list_sv.shape[-1])
+    )
     out_feat_list_sv = core.out_feat_list_sv.reshape(
         -1, core.out_feat_list_sv.shape[-1]
     )
     output_fast_list_sv = core.output_fast.reshape(
         -1, core.output_fast.shape[-1]
     )
+    out_feat_list_sv = _transpose_square_rows(out_feat_list_sv)
+    output_fast_list_sv = _transpose_square_rows(output_fast_list_sv)
     const_data_size = (
         bias_dense.reshape(-1).shape[0]
         + weight_sv.reshape(-1).shape[0]
@@ -781,7 +811,9 @@ def sim(payload: SimulationPayload):
     const_data_sv = [
         [bias_dense.reshape(-1).astype(int).tolist()],
         weight_sv.tolist(),
-        feat_quant.reshape(-1, feat_quant.shape[-1]).tolist(),
+        _transpose_last_two_axes(feat_quant)
+        .reshape(-1, feat_quant.shape[-1])
+        .tolist(),
     ]
     list_array = [
         {
@@ -869,6 +901,8 @@ def sim_naive(payload: SimulationPayload):
     feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
         feat_arr, output_quant, output_default.shape, c_len, a_len
     )
+    feat_list_sv = _transpose_square_rows(feat_list_sv)
+    out_feat_list_sv = _transpose_square_rows(out_feat_list_sv)
     if len(quant_data) != 0:
         metric = r2_score(output_default.reshape(-1), output_quant.reshape(-1))
         text_metric = f"R2: {metric}%\n"
