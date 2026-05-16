@@ -1,54 +1,78 @@
-module Transform
-  import pack_typedef::*;
-  (
-    input  type_input pin,
-    output type_weight pout
+module Transform #(
+    parameter int NBITS = 20,
+    parameter int TRANSFORM_SIZE = 2,
+    parameter int B_SIZE = 2,
+    parameter int INVERSE_SIZE = 4,
+    parameter int HADAMARD_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] pin [INVERSE_SIZE*INVERSE_SIZE-1:0],
+    output logic [NBITS-1:0] pout [HADAMARD_SIZE*HADAMARD_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
 
-  type_matrix_c partial;
+  logic [NBITS-1:0] partial [INVERSE_SIZE*HADAMARD_SIZE-1:0];
 
   // Instance of matrix multiplier "C"
-  MatrixC0 matrix_c0(
+  MatrixC0 #(
+    .NBITS(NBITS),
+    .INVERSE_SIZE(INVERSE_SIZE),
+    .HADAMARD_SIZE(HADAMARD_SIZE)
+  ) matrix_c0(
     .P(pin),
     .soma(partial)
   );
-  MatrixC1 matrix_c1(
+  MatrixC1 #(
+    .NBITS(NBITS),
+    .INVERSE_SIZE(INVERSE_SIZE),
+    .HADAMARD_SIZE(HADAMARD_SIZE)
+  ) matrix_c1(
     .P(partial),
     .soma(pout)
   );
 endmodule
 
-
-
-module Inverse
-  import pack_typedef::*;
-  (
-    input  type_weight pin,
-    output type_output pout
+module Inverse #(
+    parameter int NBITS = 20,
+    parameter int TRANSFORM_SIZE = 2,
+    parameter int B_SIZE = 2,
+    parameter int INVERSE_SIZE = 4,
+    parameter int HADAMARD_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] pin [HADAMARD_SIZE*HADAMARD_SIZE-1:0],
+    output logic [NBITS-1:0] pout [TRANSFORM_SIZE*TRANSFORM_SIZE-1:0]
  );
   timeunit 1ns;
   timeprecision 1ps;
 
-  type_matrix_a partial;
+  logic [NBITS-1:0] partial [INVERSE_SIZE*HADAMARD_SIZE-1:0];
 
-  MatrixA1 matrix_a1 (
+  MatrixA1 #(
+    .NBITS(NBITS),
+    .INVERSE_SIZE(INVERSE_SIZE),
+    .HADAMARD_SIZE(HADAMARD_SIZE)
+  ) matrix_a1 (
     .P(pin),
     .soma(partial)
   );
-  MatrixA0 matrix_a0 (
+  MatrixA0 #(
+    .NBITS(NBITS),
+    .TRANSFORM_SIZE(TRANSFORM_SIZE),
+    .INVERSE_SIZE(INVERSE_SIZE),
+    .HADAMARD_SIZE(HADAMARD_SIZE)
+  ) matrix_a0 (
     .P(partial),
     .soma(pout)
   );
 endmodule
 
-
-module MatrixC0
-  import pack_typedef::*;
-  (
-    input  type_input P,
-    output type_matrix_c soma
+module MatrixC0 #(
+    parameter int NBITS = 20,
+    parameter int INVERSE_SIZE = 4,
+    parameter int HADAMARD_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [INVERSE_SIZE*INVERSE_SIZE-1:0],
+    output logic [NBITS-1:0] soma [INVERSE_SIZE*HADAMARD_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
@@ -71,12 +95,13 @@ module MatrixC0
   assign soma[15] = P[15] - (P[13]);
 endmodule
 
-
-module MatrixC1
-  import pack_typedef::*;
-  (
-    input  type_matrix_c P,
-    output type_weight soma
+module MatrixC1 #(
+    parameter int NBITS = 20,
+    parameter int INVERSE_SIZE = 4,
+    parameter int HADAMARD_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [INVERSE_SIZE*HADAMARD_SIZE-1:0],
+    output logic [NBITS-1:0] soma [HADAMARD_SIZE*HADAMARD_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
@@ -99,12 +124,13 @@ module MatrixC1
   assign soma[15] = P[15] - (P[7]);
 endmodule
 
-
-module MatrixA1
-  import pack_typedef::*;
-  (
-    input  type_weight P,
-    output type_matrix_a soma
+module MatrixA1 #(
+    parameter int NBITS = 20,
+    parameter int INVERSE_SIZE = 4,
+    parameter int HADAMARD_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [HADAMARD_SIZE*HADAMARD_SIZE-1:0],
+    output logic [NBITS-1:0] soma [INVERSE_SIZE*HADAMARD_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
@@ -119,12 +145,15 @@ module MatrixA1
   assign soma[7] = P[13] + P[15] - (P[14]);
 endmodule
 
-
-module MatrixA0
-  import pack_typedef::*;
-  (
-    input  type_matrix_a P,
-    output type_output soma
+module MatrixA0 #(
+    parameter int NBITS = 20,
+    parameter int TRANSFORM_SIZE = 2,
+    parameter int B_SIZE = 2,
+    parameter int INVERSE_SIZE = 4,
+    parameter int HADAMARD_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [INVERSE_SIZE*HADAMARD_SIZE-1:0],
+    output logic [NBITS-1:0] soma [TRANSFORM_SIZE*TRANSFORM_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
