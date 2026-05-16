@@ -1,74 +1,96 @@
-module Transform
-  import pack_typedef::*;
-  (
-    input  type_input pin,
-    output type_weight pout
+module Transform #(
+    parameter int NBITS = 20,
+    parameter int A1_SIZE = 2,
+    parameter int C1_SIZE = 4,
+    parameter int M1_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] pin [C1_SIZE*C1_SIZE-1:0],
+    output logic [NBITS-1:0] pout [M1_SIZE*M1_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
 
-  type_matrix_c partial;
+  logic [NBITS-1:0] partial [C1_SIZE*M1_SIZE-1:0];
 
   // Instance of matrix multiplier "C"
-  MatrixC0 matrix_c0(
+  MatrixC0 #(
+    .NBITS(NBITS),
+    .C1_SIZE(C1_SIZE),
+    .M1_SIZE(M1_SIZE)
+  ) matrix_c0(
     .P(pin),
     .soma(partial)
   );
-  MatrixC1 matrix_c1(
+  MatrixC1 #(
+    .NBITS(NBITS),
+    .C1_SIZE(C1_SIZE),
+    .M1_SIZE(M1_SIZE)
+  ) matrix_c1(
     .P(partial),
     .soma(pout)
   );
 endmodule
 
-
-
-module Inverse
-  import pack_typedef::*;
-  (
-    input  type_weight pin,
-    output type_output pout
+module Inverse #(
+    parameter int NBITS = 20,
+    parameter int A1_SIZE = 2,
+    parameter int C1_SIZE = 4,
+    parameter int M1_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] pin [M1_SIZE*M1_SIZE-1:0],
+    output logic [NBITS-1:0] pout [A1_SIZE*A1_SIZE-1:0]
  );
   timeunit 1ns;
   timeprecision 1ps;
 
-  type_matrix_a partial;
+  logic [NBITS-1:0] partial [C1_SIZE*M1_SIZE-1:0];
 
-  MatrixA1 matrix_a1 (
+  MatrixA1 #(
+    .NBITS(NBITS),
+    .C1_SIZE(C1_SIZE),
+    .M1_SIZE(M1_SIZE)
+  ) matrix_a1 (
     .P(pin),
     .soma(partial)
   );
-  MatrixA0 matrix_a0 (
+  MatrixA0 #(
+    .NBITS(NBITS),
+    .A1_SIZE(A1_SIZE),
+    .C1_SIZE(C1_SIZE),
+    .M1_SIZE(M1_SIZE)
+  ) matrix_a0 (
     .P(partial),
     .soma(pout)
   );
 endmodule
 
-
-module MatrixC0
-  import pack_typedef::*;
-  (
-    input  type_input P,
-    output type_matrix_c soma
+module MatrixC0 #(
+    parameter int NBITS = 20,
+    parameter int C1_SIZE = 4,
+    parameter int M1_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [C1_SIZE*C1_SIZE-1:0],
+    output logic [NBITS-1:0] soma [C1_SIZE*M1_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
-  logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12, sp13, sp14, sp15;
-  logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7, sn8, sn9, sn10, sn11, sn12, sn13, sn14, sn15;
+  logic [NBITS-1:0] sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12, sp13, sp14, sp15;
+  logic [NBITS-1:0] sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7, sn8, sn9, sn10, sn11, sn12, sn13, sn14, sn15;
 
   assign sp0 = P[2];
-  CSA_2 csa_p1(P[1], P[2], sp1);
+  CSA_2 #(.NBITS(NBITS)) csa_p1(P[1], P[2], sp1);
   assign sp2 = P[2];
   assign sp3 = P[3];
   assign sp4 = P[6];
-  CSA_2 csa_p5(P[5], P[6], sp5);
+  CSA_2 #(.NBITS(NBITS)) csa_p5(P[5], P[6], sp5);
   assign sp6 = P[6];
   assign sp7 = P[7];
   assign sp8 = P[10];
-  CSA_2 csa_p9(P[9], P[10], sp9);
+  CSA_2 #(.NBITS(NBITS)) csa_p9(P[9], P[10], sp9);
   assign sp10 = P[10];
   assign sp11 = P[11];
   assign sp12 = P[14];
-  CSA_2 csa_p13(P[13], P[14], sp13);
+  CSA_2 #(.NBITS(NBITS)) csa_p13(P[13], P[14], sp13);
   assign sp14 = P[14];
   assign sp15 = P[15];
   assign sn0 = P[0];
@@ -101,26 +123,27 @@ module MatrixC0
   assign soma[15] = sp15 - sn15;
 endmodule
 
-
-module MatrixC1
-  import pack_typedef::*;
-  (
-    input  type_matrix_c P,
-    output type_weight soma
+module MatrixC1 #(
+    parameter int NBITS = 20,
+    parameter int C1_SIZE = 4,
+    parameter int M1_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [C1_SIZE*M1_SIZE-1:0],
+    output logic [NBITS-1:0] soma [M1_SIZE*M1_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
-  logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12, sp13, sp14, sp15;
-  logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7, sn8, sn9, sn10, sn11, sn12, sn13, sn14, sn15;
+  logic [NBITS-1:0] sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7, sp8, sp9, sp10, sp11, sp12, sp13, sp14, sp15;
+  logic [NBITS-1:0] sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7, sn8, sn9, sn10, sn11, sn12, sn13, sn14, sn15;
 
   assign sp0 = P[8];
   assign sp1 = P[9];
   assign sp2 = P[10];
   assign sp3 = P[11];
-  CSA_2 csa_p4(P[4], P[8], sp4);
-  CSA_2 csa_p5(P[5], P[9], sp5);
-  CSA_2 csa_p6(P[6], P[10], sp6);
-  CSA_2 csa_p7(P[7], P[11], sp7);
+  CSA_2 #(.NBITS(NBITS)) csa_p4(P[4], P[8], sp4);
+  CSA_2 #(.NBITS(NBITS)) csa_p5(P[5], P[9], sp5);
+  CSA_2 #(.NBITS(NBITS)) csa_p6(P[6], P[10], sp6);
+  CSA_2 #(.NBITS(NBITS)) csa_p7(P[7], P[11], sp7);
   assign sp8 = P[8];
   assign sp9 = P[9];
   assign sp10 = P[10];
@@ -159,26 +182,27 @@ module MatrixC1
   assign soma[15] = sp15 - sn15;
 endmodule
 
-
-module MatrixA1
-  import pack_typedef::*;
-  (
-    input  type_weight P,
-    output type_matrix_a soma
+module MatrixA1 #(
+    parameter int NBITS = 20,
+    parameter int C1_SIZE = 4,
+    parameter int M1_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [M1_SIZE*M1_SIZE-1:0],
+    output logic [NBITS-1:0] soma [C1_SIZE*M1_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
-  logic_vector sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7;
-  logic_vector sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7;
+  logic [NBITS-1:0] sp0, sp1, sp2, sp3, sp4, sp5, sp6, sp7;
+  logic [NBITS-1:0] sn0, sn1, sn2, sn3, sn4, sn5, sn6, sn7;
 
-  CSA_3 csa_p0(P[0], P[1], P[2], sp0);
-  CSA_2 csa_p1(P[1], P[3], sp1);
-  CSA_3 csa_p2(P[4], P[5], P[6], sp2);
-  CSA_2 csa_p3(P[5], P[7], sp3);
-  CSA_3 csa_p4(P[8], P[9], P[10], sp4);
-  CSA_2 csa_p5(P[9], P[11], sp5);
-  CSA_3 csa_p6(P[12], P[13], P[14], sp6);
-  CSA_2 csa_p7(P[13], P[15], sp7);
+  CSA_3 #(.NBITS(NBITS)) csa_p0(P[0], P[1], P[2], sp0);
+  CSA_2 #(.NBITS(NBITS)) csa_p1(P[1], P[3], sp1);
+  CSA_3 #(.NBITS(NBITS)) csa_p2(P[4], P[5], P[6], sp2);
+  CSA_2 #(.NBITS(NBITS)) csa_p3(P[5], P[7], sp3);
+  CSA_3 #(.NBITS(NBITS)) csa_p4(P[8], P[9], P[10], sp4);
+  CSA_2 #(.NBITS(NBITS)) csa_p5(P[9], P[11], sp5);
+  CSA_3 #(.NBITS(NBITS)) csa_p6(P[12], P[13], P[14], sp6);
+  CSA_2 #(.NBITS(NBITS)) csa_p7(P[13], P[15], sp7);
   assign sn1 = P[2];
   assign sn3 = P[6];
   assign sn5 = P[10];
@@ -193,22 +217,24 @@ module MatrixA1
   assign soma[7] = sp7 - sn7;
 endmodule
 
-
-module MatrixA0
-  import pack_typedef::*;
-  (
-    input  type_matrix_a P,
-    output type_output soma
+module MatrixA0 #(
+    parameter int NBITS = 20,
+    parameter int A1_SIZE = 2,
+    parameter int C1_SIZE = 4,
+    parameter int M1_SIZE = 4
+  ) (
+    input  logic [NBITS-1:0] P [C1_SIZE*M1_SIZE-1:0],
+    output logic [NBITS-1:0] soma [A1_SIZE*A1_SIZE-1:0]
   );
   timeunit 1ns;
   timeprecision 1ps;
-  logic_vector sp0, sp1, sp2, sp3;
-  logic_vector sn0, sn1, sn2, sn3;
+  logic [NBITS-1:0] sp0, sp1, sp2, sp3;
+  logic [NBITS-1:0] sn0, sn1, sn2, sn3;
 
-  CSA_3 csa_p0(P[0], P[2], P[4], sp0);
-  CSA_3 csa_p1(P[1], P[3], P[5], sp1);
-  CSA_2 csa_p2(P[2], P[6], sp2);
-  CSA_2 csa_p3(P[3], P[7], sp3);
+  CSA_3 #(.NBITS(NBITS)) csa_p0(P[0], P[2], P[4], sp0);
+  CSA_3 #(.NBITS(NBITS)) csa_p1(P[1], P[3], P[5], sp1);
+  CSA_2 #(.NBITS(NBITS)) csa_p2(P[2], P[6], sp2);
+  CSA_2 #(.NBITS(NBITS)) csa_p3(P[3], P[7], sp3);
   assign sn2 = P[4];
   assign sn3 = P[5];
   assign soma[0] = sp0;
