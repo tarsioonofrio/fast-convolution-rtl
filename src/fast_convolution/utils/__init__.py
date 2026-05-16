@@ -39,6 +39,7 @@ from .sv_codegen import (
     sv_kron_modules_direct,
     sv_kron_modules,
     sv_nest,
+    sv_nest_direct_param,
     sv_pkg,
 )
 
@@ -78,6 +79,7 @@ __all__ = [
     "sv_kron_modules_direct",
     "sv_kron_modules",
     "sv_nest",
+    "sv_nest_direct_param",
     "sv_mux_mult",
     "sv_pkg",
 ]

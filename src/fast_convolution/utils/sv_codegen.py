@@ -201,43 +201,44 @@ def _module_header_csa_param(
     if name == "c" and idx == 0:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int C1_SIZE = {c1_size},",
-            f"    parameter int M1_SIZE = {m1_size}",
+            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [C1_SIZE*C1_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [C1_SIZE*M1_SIZE-1:0]",
+            "    input  logic [NBITS-1:0] P [INVERSE_SIZE*INVERSE_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [INVERSE_SIZE*HADAMARD_SIZE-1:0]",
         ]
     elif name == "c" and idx == 1:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int C1_SIZE = {c1_size},",
-            f"    parameter int M1_SIZE = {m1_size}",
+            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [C1_SIZE*M1_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [M1_SIZE*M1_SIZE-1:0]",
+            "    input  logic [NBITS-1:0] P [INVERSE_SIZE*HADAMARD_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [HADAMARD_SIZE*HADAMARD_SIZE-1:0]",
         ]
     elif name == "a" and idx == 1:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int C1_SIZE = {c1_size},",
-            f"    parameter int M1_SIZE = {m1_size}",
+            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [M1_SIZE*M1_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [C1_SIZE*M1_SIZE-1:0]",
+            "    input  logic [NBITS-1:0] P [HADAMARD_SIZE*HADAMARD_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [INVERSE_SIZE*HADAMARD_SIZE-1:0]",
         ]
     else:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int A1_SIZE = {a1_size},",
-            f"    parameter int C1_SIZE = {c1_size},",
-            f"    parameter int M1_SIZE = {m1_size}",
+            f"    parameter int TRANSFORM_SIZE = {a1_size},",
+            f"    parameter int B_SIZE = {a1_size},",
+            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [C1_SIZE*M1_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [A1_SIZE*A1_SIZE-1:0]",
+            "    input  logic [NBITS-1:0] P [INVERSE_SIZE*HADAMARD_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [TRANSFORM_SIZE*TRANSFORM_SIZE-1:0]",
         ]
 
     return [
@@ -486,6 +487,65 @@ def sv_nest_direct(
         assignments.sort(key=lambda entry: (entry["row"], entry["col"]))
         spaced_lines = [entry["line"] for entry in assignments]
         module_str = "\n".join(header_lines + [""] + spaced_lines + ["endmodule"])
+        modules.append(module_str)
+    return tuple(modules)
+
+
+def sv_nest_direct_param(
+    matrix: sy.Matrix,
+    input_shape: Tuple[int, int],
+    name: str,
+    a1_size: int,
+    c1_size: int,
+    m1_size: int,
+) -> Tuple[str, str]:
+    matrix_idx = {"c": (0, 1), "a": (1, 0)}
+
+    arr = np.array(matrix)
+    arr_p = np.where(arr > 0, arr, 0)
+    arr_n = np.where(arr < 0, arr, 0)
+
+    modules = []
+    for module_idx, idx in enumerate(matrix_idx[name]):
+        header_lines = _module_header_csa_param(
+            name, idx, a1_size=a1_size, c1_size=c1_size, m1_size=m1_size
+        )
+        if module_idx == 0:
+            input_grid = np.array(
+                [f"P[{i}]" for i in range(input_shape[0] * input_shape[1])]
+            ).reshape(*input_shape)
+            port_p, port_pp_raw = matmul_sv2(input_grid, arr_p)
+            port_n, port_np_raw = matmul_sv2(input_grid, arr_n)
+        else:
+            input_grid = np.array(
+                [f"P[{i}]" for i in range(input_shape[0] * matrix.shape[1])]
+            ).reshape(input_shape[0], matrix.shape[1])
+            port_pp_raw, port_p = matmul_sv2(arr_p.T, input_grid)
+            port_np_raw, port_n = matmul_sv2(arr_n.T, input_grid)
+
+        port_p, port_pp = _filter_terms_weights(port_p, port_pp_raw)
+        port_n, port_np = _filter_terms_weights(port_n, port_np_raw)
+
+        assignments = []
+        for idx_out, (p_terms, p_weights, n_terms, n_weights) in enumerate(
+            zip(port_p, port_pp, port_n, port_np)
+        ):
+            pos_expr = _format_weighted_sum(p_terms, p_weights)
+            neg_expr = _format_weighted_sum(
+                n_terms,
+                [abs(weight) for weight in n_weights],
+            )
+            if pos_expr != "0" and neg_expr != "0":
+                expr = f"{pos_expr} - ({neg_expr})"
+            elif pos_expr != "0":
+                expr = pos_expr
+            elif neg_expr != "0":
+                expr = f"-({neg_expr})"
+            else:
+                expr = "0"
+            assignments.append(f"  assign soma[{idx_out}] = {expr};")
+
+        module_str = "\n".join(header_lines + [""] + assignments + ["endmodule"])
         modules.append(module_str)
     return tuple(modules)
 

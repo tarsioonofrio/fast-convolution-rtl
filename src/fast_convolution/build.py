@@ -366,14 +366,10 @@ def build2d(
         },
     ]
     dict_param = {
-        "A1_SIZE": a_len[0],
-        "B1_SIZE": b_len[0],
-        "C1_SIZE": c_len[0],
-        "M1_SIZE": len(q1),
-        "A2_SIZE": a_len[0],
-        "B2_SIZE": b_len[0],
-        "C2_SIZE": c_len[0],
-        "M2_SIZE": len(q1),
+        "TRANSFORM_SIZE": a_len[0],
+        "B_SIZE": b_len[0],
+        "INVERSE_SIZE": c_len[0],
+        "HADAMARD_SIZE": len(q1),
     }
     utils.sv_pkg(
         "pack_param", repo.dir_sv / "pack_param.sv", [], list_array, dict_param
