@@ -232,7 +232,6 @@ def _module_header_csa_param(
         params = [
             "    parameter int NBITS = 20,",
             f"    parameter int TRANSFORM_SIZE = {a1_size},",
-            f"    parameter int B_SIZE = {a1_size},",
             f"    parameter int INVERSE_SIZE = {c1_size},",
             f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]

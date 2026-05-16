@@ -47,9 +47,7 @@ def cmd_build_tolimlin_4x3(repo):
     dim, c_len, b_len, a_len = read_init(repo)
     list_points = [1]
     c, q, b, a = fast.conv_tolimlin_4x3()
-    build1d(
-        repo, list_points, a, b, c, q, b_len, c_len, readme.tolimlin_4x3
-    )
+    build1d(repo, list_points, a, b, c, q, b_len, c_len, readme.tolimlin_4x3)
     header_init(repo, dim, a_len, b_len, c_len, len(q))
     with open(repo.file_gen, "w", encoding="utf-8") as f:
         json.dump(
@@ -149,12 +147,12 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         f"{hadamart['function']}\n"
     )
     c_head = (
-        '#ifndef C_OPTIM_H\n'
-        '#define C_OPTIM_H\n\n'
+        "#ifndef C_OPTIM_H\n"
+        "#define C_OPTIM_H\n\n"
         f"{matmul_a['header']}\n"
         f"{matmul_c['header']}\n"
         f"{hadamart['header']}\n"
-        '#endif //C_OPTIM_H'
+        "#endif //C_OPTIM_H"
     )
     lib_opt = "filter1d-opt"
     dir_lib_opt = repo.dir_clib_make / f"{lib_opt}/lib"
@@ -186,11 +184,12 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
         with open(repo.dir_sv / f"mux_mult_{steps:02d}.sv", "w") as f:
             f.write(sv_mux_mult)
     dim, c_len, b_len, a_len = read_init(repo)
+
     dict_param = {
-        "A_SIZE": a_len,
-        "B_SIZE": b_len,
-        "C_SIZE": c_len,
-        "M_SIZE": len(q),
+        "TRANSFORM_SIZE": a_len,
+        "KERNEL_SIZE": b_len,
+        "INVERSE_SIZE": c_len,
+        "HADAMARD_SIZE": len(q),
     }
     utils.sv_pkg(
         "pack_param", repo.dir_sv / "pack_param.sv", [], [], dict_param
@@ -367,7 +366,7 @@ def build2d(
     ]
     dict_param = {
         "TRANSFORM_SIZE": a_len[0],
-        "B_SIZE": b_len[0],
+        "KERNEL_SIZE": b_len[0],
         "INVERSE_SIZE": c_len[0],
         "HADAMARD_SIZE": len(q1),
     }
