@@ -55,8 +55,22 @@ def cmd_build2d_bind_nest(repo):
     utils.write_csa_parcels(csa_parcels, path / "csa")
 
     dim, s_len, g_len, d_len = read_init(repo)
-    c0_sv, c1_sv = utils.sv_nest(c1, s_len, "c")
-    a1_sv, a0_sv = utils.sv_nest(a1, (q1.shape[0], q2.shape[0]), "a")
+    c0_sv, c1_sv = utils.sv_nest_csa_param(
+        c1,
+        s_len,
+        "c",
+        a1_size=d_len[0],
+        c1_size=c1.shape[0],
+        m1_size=q1.shape[0],
+    )
+    a1_sv, a0_sv = utils.sv_nest_csa_param(
+        a1,
+        (q1.shape[0], q2.shape[0]),
+        "a",
+        a1_size=d_len[0],
+        c1_size=c1.shape[0],
+        m1_size=q1.shape[0],
+    )
     c0_sv_direct, c1_sv_direct = utils.sv_nest_direct(c1, s_len, "c")
     a1_sv_direct, a0_sv_direct = utils.sv_nest_direct(
         a1, (q1.shape[0], q2.shape[0]), "a"
@@ -64,8 +78,24 @@ def cmd_build2d_bind_nest(repo):
     repo.dir_sv.mkdir(exist_ok=True)
     with open(Path(__file__).parent / "template/nest.sv") as f:
         nest_sv = f.read().rstrip()
+    with open(Path(__file__).parent / "template/nest_csa.sv") as f:
+        nest_csa_sv = f.read().rstrip()
     with open(repo.dir_sv / "mult_matrices_csa.sv", "w") as f:
-        str_sv = "\n\n\n".join([nest_sv, c0_sv, c1_sv, a1_sv, a0_sv])
+        str_sv = "\n\n".join(
+            [
+                nest_csa_sv.format(
+                    a1_size=d_len[0],
+                    c1_size=c1.shape[0],
+                    m1_size=q1.shape[0],
+                ),
+                c0_sv,
+                c1_sv,
+                a1_sv,
+                a0_sv,
+            ]
+        )
+        while "\n\n\nmodule " in str_sv:
+            str_sv = str_sv.replace("\n\n\nmodule ", "\n\nmodule ")
         f.write(str_sv + "\n")
     with open(repo.dir_sv / "mult_matrices.sv", "w") as f:
         str_sv = "\n\n\n".join(

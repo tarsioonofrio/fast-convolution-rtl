@@ -140,6 +140,32 @@ def _build_csa_section(prefix: str, ports, powers):
     return signal_decl, assignments
 
 
+def _build_csa_section_param(prefix: str, ports, powers):
+    signal_decl = (
+        "  logic [NBITS-1:0] "
+        + ", ".join(f"s{prefix}{idx}" for idx in range(len(ports)))
+        + ";"
+    )
+
+    assignments = []
+    for idx, (terms, weights) in enumerate(zip(ports, powers)):
+        weighted = [
+            sv_bitshift(term, power) if abs(power) != 0 else [term]
+            for term, power in zip(terms, weights)
+        ]
+        flattened = [value for cluster in weighted for value in cluster]
+        if not flattened:
+            continue
+        if len(flattened) == 1:
+            assignments.append(f"  assign s{prefix}{idx} = {flattened[0]};")
+        else:
+            args = ", ".join(flattened)
+            assignments.append(
+                f"  CSA_{len(flattened)} #(.NBITS(NBITS)) csa_{prefix}{idx}({args}, s{prefix}{idx});"
+            )
+    return signal_decl, assignments
+
+
 def _build_output_assignments(prefix_p: str, prefix_n: str, ports_p, ports_n):
     lines = []
     for idx, (neg_terms, pos_terms) in enumerate(zip(ports_n, ports_p)):
@@ -159,6 +185,66 @@ def _module_header(name: str, idx: int, type_in: str, type_out: str) -> List[str
         "  (",
         f"    input  {type_in} P,",
         f"    output {type_out} soma",
+        "  );",
+        "  timeunit 1ns;",
+        "  timeprecision 1ps;",
+    ]
+
+
+def _module_header_csa_param(
+    name: str,
+    idx: int,
+    a1_size: int,
+    c1_size: int,
+    m1_size: int,
+) -> List[str]:
+    if name == "c" and idx == 0:
+        params = [
+            "    parameter int NBITS = 20,",
+            f"    parameter int C1_SIZE = {c1_size},",
+            f"    parameter int M1_SIZE = {m1_size}",
+        ]
+        ports = [
+            "    input  logic [NBITS-1:0] P [C1_SIZE*C1_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [C1_SIZE*M1_SIZE-1:0]",
+        ]
+    elif name == "c" and idx == 1:
+        params = [
+            "    parameter int NBITS = 20,",
+            f"    parameter int C1_SIZE = {c1_size},",
+            f"    parameter int M1_SIZE = {m1_size}",
+        ]
+        ports = [
+            "    input  logic [NBITS-1:0] P [C1_SIZE*M1_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [M1_SIZE*M1_SIZE-1:0]",
+        ]
+    elif name == "a" and idx == 1:
+        params = [
+            "    parameter int NBITS = 20,",
+            f"    parameter int C1_SIZE = {c1_size},",
+            f"    parameter int M1_SIZE = {m1_size}",
+        ]
+        ports = [
+            "    input  logic [NBITS-1:0] P [M1_SIZE*M1_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [C1_SIZE*M1_SIZE-1:0]",
+        ]
+    else:
+        params = [
+            "    parameter int NBITS = 20,",
+            f"    parameter int A1_SIZE = {a1_size},",
+            f"    parameter int C1_SIZE = {c1_size},",
+            f"    parameter int M1_SIZE = {m1_size}",
+        ]
+        ports = [
+            "    input  logic [NBITS-1:0] P [C1_SIZE*M1_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [A1_SIZE*A1_SIZE-1:0]",
+        ]
+
+    return [
+        f"module Matrix{name.upper()}{idx} #(",
+        *params,
+        "  ) (",
+        *ports,
         "  );",
         "  timeunit 1ns;",
         "  timeprecision 1ps;",
@@ -259,6 +345,57 @@ def sv_nest(matrix: sy.Matrix, input_shape: Tuple[int, int], name: str) -> Tuple
 
         signal_p, assignments_p = _build_csa_section("p", port_p, port_pp)
         signal_n, assignments_n = _build_csa_section("n", port_n, port_np)
+        outputs = _build_output_assignments("p", "n", port_p, port_n)
+
+        module_str = "\n".join(
+            header_lines
+            + [signal_p, signal_n + "\n"]
+            + assignments_p
+            + assignments_n
+            + outputs
+            + ["endmodule"]
+        )
+        modules.append(module_str)
+    return tuple(modules)
+
+
+def sv_nest_csa_param(
+    matrix: sy.Matrix,
+    input_shape: Tuple[int, int],
+    name: str,
+    a1_size: int,
+    c1_size: int,
+    m1_size: int,
+) -> Tuple[str, str]:
+    matrix_idx = {"c": (0, 1), "a": (1, 0)}
+
+    arr = np.array(matrix)
+    arr_p = np.where(arr > 0, arr, 0)
+    arr_n = np.where(arr < 0, arr, 0)
+
+    modules = []
+    for module_idx, idx in enumerate(matrix_idx[name]):
+        header_lines = _module_header_csa_param(
+            name, idx, a1_size=a1_size, c1_size=c1_size, m1_size=m1_size
+        )
+        if module_idx == 0:
+            input_grid = np.array(
+                [f"P[{i}]" for i in range(input_shape[0] * input_shape[1])]
+            ).reshape(*input_shape)
+            port_p, port_pp_raw = matmul_sv2(input_grid, arr_p)
+            port_n, port_np_raw = matmul_sv2(input_grid, arr_n)
+        else:
+            input_grid = np.array(
+                [f"P[{i}]" for i in range(input_shape[0] * matrix.shape[1])]
+            ).reshape(input_shape[0], matrix.shape[1])
+            port_pp_raw, port_p = matmul_sv2(arr_p.T, input_grid)
+            port_np_raw, port_n = matmul_sv2(arr_n.T, input_grid)
+
+        port_pp = [[p for p in powers if p != 0] for powers in port_pp_raw]
+        port_np = [[p for p in powers if p != 0] for powers in port_np_raw]
+
+        signal_p, assignments_p = _build_csa_section_param("p", port_p, port_pp)
+        signal_n, assignments_n = _build_csa_section_param("n", port_n, port_np)
         outputs = _build_output_assignments("p", "n", port_p, port_n)
 
         module_str = "\n".join(
