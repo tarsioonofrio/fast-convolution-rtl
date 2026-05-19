@@ -201,43 +201,47 @@ def _module_header_csa_param(
     if name == "c" and idx == 0:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int CONV_INPUT_SIZE = {c1_size},",
+            f"    parameter int CONV_KERNEL_SIZE = {a1_size},",
             f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [INVERSE_SIZE*INVERSE_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [INVERSE_SIZE*HADAMARD_SIZE-1:0]",
+            "    input  logic [NBITS-1:0] P [CONV_INPUT_SIZE*CONV_INPUT_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [CONV_INPUT_SIZE*HADAMARD_SIZE-1:0]",
         ]
     elif name == "c" and idx == 1:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int CONV_INPUT_SIZE = {c1_size},",
+            f"    parameter int CONV_KERNEL_SIZE = {a1_size},",
             f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [INVERSE_SIZE*HADAMARD_SIZE-1:0],",
+            "    input  logic [NBITS-1:0] P [CONV_INPUT_SIZE*HADAMARD_SIZE-1:0],",
             "    output logic [NBITS-1:0] soma [HADAMARD_SIZE*HADAMARD_SIZE-1:0]",
         ]
     elif name == "a" and idx == 1:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int CONV_INPUT_SIZE = {c1_size},",
+            f"    parameter int CONV_KERNEL_SIZE = {a1_size},",
             f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
             "    input  logic [NBITS-1:0] P [HADAMARD_SIZE*HADAMARD_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [INVERSE_SIZE*HADAMARD_SIZE-1:0]",
+            "    output logic [NBITS-1:0] soma [CONV_INPUT_SIZE*HADAMARD_SIZE-1:0]",
         ]
     else:
         params = [
             "    parameter int NBITS = 20,",
-            f"    parameter int TRANSFORM_SIZE = {a1_size},",
-            f"    parameter int INVERSE_SIZE = {c1_size},",
+            f"    parameter int CONV_OUTPUT_SIZE = {a1_size},",
+            f"    parameter int CONV_INPUT_SIZE = {c1_size},",
+            f"    parameter int CONV_KERNEL_SIZE = {a1_size},",
             f"    parameter int HADAMARD_SIZE = {m1_size}",
         ]
         ports = [
-            "    input  logic [NBITS-1:0] P [INVERSE_SIZE*HADAMARD_SIZE-1:0],",
-            "    output logic [NBITS-1:0] soma [TRANSFORM_SIZE*TRANSFORM_SIZE-1:0]",
+            "    input  logic [NBITS-1:0] P [CONV_INPUT_SIZE*HADAMARD_SIZE-1:0],",
+            "    output logic [NBITS-1:0] soma [CONV_OUTPUT_SIZE*CONV_OUTPUT_SIZE-1:0]",
         ]
 
     return [

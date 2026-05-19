@@ -186,9 +186,9 @@ def build1d(repo, list_points, a, b, c, q, b_len, c_len, readme_data):
     dim, c_len, b_len, a_len = read_init(repo)
 
     dict_param = {
-        "TRANSFORM_SIZE": a_len,
-        "KERNEL_SIZE": b_len,
-        "INVERSE_SIZE": c_len,
+        "CONV_OUTPUT_SIZE": a_len,
+        "CONV_KERNEL_SIZE": b_len,
+        "CONV_INPUT_SIZE": c_len,
         "HADAMARD_SIZE": len(q),
     }
     utils.sv_pkg(
@@ -365,9 +365,9 @@ def build2d(
         },
     ]
     dict_param = {
-        "TRANSFORM_SIZE": a_len[0],
-        "KERNEL_SIZE": b_len[0],
-        "INVERSE_SIZE": c_len[0],
+        "CONV_OUTPUT_SIZE": a_len[0],
+        "CONV_KERNEL_SIZE": b_len[0],
+        "CONV_INPUT_SIZE": c_len[0],
         "HADAMARD_SIZE": len(q1),
     }
     utils.sv_pkg(
