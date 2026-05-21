@@ -38,6 +38,7 @@ class SimulationPayload:
     weight_quant: np.ndarray
     channel_in: int
     channel_out: int
+    export_c_headers: bool = True
     bias: Optional[np.ndarray] = None
     bias_quant: Optional[np.ndarray] = None
 
@@ -402,6 +403,7 @@ def cmd_sim_file(
     suffix,
     bias_value,
     standard,
+    export_c_headers: bool = True,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -446,6 +448,7 @@ def cmd_sim_file(
         weight_quant=wght_arr,
         channel_in=int(feat_arr.shape[1]),
         channel_out=int(wght_arr.shape[0]),
+        export_c_headers=export_c_headers,
         bias=bias,
         bias_quant=bias_quant,
     )
@@ -464,6 +467,7 @@ def cmd_sim_int(
     seed,
     bias_value,
     standard,
+    export_c_headers: bool = True,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -537,6 +541,7 @@ def cmd_sim_int(
         weight_quant=wght_quant,
         channel_in=channel_in,
         channel_out=channel_out,
+        export_c_headers=export_c_headers,
         bias=bias,
         bias_quant=bias_quant,
     )
@@ -552,6 +557,7 @@ def cmd_sim_normal(
     seed,
     bias_mean,
     standard,
+    export_c_headers: bool = True,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -599,6 +605,7 @@ def cmd_sim_normal(
         weight_quant=wght_quant,
         channel_in=channel_in,
         channel_out=channel_out,
+        export_c_headers=export_c_headers,
         bias=bias,
         bias_quant=bias_quant,
     )
@@ -728,65 +735,66 @@ def sim(payload: SimulationPayload):
         float_exports.append(("bias_default", bias))
     _save_flat_arrays(path, float_exports, fmt="%f")
 
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    list_quant = [
-        {
-            "name": "weight",
-            "value": wght_quant.reshape(-1, wght_quant.shape[-1]),
-        },
-        {
-            "name": "weight_gg",
-            "value": core.bg_quant.reshape(-1, core.bg_quant.shape[-1]),
-        },
-        {
-            "name": "feat_in_quant",
-            "value": feat_quant.reshape(-1, feat_quant.shape[-1]),
-        },
-        {
-            "name": "feat_out",
-            "value": core.output_fast.reshape(-1, core.output_fast.shape[-1]),
-        },
-    ]
-    if bias_quant is not None:
-        list_quant.append(
+    if payload.export_c_headers:
+        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+        list_quant = [
             {
-                "name": "bias",
-                "value": bias_quant.reshape(1, -1),
-            }
-        )
-    list_float = [
-        {
-            "name": "weight",
-            "value": wght_arr.reshape(-1, wght_arr.shape[-1]),
-        },
-        {"name": "weight_gg", "value": core.bg.reshape(-1, core.bg.shape[-1])},
-        {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
-        {
-            "name": "feat_out",
-            "value": output_default.reshape(-1, output_default.shape[-1]),
-        },
-    ]
-    if bias is not None:
-        list_float.append(
+                "name": "weight",
+                "value": wght_quant.reshape(-1, wght_quant.shape[-1]),
+            },
             {
-                "name": "bias",
-                "value": bias.reshape(1, -1),
-            }
+                "name": "weight_gg",
+                "value": core.bg_quant.reshape(-1, core.bg_quant.shape[-1]),
+            },
+            {
+                "name": "feat_in_quant",
+                "value": feat_quant.reshape(-1, feat_quant.shape[-1]),
+            },
+            {
+                "name": "feat_out",
+                "value": core.output_fast.reshape(-1, core.output_fast.shape[-1]),
+            },
+        ]
+        if bias_quant is not None:
+            list_quant.append(
+                {
+                    "name": "bias",
+                    "value": bias_quant.reshape(1, -1),
+                }
+            )
+        list_float = [
+            {
+                "name": "weight",
+                "value": wght_arr.reshape(-1, wght_arr.shape[-1]),
+            },
+            {"name": "weight_gg", "value": core.bg.reshape(-1, core.bg.shape[-1])},
+            {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
+            {
+                "name": "feat_out",
+                "value": output_default.reshape(-1, output_default.shape[-1]),
+            },
+        ]
+        if bias is not None:
+            list_float.append(
+                {
+                    "name": "bias",
+                    "value": bias.reshape(1, -1),
+                }
+            )
+        dict_def = {
+            "QUANT_BITS": quant_bits,
+            "W_SIZE": wght_quant.shape[-1],
+            "FIN_SIZE": feat_arr.shape[-1],
+            "FOUT_SIZE": output_default.shape[-1],
+        }
+        # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
+        arr = [{**r, "type": "int"} for r in list_quant]
+        utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
+        arr_float = [{**r, "type": "float"} for r in list_float]
+        repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+        utils.c_header(
+            repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
         )
-    dict_def = {
-        "QUANT_BITS": quant_bits,
-        "W_SIZE": wght_quant.shape[-1],
-        "FIN_SIZE": feat_arr.shape[-1],
-        "FOUT_SIZE": output_default.shape[-1],
-    }
-    # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
-    arr = [{**r, "type": "int"} for r in list_quant]
-    utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
-    arr_float = [{**r, "type": "float"} for r in list_float]
-    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
-    utils.c_header(
-        repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
-    )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
 
     weight_sv = core.bg_quant.reshape(
@@ -801,19 +809,15 @@ def sim(payload: SimulationPayload):
     output_fast_list_sv = core.output_fast.reshape(
         -1, core.output_fast.shape[-1]
     )
-    out_feat_list_sv = _transpose_square_rows(out_feat_list_sv)
-    output_fast_list_sv = _transpose_square_rows(output_fast_list_sv)
+    output_fast_list_sv = output_fast_list_sv.T
     const_data_size = (
-        bias_dense.reshape(-1).shape[0]
-        + weight_sv.reshape(-1).shape[0]
-        + np.array(feat_quant).reshape(-1).shape[0]
+        weight_sv.reshape(-1).shape[0] + np.array(feat_quant).reshape(-1).shape[0]
     )
     const_data_sv = [
-        [bias_dense.reshape(-1).astype(int).tolist()],
-        weight_sv.tolist(),
         _transpose_last_two_axes(feat_quant)
         .reshape(-1, feat_quant.shape[-1])
         .tolist(),
+        weight_sv.tolist(),
     ]
     list_array = [
         {
@@ -901,8 +905,6 @@ def sim_naive(payload: SimulationPayload):
     feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
         feat_arr, output_quant, output_default.shape, c_len, a_len
     )
-    feat_list_sv = _transpose_square_rows(feat_list_sv)
-    out_feat_list_sv = _transpose_square_rows(out_feat_list_sv)
     if len(quant_data) != 0:
         metric = r2_score(output_default.reshape(-1), output_quant.reshape(-1))
         text_metric = f"R2: {metric}%\n"
@@ -939,28 +941,29 @@ def sim_naive(payload: SimulationPayload):
         ],
         fmt="%d",
     )
-    repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
-    list_array = [
-        {"name": "weight", "value": wght_quant},
-        # {"name": "weight_gg_quant", "value": bg_quant},
-        {"name": "feat_in", "value": feat_arr},
-        {"name": "gold", "value": output_default},
-        {"name": "gold_quant", "value": output_quant},
-    ]
-    dict_def = {
-        "QUANT_BITS": quant_bits,
-        "W_SIZE": wght_quant.shape[0],
-        "FIN_SIZE": feat_arr.shape[0],
-        "FOUT_SIZE": output_default.shape[0],
-    }
-    # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
-    arr = [{**r, "type": "int"} for r in list_array]
-    utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
-    arr_float = [{**r, "type": "float"} for r in list_array]
-    repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
-    utils.c_header(
-        repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
-    )
+    if payload.export_c_headers:
+        repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
+        list_array = [
+            {"name": "weight", "value": wght_quant},
+            # {"name": "weight_gg_quant", "value": bg_quant},
+            {"name": "feat_in", "value": feat_arr},
+            {"name": "gold", "value": output_default},
+            {"name": "gold_quant", "value": output_quant},
+        ]
+        dict_def = {
+            "QUANT_BITS": quant_bits,
+            "W_SIZE": wght_quant.shape[0],
+            "FIN_SIZE": feat_arr.shape[0],
+            "FOUT_SIZE": output_default.shape[0],
+        }
+        # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
+        arr = [{**r, "type": "int"} for r in list_array]
+        utils.c_header(repo.dir_clib_data / "sim.h", arr, dict_def)
+        arr_float = [{**r, "type": "float"} for r in list_array]
+        repo.dir_clib_data_float.mkdir(parents=True, exist_ok=True)
+        utils.c_header(
+            repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
+        )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     weight_sv = np.array(wght_quant).reshape(1, -1)
     w_size = (len(weight_sv), len(weight_sv[0]))

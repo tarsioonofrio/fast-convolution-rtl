@@ -177,6 +177,7 @@ def handle_sim_file(args):
         args.name,
         bias_value,
         args.standard,
+        not args.no_c,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -197,6 +198,7 @@ def handle_sim_int(args):
         args.seed,
         bias_value,
         args.standard,
+        not args.no_c,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -214,6 +216,7 @@ def handle_sim_normal(args):
         args.seed,
         bias_value,
         args.standard,
+        not args.no_c,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -391,6 +394,11 @@ def _build_sim_parser(subparsers):
         help="Minimal bias value per output channel (requires --enable-bias).",
     )
     sim_file.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
+    sim_file.add_argument(
+        "--no-c",
+        action="store_true",
+        help="Do not generate C header artifacts (sim.h/sim_float.h).",
+    )
     sim_file.set_defaults(func=handle_sim_file)
 
     sim_int = sim_sub.add_parser("int", help="Simulation with integers.")
@@ -415,6 +423,11 @@ def _build_sim_parser(subparsers):
         help="Minimal bias value per output channel (requires --enable-bias).",
     )
     sim_int.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
+    sim_int.add_argument(
+        "--no-c",
+        action="store_true",
+        help="Do not generate C header artifacts (sim.h/sim_float.h).",
+    )
     sim_int.set_defaults(func=handle_sim_int)
 
     sim_normal = sim_sub.add_parser(
@@ -439,6 +452,11 @@ def _build_sim_parser(subparsers):
         help="Mean of the normal distribution used to sample bias (requires --enable-bias).",
     )
     sim_normal.add_argument("-s", "--standard", action="store_true", help="Use standard convolution.")
+    sim_normal.add_argument(
+        "--no-c",
+        action="store_true",
+        help="Do not generate C header artifacts (sim.h/sim_float.h).",
+    )
     sim_normal.set_defaults(func=handle_sim_normal)
 
 
