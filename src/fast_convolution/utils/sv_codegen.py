@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import sympy as sy
@@ -61,12 +61,17 @@ def sv_pkg(
     list1d: Sequence[Dict[str, object]],
     list2d: Sequence[Dict[str, object]],
     definitions: Dict[str, object],
+    list1d_tail: Optional[Sequence[Dict[str, object]]] = None,
 ) -> None:
     definition_block = "".join(
         SV_DEF_TEMPLATE.format(key=key, value=value)
         for key, value in definitions.items()
     )
-    array_blocks = _format_list1d(list1d) + _format_list2d(list2d)
+    array_blocks = (
+        _format_list1d(list1d)
+        + _format_list2d(list2d)
+        + _format_list1d(list1d_tail or [])
+    )
     code_parts = []
     if definition_block:
         code_parts.append(definition_block)

@@ -806,10 +806,13 @@ def sim(payload: SimulationPayload):
     out_feat_list_sv = core.out_feat_list_sv.reshape(
         -1, core.out_feat_list_sv.shape[-1]
     )
-    output_fast_list_sv = core.output_fast.reshape(
-        -1, core.output_fast.shape[-1]
-    )
-    output_fast_list_sv = output_fast_list_sv.T
+    output_fast_arr_sv = np.array(core.output_fast)
+    # Transpose per channel (C,H,W -> C,W,H) before flattening for SV export.
+    if output_fast_arr_sv.ndim >= 3:
+        output_fast_arr_sv = _transpose_last_two_axes(output_fast_arr_sv)
+    output_fast_line_size = int(output_fast_arr_sv.shape[-1])
+    output_fast_rows_sv = output_fast_arr_sv.reshape(-1, output_fast_line_size)
+    output_fast_flat_size = int(output_fast_rows_sv.size)
     const_data_size = (
         weight_sv.reshape(-1).shape[0] + np.array(feat_quant).reshape(-1).shape[0]
     )
@@ -832,10 +835,6 @@ def sim(payload: SimulationPayload):
             "name": f"const_feat_out_batch[{out_feat_list_sv.shape[0]}][{out_feat_list_sv.shape[1]}]",
             "value": out_feat_list_sv,
         },
-        {
-            "name": f"const_feat_out[{output_fast_list_sv.shape[0]}][{output_fast_list_sv.shape[1]}]",
-            "value": output_fast_list_sv,
-        },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
 
@@ -843,6 +842,13 @@ def sim(payload: SimulationPayload):
         {
             "name": f"const_data[{const_data_size}]",
             "value": const_data_sv,
+            "type": "int",
+        }
+    ]
+    list1d_tail = [
+        {
+            "name": f"const_feat_out[{output_fast_flat_size}]",
+            "value": [output_fast_rows_sv.tolist()],
             "type": "int",
         }
     ]
@@ -859,7 +865,14 @@ def sim(payload: SimulationPayload):
         "N_CHANNEL_IN": channel_in,
         "N_CHANNEL_OUT": channel_out,
     }
-    utils.sv_pkg("pack_data", path / "pack_data.sv", list1d, arr, dict_def)
+    utils.sv_pkg(
+        "pack_data",
+        path / "pack_data.sv",
+        list1d,
+        arr,
+        dict_def,
+        list1d_tail=list1d_tail,
+    )
     return out_dict
 
 
