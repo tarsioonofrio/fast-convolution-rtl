@@ -3,7 +3,7 @@ Weights: /home/tarsio/gaph/fast-convolution-rtl/images/laplace.json
 Bias enabled: False
 Image side: 32
 Quantization bits: 0
-Output default and fast are equals: True
+Output default and fast are equals: False
 
 Totals
 Naive

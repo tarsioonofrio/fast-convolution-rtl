@@ -288,6 +288,14 @@ def _transpose_last_two_axes(arr: np.ndarray) -> np.ndarray:
     return np.swapaxes(arr_np, -1, -2)
 
 
+def _transpose_feature_maps_for_sv(arr: np.ndarray) -> np.ndarray:
+    """Arrange physical feature maps as column-major maps for the legacy RTL ROM."""
+    arr_np = np.asarray(arr)
+    if arr_np.ndim < 2:
+        return arr_np
+    return _transpose_last_two_axes(arr_np)
+
+
 def _transpose_square_rows(arr: np.ndarray) -> np.ndarray:
     arr_np = np.array(arr)
     if arr_np.ndim != 2:
@@ -852,16 +860,36 @@ def sim(payload: SimulationPayload):
     output_fast_line_size = int(output_fast_arr_sv.shape[-1])
     output_fast_rows_sv = output_fast_arr_sv.reshape(-1, output_fast_line_size)
     output_fast_flat_size = int(output_fast_rows_sv.size)
-    const_data_size = (
-        bias_dense.reshape(-1).shape[0]
-        + weight_sv.reshape(-1).shape[0]
-        + np.array(feat_quant).reshape(-1).shape[0]
-    )
-    const_data_sv = [
-        [bias_dense.reshape(-1).astype(int).tolist()],
-        weight_sv.tolist(),
-        np.asarray(feat_quant).reshape(-1, feat_quant.shape[-1]).tolist(),
-    ]
+    # The legacy 2-D RTL reads each feature map column by column.  Keep the
+    # original 1-D ordering unchanged because its controller has a different
+    # address convention.
+    if dim == 2:
+        # Match the old 2-D RTL ROM image: feature maps are column-major and
+        # precede transformed weights; no bias/header words are exported.
+        feature_maps_sv = _transpose_feature_maps_for_sv(feat_quant)
+        const_data_size = weight_sv.reshape(-1).size + feature_maps_sv.size
+        const_data_sv = [
+            feature_maps_sv.reshape(-1, feature_maps_sv.shape[-1])
+            .astype(int)
+            .tolist(),
+            weight_sv.tolist(),
+        ]
+    else:
+        # Preserve the established 1-D ROM contract (bias/header, weights,
+        # then the linear feature vector).
+        const_data_size = (
+            bias_dense.reshape(-1).size
+            + weight_sv.reshape(-1).size
+            + np.asarray(feat_quant).reshape(-1).size
+        )
+        const_data_sv = [
+            [bias_dense.reshape(-1).astype(int).tolist()],
+            weight_sv.tolist(),
+            np.asarray(feat_quant)
+            .reshape(-1, np.asarray(feat_quant).shape[-1])
+            .astype(int)
+            .tolist(),
+        ]
     list_array = [
         {
             "name": f"const_weight[{weight_sv.shape[0]}][{weight_sv.shape[1]}]",
@@ -885,13 +913,27 @@ def sim(payload: SimulationPayload):
             "type": "int",
         }
     ]
-    list1d_tail = [
-        {
-            "name": f"const_feat_out[{output_fast_flat_size}]",
-            "value": [output_fast_rows_sv.tolist()],
-            "type": "int",
-        }
-    ]
+    if dim == 2:
+        list1d_tail = [
+            {
+                "name": f"const_feat_out[{output_fast_flat_size}]",
+                "value": [[output_fast_arr_sv.reshape(-1).astype(int).tolist()]],
+                "type": "int",
+            }
+        ]
+    else:
+        # The historical 1-D package exposes the output as a 2-D SV array.
+        list1d_tail = []
+        arr.append(
+            {
+                "name": (
+                    f"const_feat_out[{output_fast_rows_sv.shape[0]}]"
+                    f"[{output_fast_rows_sv.shape[1]}]"
+                ),
+                "value": output_fast_rows_sv,
+                "type": "int",
+            }
+        )
     dict_def = {
         "QUANT_BITS": quant_bits,
         "FIN1_SIZE": feat_list_sv.shape[0],
@@ -1091,25 +1133,48 @@ def sim_naive(payload: SimulationPayload):
         },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
-    # Keep the packed ROM image for HDL consumers that read the input through
-    # const_data. Its order is header/bias, transformed weights, then the
-    # row-major feature map expected by the memory controller.
-    const_data_size = (
-        bias_dense.reshape(-1).size
-        + weight_sv.reshape(-1).size
-        + feat_quant.size
-    )
-    const_data_sv = [
-        [bias_dense.reshape(-1).astype(int).tolist()],
-        weight_sv.tolist(),
-        np.asarray(feat_quant).reshape(-1, feat_quant.shape[-1]).tolist(),
-    ]
-    list_array.append(
-        {
-            "name": f"const_feat_out[{output_fast_rows_sv.shape[0]}][{output_fast_rows_sv.shape[1]}]",
-            "value": output_fast_rows_sv,
-        }
-    )
+    if dim == 2:
+        # Match the old 2-D RTL ROM image: feature maps are column-major and
+        # precede transformed weights; no bias/header words are exported.
+        feature_maps_sv = _transpose_feature_maps_for_sv(feat_quant)
+        const_data_size = feature_maps_sv.size + weight_sv.reshape(-1).size
+        const_data_sv = [
+            feature_maps_sv.reshape(-1, feature_maps_sv.shape[-1])
+            .astype(int)
+            .tolist(),
+            weight_sv.tolist(),
+        ]
+        list_array.append(
+            {
+                "name": f"const_feat_out[{output_fast_rows_sv.size}]",
+                "value": output_fast_arr_sv.reshape(-1).astype(int).tolist(),
+            }
+        )
+    else:
+        # Preserve the established 1-D ROM contract (bias/header, weights,
+        # then the linear feature vector).
+        feature_maps_sv = np.asarray(feat_quant)
+        const_data_size = (
+            bias_dense.reshape(-1).size
+            + weight_sv.reshape(-1).size
+            + feature_maps_sv.size
+        )
+        const_data_sv = [
+            [bias_dense.reshape(-1).astype(int).tolist()],
+            weight_sv.tolist(),
+            feature_maps_sv.reshape(-1, feature_maps_sv.shape[-1])
+            .astype(int)
+            .tolist(),
+        ]
+        list_array.append(
+            {
+                "name": (
+                    f"const_feat_out[{output_fast_rows_sv.shape[0]}]"
+                    f"[{output_fast_rows_sv.shape[1]}]"
+                ),
+                "value": output_fast_rows_sv,
+            }
+        )
     arr = [{**r, "type": "int"} for r in list_array]
     const_data_entries = [
         {
