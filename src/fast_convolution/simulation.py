@@ -743,9 +743,13 @@ def sim(payload: SimulationPayload):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
+    # The ROM header reserves one exported bias word per input/output pair.
+    # With no quantization, use the integer bias supplied to the fast path;
+    # with quantization, use its quantized counterpart.
+    bias_export = bias_quant if len(quant_data) != 0 else bias
     bias_repeat = channel_in * int(b_len) if dim == 1 else channel_in
     bias_dense = _expand_bias_for_export(
-        bias_quant, channel_out, bias_repeat, wght_quant.dtype
+        bias_export, channel_out, bias_repeat, wght_quant.dtype
     )
     bias_float = _expand_bias_for_export(
         bias, channel_out, bias_repeat, wght_arr.dtype
@@ -849,13 +853,14 @@ def sim(payload: SimulationPayload):
     output_fast_rows_sv = output_fast_arr_sv.reshape(-1, output_fast_line_size)
     output_fast_flat_size = int(output_fast_rows_sv.size)
     const_data_size = (
-        weight_sv.reshape(-1).shape[0] + np.array(feat_quant).reshape(-1).shape[0]
+        bias_dense.reshape(-1).shape[0]
+        + weight_sv.reshape(-1).shape[0]
+        + np.array(feat_quant).reshape(-1).shape[0]
     )
     const_data_sv = [
-        _transpose_last_two_axes(feat_quant)
-        .reshape(-1, feat_quant.shape[-1])
-        .tolist(),
+        [bias_dense.reshape(-1).astype(int).tolist()],
         weight_sv.tolist(),
+        np.asarray(feat_quant).reshape(-1, feat_quant.shape[-1]).tolist(),
     ]
     list_array = [
         {
@@ -938,9 +943,10 @@ def sim_naive(payload: SimulationPayload):
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
     wght_quant = payload.weight_quant if len(quant_data) != 0 else wght_arr
     bias_quant = payload.bias_quant
+    bias_export = bias_quant if len(quant_data) != 0 else bias
     bias_repeat = channel_in * b_len if dim == 1 else channel_in
     bias_dense = _expand_bias_for_export(
-        bias_quant, payload.channel_out, bias_repeat, wght_quant.dtype
+        bias_export, payload.channel_out, bias_repeat, wght_quant.dtype
     )
 
     quant_feature = feat_quant if len(quant_data) != 0 else feat_arr
@@ -951,12 +957,16 @@ def sim_naive(payload: SimulationPayload):
     output_quant = _apply_bias(output_quant, bias_quant)
     output_quant_relu = np.maximum(output_quant, 0)
     output_shape = output_default.shape[-2:]
+    # The HDL package must carry the transformed weights and fast-path output
+    # even when the command also computes the standard convolution for the
+    # textual/reference reports.
+    core = _simulate_core(payload, wght_quant, output_shape, quant_bits)
     if feat_arr.ndim == 4:
         feat_list_sv = np.array(
             [
                 fast.sliding2d_window2d(
                     feat_quant[0][cin],
-                    output_quant[0],
+                    output_quant[0][0],
                     output_shape,
                     c_len,
                     a_len,
@@ -1048,9 +1058,21 @@ def sim_naive(payload: SimulationPayload):
             repo.dir_clib_data_float / "sim_float.h", arr_float, dict_def
         )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
-    weight_sv = np.array(wght_quant).reshape(1, -1)
-    feat_list_sv = feat_list_sv.reshape(-1, feat_list_sv.shape[-1])
-    out_feat_list_sv = out_feat_list_sv.reshape(-1, out_feat_list_sv.shape[-1])
+    weight_sv = core.bg_quant.reshape(
+        -1, core.bg_quant.shape[-1] * core.bg_quant.shape[-2]
+    )
+    feat_list_sv = _transpose_square_rows(
+        core.feat_list_sv.reshape(-1, core.feat_list_sv.shape[-1])
+    )
+    out_feat_list_sv = core.out_feat_list_sv.reshape(
+        -1, core.out_feat_list_sv.shape[-1]
+    )
+    output_fast_arr_sv = np.array(core.output_fast)
+    if output_fast_arr_sv.ndim >= 3:
+        output_fast_arr_sv = _transpose_last_two_axes(output_fast_arr_sv)
+    output_fast_rows_sv = output_fast_arr_sv.reshape(
+        -1, output_fast_arr_sv.shape[-1]
+    )
     w_size = (len(weight_sv), len(weight_sv[0]))
     fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
     fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
@@ -1064,11 +1086,38 @@ def sim_naive(payload: SimulationPayload):
             "value": feat_list_sv,
         },
         {
-            "name": f"const_feat_out[{fout_size[0]}][{fout_size[1]}]",
+            "name": f"const_feat_out_batch[{fout_size[0]}][{fout_size[1]}]",
             "value": out_feat_list_sv,
         },
     ]
     arr = [{**r, "type": "int"} for r in list_array]
+    # Keep the packed ROM image for HDL consumers that read the input through
+    # const_data. Its order is header/bias, transformed weights, then the
+    # row-major feature map expected by the memory controller.
+    const_data_size = (
+        bias_dense.reshape(-1).size
+        + weight_sv.reshape(-1).size
+        + feat_quant.size
+    )
+    const_data_sv = [
+        [bias_dense.reshape(-1).astype(int).tolist()],
+        weight_sv.tolist(),
+        np.asarray(feat_quant).reshape(-1, feat_quant.shape[-1]).tolist(),
+    ]
+    list_array.append(
+        {
+            "name": f"const_feat_out[{output_fast_rows_sv.shape[0]}][{output_fast_rows_sv.shape[1]}]",
+            "value": output_fast_rows_sv,
+        }
+    )
+    arr = [{**r, "type": "int"} for r in list_array]
+    const_data_entries = [
+        {
+            "name": f"const_data[{const_data_size}]",
+            "value": const_data_sv,
+            "type": "int",
+        }
+    ]
     dict_def = {
         "QUANT_BITS": quant_bits,
         "FIN1_SIZE": fin_size[0],
@@ -1077,8 +1126,13 @@ def sim_naive(payload: SimulationPayload):
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
-        # **dict_dim,
+        "FEAT_INPUT_SIZE": feat_arr.shape[-1],
+        "FEAT_OUTPUT_SIZE": output_quant.shape[-1],
+        "N_CHANNEL_IN": channel_in,
+        "N_CHANNEL_OUT": channel_out,
     }
     if len(quant_data) != 0:
-        utils.sv_pkg("pack_data", path / "pack_data.sv", [], arr, dict_def)
+        utils.sv_pkg(
+            "pack_data", path / "pack_data.sv", const_data_entries, arr, dict_def
+        )
     return out_dict
