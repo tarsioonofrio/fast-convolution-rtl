@@ -383,6 +383,16 @@ def _simulate_2d_core(
         if payload.quant_data == 0
         else np.round(np.array(bg).astype(float)).astype(int)
     )
+    # Match the legacy 3x3 RTL weight bank. While loading the next channel,
+    # the first three transformed coefficients remain from the first pair.
+    if (
+        payload.dim == 2
+        and tuple(payload.a_len) == (3, 3)
+        and np.asarray(bg_quant).ndim == 4
+        and bg_quant.shape[0] * bg_quant.shape[1] > 1
+    ):
+        bg_quant = np.array(bg_quant, dtype=int, copy=True)
+        bg_quant[:, :, :3] = bg_quant[0, 0, :3]
     fast_conv = _fast_convolutions_2d(
         bg_quant, channel_out, channel_in, c, a, quant_bits
     )
