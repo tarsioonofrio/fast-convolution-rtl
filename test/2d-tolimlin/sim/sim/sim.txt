@@ -1,5 +1,5 @@
-Feature: /home/tarsio/gaph/fast-convolution-rtl/images/karatsuba032.jpg
-Weights: /home/tarsio/gaph/fast-convolution-rtl/images/laplace.json
+Feature: 0
+Weights: 0
 Bias enabled: False
 Image side: 32
 Quantization bits: 0
@@ -7,9 +7,9 @@ Output default and fast are equals: False
 
 Totals
 Naive
-Convolutions: 900
-Multiplications: 8100
-Additions: 7200
+Convolutions: 1800
+Multiplications: 16200
+Additions: 14400
 Fast
-Convolutions: 64
-Multiplications: 4096
+Convolutions: 128
+Multiplications: 8192
