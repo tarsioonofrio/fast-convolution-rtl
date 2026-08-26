@@ -3,21 +3,21 @@ import numpy as np
 
 
 def naive_convolve(data: np.array, kernel: np.array) -> np.array:
-    # To simplify things
-    k = kernel.shape[0]
-    new_shape = (data.shape[0] - 2, data.shape[1] - 2)
-    # 2D array of zeros
-    output = np.zeros(shape=new_shape, dtype=int)
+    data = np.asarray(data)
+    kernel = np.asarray(kernel)
+    if data.ndim != 2 or kernel.ndim != 2:
+        raise ValueError("naive_convolve expects two-dimensional arrays")
+    kernel_rows, kernel_cols = kernel.shape
+    new_shape = (
+        data.shape[0] - kernel_rows + 1,
+        data.shape[1] - kernel_cols + 1,
+    )
+    if min(new_shape) <= 0:
+        raise ValueError("kernel must not be larger than data")
+    output = np.zeros(shape=new_shape, dtype=np.result_type(data, kernel))
 
-    # Iterate over the rows
-    for i in range(data.shape[0] - k + 1):
-        # Iterate over the columns
-        for j in range(data.shape[1] - k + 1):
-            # img[i, j] = individual pixel value
-            # Get the current matrix
-            tmp = data[i:i + k, j:j + k]
-            # Apply the convolution - element-wise multiplication and summation of the result
-            # Store the result to i-th row and j-th column of our convolved_img array
-            # 9 multiplications, 8 aditions per output
+    for i in range(new_shape[0]):
+        for j in range(new_shape[1]):
+            tmp = data[i : i + kernel_rows, j : j + kernel_cols]
             output[i, j] = np.sum(np.multiply(tmp, kernel))
     return output

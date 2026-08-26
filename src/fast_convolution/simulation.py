@@ -57,6 +57,8 @@ class SimulationCore:
 def _reshape_bias(bias: np.ndarray, target: np.ndarray) -> np.ndarray:
     if bias.ndim != 1:
         raise ValueError("Bias must be a 1D array.")
+    if target.ndim == 4 and target.shape[1] == bias.shape[0]:
+        return bias.reshape(1, bias.shape[0], 1, 1)
     shape = (bias.shape[0],) + (1,) * (target.ndim - 1)
     return bias.reshape(shape)
 
@@ -65,6 +67,39 @@ def _apply_bias(output: np.ndarray, bias: Optional[np.ndarray]) -> np.ndarray:
     if bias is None:
         return output
     return output + _reshape_bias(bias, output)
+
+
+def _standard_convolve(
+    feature: np.ndarray, weights: np.ndarray, naive: bool = False
+) -> np.ndarray:
+    """Convolve batched, multi-channel 2D tensors in the standard path."""
+    feature = np.asarray(feature)
+    weights = np.asarray(weights)
+    if feature.ndim == 4 and weights.ndim == 4:
+        outputs = []
+        for batch in feature:
+            channels_out = []
+            for kernels in weights:
+                accumulated = None
+                for channel, kernel in zip(batch, kernels):
+                    if naive:
+                        value = naive_convolve(channel, kernel)
+                    else:
+                        value = signal.convolve2d(
+                            channel, kernel[::-1, ::-1], mode="valid"
+                        )
+                    accumulated = value if accumulated is None else accumulated + value
+                channels_out.append(accumulated)
+            outputs.append(channels_out)
+        return np.asarray(outputs)
+    if feature.ndim == 2 and weights.ndim == 2:
+        if naive:
+            return naive_convolve(feature, weights)
+        return signal.convolve2d(feature, weights[::-1, ::-1], mode="valid")
+    raise ValueError(
+        "standard convolution expects feature/weight arrays with shape "
+        "(batch, channels, height, width) or two-dimensional arrays"
+    )
 
 
 def _quantize_bias(
@@ -890,37 +925,71 @@ def sim_naive(payload: SimulationPayload):
     weight = payload.weight_info
     wght_arr = payload.weight
     bias = payload.bias
-    output_default = signal.convolve2d(
-        feat_arr, wght_arr[::-1, ::-1], mode="valid"
-    )
+    feat_quant = payload.feature_quant
+    channel_in = payload.channel_in
+    channel_out = payload.channel_out
+    output_default = _standard_convolve(feat_arr, wght_arr)
     output_default = _apply_bias(output_default, bias)
-    output_naive = _apply_bias(naive_convolve(feat_arr, wght_arr), bias)
-    compare_naive = np.all(output_default == output_naive)
+    output_naive = _apply_bias(
+        _standard_convolve(feat_arr, wght_arr, naive=True), bias
+    )
+    compare_naive = np.allclose(output_default, output_naive)
     text_equal = f"Output default and naive are equals: {compare_naive}\n"
     quant_bits = quant_data["bits"] if "bits" in quant_data else 0
-    wght_quant = (
-        wght_arr
-        if len(quant_data) == 0
-        else np.left_shift(wght_arr, quant_bits)
-    )
+    wght_quant = payload.weight_quant if len(quant_data) != 0 else wght_arr
     bias_quant = payload.bias_quant
-    channel_in = payload.channel_in
     bias_repeat = channel_in * b_len if dim == 1 else channel_in
     bias_dense = _expand_bias_for_export(
         bias_quant, payload.channel_out, bias_repeat, wght_quant.dtype
     )
 
-    output_quant = np.right_shift(
-        naive_convolve(feat_arr, wght_quant), quant_bits
-    )
+    quant_feature = feat_quant if len(quant_data) != 0 else feat_arr
+    output_quant = _standard_convolve(quant_feature, wght_quant, naive=True)
+    if len(quant_data) != 0:
+        output_quant = np.right_shift(output_quant, quant_bits)
     bias_quant = payload.bias_quant if len(quant_data) != 0 else payload.bias
     output_quant = _apply_bias(output_quant, bias_quant)
-    feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
-        feat_arr, output_quant, output_default.shape, c_len, a_len
-    )
+    output_quant_relu = np.maximum(output_quant, 0)
+    output_shape = output_default.shape[-2:]
+    if feat_arr.ndim == 4:
+        feat_list_sv = np.array(
+            [
+                fast.sliding2d_window2d(
+                    feat_quant[0][cin],
+                    output_quant[0],
+                    output_shape,
+                    c_len,
+                    a_len,
+                    False,
+                )
+                for cin in range(channel_in)
+            ]
+        )
+        out_feat_list_sv = np.array(
+            [
+                fast.sliding2d_window2d(
+                    feat_quant[0][0],
+                    output_quant[0][cout],
+                    output_shape,
+                    c_len,
+                    a_len,
+                    True,
+                )
+                for cout in range(channel_out)
+            ]
+        )
+    else:
+        feat_list_sv, out_feat_list_sv = fast.sliding2d_window2d(
+            feat_quant, output_quant, output_shape, c_len, a_len
+        )
+    feat_list_sv = np.asarray(feat_list_sv)
+    out_feat_list_sv = np.asarray(out_feat_list_sv)
     if len(quant_data) != 0:
-        metric = r2_score(output_default.reshape(-1), output_quant.reshape(-1))
-        text_metric = f"R2: {metric}%\n"
+        metric = r2_score(
+            output_default.reshape(-1),
+            output_quant.reshape(-1) / (2**quant_bits),
+        )
+        text_metric = f"R2: {metric}\n"
     else:
         metric = np.all(output_default == output_quant)
         text_metric = f"Output default and fast are equals: {metric}\n"
@@ -947,10 +1016,11 @@ def sim_naive(payload: SimulationPayload):
     _save_flat_arrays(
         path,
         [
-            ("d", feat_arr),
+            ("d", feat_quant),
             ("g", _prepend_bias(wght_quant, bias_dense)),
             ("s_default", output_default),
             ("s", output_quant),
+            ("s_default_quant_relu", output_quant_relu),
         ],
         fmt="%d",
     )
@@ -959,15 +1029,15 @@ def sim_naive(payload: SimulationPayload):
         list_array = [
             {"name": "weight", "value": wght_quant},
             # {"name": "weight_gg_quant", "value": bg_quant},
-            {"name": "feat_in", "value": feat_arr},
+            {"name": "feat_in", "value": feat_quant},
             {"name": "gold", "value": output_default},
             {"name": "gold_quant", "value": output_quant},
         ]
         dict_def = {
             "QUANT_BITS": quant_bits,
-            "W_SIZE": wght_quant.shape[0],
-            "FIN_SIZE": feat_arr.shape[0],
-            "FOUT_SIZE": output_default.shape[0],
+            "W_SIZE": wght_quant.shape[-1],
+            "FIN_SIZE": feat_arr.shape[-1],
+            "FOUT_SIZE": output_default.shape[-1],
         }
         # for path, typ in zip(["sim.h", "sim_float.h"], ["int", "float"]):
         arr = [{**r, "type": "int"} for r in list_array]
@@ -979,6 +1049,8 @@ def sim_naive(payload: SimulationPayload):
         )
     out_dict = {"quant": len(quant_data) > 0, "metric": metric, "text": text}
     weight_sv = np.array(wght_quant).reshape(1, -1)
+    feat_list_sv = feat_list_sv.reshape(-1, feat_list_sv.shape[-1])
+    out_feat_list_sv = out_feat_list_sv.reshape(-1, out_feat_list_sv.shape[-1])
     w_size = (len(weight_sv), len(weight_sv[0]))
     fin_size = (len(feat_list_sv), len(feat_list_sv[0]))
     fout_size = (len(out_feat_list_sv), len(out_feat_list_sv[0]))
@@ -1000,7 +1072,8 @@ def sim_naive(payload: SimulationPayload):
     dict_def = {
         "QUANT_BITS": quant_bits,
         "FIN1_SIZE": fin_size[0],
-        "N_WINDOW": output_fast.shape[0] // (a_len if dim == 1 else a_len[0]),
+        "N_WINDOW": output_quant.shape[-1]
+        // (a_len if dim == 1 else a_len[0]),
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
