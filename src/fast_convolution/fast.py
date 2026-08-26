@@ -279,14 +279,16 @@ def filter2d_slide2d(
         for c in range(0, out_shape[1], out_size[1]):
             feat = in_arr[r : r + in_size[0], c : c + in_size[1]]
             if tuple(feat.shape) == tuple(in_size):
-                out_tmp = tap_filter(feat)
+                # The RTL stores each input tile column-major. Match that
+                # representation before applying the separable transform.
+                out_tmp = tap_filter(feat.T)
                 out_arr[r : r + out_size[0], c : c + out_size[1]] = out_tmp
             else:
                 row_in = feat.shape[0]
                 col_in = feat.shape[1]
                 new_feat = np.zeros((in_size[0], in_size[1]), dtype=int)
                 new_feat[:row_in, :col_in] = feat
-                out_tmp = tap_filter(new_feat)
+                out_tmp = tap_filter(new_feat.T)
                 row_out, col_out = out_arr[
                     r : r + out_size[0], c : c + out_size[1]
                 ].shape
