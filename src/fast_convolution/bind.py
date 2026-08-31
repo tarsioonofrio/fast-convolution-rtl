@@ -55,6 +55,16 @@ def cmd_build2d_bind_nest(repo):
     utils.write_csa_parcels(csa_parcels, path / "csa")
 
     dim, s_len, g_len, d_len = read_init(repo)
+    # The RTL output memory is column-major.  The generated final A0 stage is
+    # row-major for the 4x4 configurations with six input-transform rows
+    # (TCN16 uses 6x6 and WPN16 uses 6x8), so request the explicit final-vector
+    # permutation at generation time instead of compensating in every Conv
+    # implementation.
+    transpose_output = (
+        d_len[0] == 4
+        and c1.shape[0] == 6
+        and a1.shape[1] == 4
+    )
     c0_sv, c1_sv = utils.sv_nest_csa_param(
         c1,
         s_len,
@@ -70,6 +80,7 @@ def cmd_build2d_bind_nest(repo):
         a1_size=d_len[0],
         c1_size=c1.shape[0],
         m1_size=q1.shape[0],
+        transpose_output=transpose_output,
     )
     c0_sv_direct, c1_sv_direct = utils.sv_nest_direct_param(
         c1,
@@ -86,6 +97,7 @@ def cmd_build2d_bind_nest(repo):
         a1_size=d_len[0],
         c1_size=c1.shape[0],
         m1_size=q1.shape[0],
+        transpose_output=transpose_output,
     )
     repo.dir_sv.mkdir(exist_ok=True)
     with open(Path(__file__).parent / "template/nest.sv") as f:

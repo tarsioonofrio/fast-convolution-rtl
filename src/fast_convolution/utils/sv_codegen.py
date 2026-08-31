@@ -316,6 +316,18 @@ def _maybe_pad_term(term: str, pad: bool) -> str:
     return f"P[{idx:02d}]"
 
 
+def _output_index_order(rows: int, cols: int, transpose: bool = False) -> List[int]:
+    """Return source indices for the generated output vector.
+
+    The nested RTL writes each output tile column by column. Most legacy
+    configurations already generate expressions in that order; TCN16 is the
+    exception because its final factor is emitted row-major.
+    """
+    if not transpose:
+        return list(range(rows * cols))
+    return [(idx % cols) * rows + (idx // cols) for idx in range(rows * cols)]
+
+
 def sv_nest(matrix: sy.Matrix, input_shape: Tuple[int, int], name: str) -> Tuple[str, str]:
     matrix_idx = {"c": (0, 1), "a": (1, 0)}
     type_input = {
@@ -375,6 +387,7 @@ def sv_nest_csa_param(
     a1_size: int,
     c1_size: int,
     m1_size: int,
+    transpose_output: bool = False,
 ) -> Tuple[str, str]:
     matrix_idx = {"c": (0, 1), "a": (1, 0)}
 
@@ -403,6 +416,15 @@ def sv_nest_csa_param(
         port_pp = [[p for p in powers if p != 0] for powers in port_pp_raw]
         port_np = [[p for p in powers if p != 0] for powers in port_np_raw]
 
+        if transpose_output and name == "a" and module_idx == 1:
+            output_indices = _output_index_order(
+                matrix.shape[1], matrix.shape[1], transpose=True
+            )
+            port_p = [port_p[idx] for idx in output_indices]
+            port_pp = [port_pp[idx] for idx in output_indices]
+            port_n = [port_n[idx] for idx in output_indices]
+            port_np = [port_np[idx] for idx in output_indices]
+
         signal_p, assignments_p = _build_csa_section_param("p", port_p, port_pp)
         signal_n, assignments_n = _build_csa_section_param("n", port_n, port_np)
         outputs = _build_output_assignments("p", "n", port_p, port_n)
@@ -423,6 +445,7 @@ def sv_nest_direct(
     matrix: sy.Matrix,
     input_shape: Tuple[int, int],
     name: str,
+    transpose_output: bool = False,
 ) -> Tuple[str, str]:
     matrix_idx = {"c": (0, 1), "a": (1, 0)}
     type_input = {
@@ -459,17 +482,17 @@ def sv_nest_direct(
         port_p, port_pp = _filter_terms_weights(port_p, port_pp_raw)
         port_n, port_np = _filter_terms_weights(port_n, port_np_raw)
 
-        if module_idx == 0:
-            output_rows = input_shape[0]
-            output_cols = matrix.shape[1]
-        else:
-            output_rows = matrix.shape[1]
-            output_cols = matrix.shape[1]
-
+        output_rows = input_shape[0] if module_idx == 0 else matrix.shape[1]
+        output_cols = matrix.shape[1]
+        output_indices = _output_index_order(
+            output_rows,
+            output_cols,
+            transpose_output and name == "a" and module_idx == 1,
+        )
         assignments = []
-        for idx, (p_terms, p_weights, n_terms, n_weights) in enumerate(
-            zip(port_p, port_pp, port_n, port_np)
-        ):
+        for idx_out, idx_src in enumerate(output_indices):
+            p_terms, p_weights = port_p[idx_src], port_pp[idx_src]
+            n_terms, n_weights = port_n[idx_src], port_np[idx_src]
             pos_expr = _format_weighted_sum(p_terms, p_weights)
             neg_expr = _format_weighted_sum(
                 n_terms,
@@ -485,10 +508,10 @@ def sv_nest_direct(
                 expr = "0"
             assignments.append(
                 {
-                    "idx": idx,
-                    "row": idx // output_cols,
-                    "col": idx % output_cols,
-                    "line": f"  assign soma[{idx}] = {expr};",
+                    "idx": idx_out,
+                    "row": idx_out // output_cols,
+                    "col": idx_out % output_cols,
+                    "line": f"  assign soma[{idx_out}] = {expr};",
                 }
             )
 
@@ -506,6 +529,7 @@ def sv_nest_direct_param(
     a1_size: int,
     c1_size: int,
     m1_size: int,
+    transpose_output: bool = False,
 ) -> Tuple[str, str]:
     matrix_idx = {"c": (0, 1), "a": (1, 0)}
 
@@ -534,10 +558,17 @@ def sv_nest_direct_param(
         port_p, port_pp = _filter_terms_weights(port_p, port_pp_raw)
         port_n, port_np = _filter_terms_weights(port_n, port_np_raw)
 
+        output_rows = input_shape[0] if module_idx == 0 else matrix.shape[1]
+        output_cols = matrix.shape[1]
+        output_indices = _output_index_order(
+            output_rows,
+            output_cols,
+            transpose_output and name == "a" and module_idx == 1,
+        )
         assignments = []
-        for idx_out, (p_terms, p_weights, n_terms, n_weights) in enumerate(
-            zip(port_p, port_pp, port_n, port_np)
-        ):
+        for idx_out, idx_src in enumerate(output_indices):
+            p_terms, p_weights = port_p[idx_src], port_pp[idx_src]
+            n_terms, n_weights = port_n[idx_src], port_np[idx_src]
             pos_expr = _format_weighted_sum(p_terms, p_weights)
             neg_expr = _format_weighted_sum(
                 n_terms,

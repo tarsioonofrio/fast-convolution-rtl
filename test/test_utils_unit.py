@@ -122,3 +122,39 @@ def test_sv_helpers(tmp_path: Path):
     mux = utils.sv_mux_mult(4, 2)
     assert "case" in mux
     assert "default: begin" in mux
+
+
+def test_sv_nested_output_transpose_is_explicit_for_column_major_rtl():
+    matrix = sy.Matrix(np.arange(24).reshape(6, 4))
+    row_major = utils.sv_nest_direct_param(
+        matrix,
+        (6, 6),
+        "a",
+        a1_size=4,
+        c1_size=6,
+        m1_size=6,
+    )[1]
+    column_major = utils.sv_nest_direct_param(
+        matrix,
+        (6, 6),
+        "a",
+        a1_size=4,
+        c1_size=6,
+        m1_size=6,
+        transpose_output=True,
+    )[1]
+
+    def assignments(module: str) -> dict[int, str]:
+        return {
+            int(line.split("[")[1].split("]")[0]): line
+            for line in module.splitlines()
+            if line.strip().startswith("assign soma[")
+        }
+
+    regular = assignments(row_major)
+    transposed = assignments(column_major)
+    for idx in range(16):
+        source = (idx % 4) * 4 + (idx // 4)
+        assert transposed[idx].replace(f"soma[{idx}]", "soma[X]") == regular[
+            source
+        ].replace(f"soma[{source}]", "soma[X]")
