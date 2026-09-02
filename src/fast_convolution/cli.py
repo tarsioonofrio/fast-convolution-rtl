@@ -178,6 +178,7 @@ def handle_sim_file(args):
         bias_value,
         args.standard,
         not args.no_c,
+        args.exact_scaled,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -199,6 +200,7 @@ def handle_sim_int(args):
         bias_value,
         args.standard,
         not args.no_c,
+        args.exact_scaled,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -217,6 +219,7 @@ def handle_sim_normal(args):
         bias_value,
         args.standard,
         not args.no_c,
+        args.exact_scaled,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -399,6 +402,11 @@ def _build_sim_parser(subparsers):
         action="store_true",
         help="Do not generate C header artifacts (sim.h/sim_float.h).",
     )
+    sim_file.add_argument(
+        "--exact-scaled",
+        action="store_true",
+        help="Export exact scaled 2-D Winograd weights and quantize only once at the output.",
+    )
     sim_file.set_defaults(func=handle_sim_file)
 
     sim_int = sim_sub.add_parser("int", help="Simulation with integers.")
@@ -428,6 +436,11 @@ def _build_sim_parser(subparsers):
         action="store_true",
         help="Do not generate C header artifacts (sim.h/sim_float.h).",
     )
+    sim_int.add_argument(
+        "--exact-scaled",
+        action="store_true",
+        help="Export exact scaled 2-D Winograd weights and quantize only once at the output.",
+    )
     sim_int.set_defaults(func=handle_sim_int)
 
     sim_normal = sim_sub.add_parser(
@@ -456,6 +469,11 @@ def _build_sim_parser(subparsers):
         "--no-c",
         action="store_true",
         help="Do not generate C header artifacts (sim.h/sim_float.h).",
+    )
+    sim_normal.add_argument(
+        "--exact-scaled",
+        action="store_true",
+        help="Export exact scaled 2-D Winograd weights and quantize only once at the output.",
     )
     sim_normal.set_defaults(func=handle_sim_normal)
 

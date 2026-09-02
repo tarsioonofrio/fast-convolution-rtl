@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from typing import Any, Optional
 
 import numpy as np
+import sympy as sy
 from PIL import Image
 from scipy import signal
 from sklearn.metrics import r2_score
@@ -41,6 +43,9 @@ class SimulationPayload:
     export_c_headers: bool = True
     bias: Optional[np.ndarray] = None
     bias_quant: Optional[np.ndarray] = None
+    # Preserve the rational Winograd weight transform as an integer numerator.
+    # The scale is applied once at the end of the fast path.
+    exact_scaled: bool = False
 
 
 @dataclass
@@ -52,6 +57,33 @@ class SimulationCore:
     bg: np.ndarray
     count_nest: int
     count_mult: int
+    weight_scale: int = 1
+
+
+def _weight_transform_scale_2d(q) -> int:
+    """Return the common denominator of the two 2-D q vectors."""
+    # The 2-D transform contains one q vector per axis, so its denominator is
+    # the product of the per-axis common denominators.
+    axis_scales = []
+    for axis in q:
+        axis_scale = 1
+        for value in axis:
+            axis_scale = math.lcm(axis_scale, int(sy.denom(value)))
+        axis_scales.append(axis_scale)
+    scale = math.prod(axis_scales)
+    if scale <= 0 or scale & (scale - 1):
+        raise ValueError(
+            "exact scaled 2-D export requires a power-of-two weight scale; "
+            f"got {scale}"
+        )
+    return scale
+
+
+def _matrix_to_exact_int(array) -> np.ndarray:
+    """Convert a SymPy/object matrix to an integer ndarray without float loss."""
+    return np.vectorize(lambda value: int(value), otypes=[int])(
+        np.asarray(array, dtype=object)
+    )
 
 
 def _reshape_bias(bias: np.ndarray, target: np.ndarray) -> np.ndarray:
@@ -373,16 +405,30 @@ def _simulate_2d_core(
     output_shape,
     quant_bits: int,
 ) -> SimulationCore:
+    if payload.exact_scaled and (
+        payload.bias is not None or payload.bias_quant is not None
+    ):
+        raise ValueError(
+            "--exact-scaled currently targets the bias-free Conv RTL contract; "
+            "remove --enable-bias or use the regular export"
+        )
     repo = payload.repo
     channel_in = payload.channel_in
     channel_out = payload.channel_out
     points, c, b, a, q = read_build_2d(repo)
     bg = _compute_bg_2d(wght_quant, q, b, channel_out, channel_in)
-    bg_quant = (
-        bg
-        if payload.quant_data == 0
-        else np.round(np.array(bg).astype(float)).astype(int)
-    )
+    weight_scale = 1
+    if payload.exact_scaled:
+        weight_scale = _weight_transform_scale_2d(q)
+        bg_quant = _matrix_to_exact_int(
+            np.asarray(bg, dtype=object) * weight_scale
+        )
+    else:
+        bg_quant = (
+            bg
+            if payload.quant_data == 0
+            else np.round(np.array(bg).astype(float)).astype(int)
+        )
     # Match the legacy 3x3 RTL weight bank. While loading the next channel,
     # the first three transformed coefficients remain from the first pair.
     if (
@@ -393,8 +439,12 @@ def _simulate_2d_core(
     ):
         bg_quant = np.array(bg_quant, dtype=int, copy=True)
         bg_quant[:, :, :3] = bg_quant[0, 0, :3]
+    # In exact-scaled mode the transformed weights are integer numerators.
+    # Keep the regular product shift here; the common weight-transform scale
+    # is removed once, after all input channels have been accumulated.
+    product_quant = quant_bits
     fast_conv = _fast_convolutions_2d(
-        bg_quant, channel_out, channel_in, c, a, quant_bits
+        bg_quant, channel_out, channel_in, c, a, product_quant
     )
 
     output_fast_ = np.array(
@@ -416,7 +466,19 @@ def _simulate_2d_core(
     bias_fast = (
         payload.bias_quant if len(payload.quant_data) != 0 else payload.bias
     )
-    output_fast = _apply_bias(output_fast, bias_fast)
+    if payload.exact_scaled:
+        # Products and bias are now in a common scaled domain.  Apply the
+        # scale reduction once at the output boundary, matching the exact RTL
+        # path and avoiding per-coefficient rounding in the transform.
+        if bias_fast is not None:
+            bias_fast = np.asarray(bias_fast, dtype=object) * weight_scale
+        output_fast = _apply_bias(output_fast, bias_fast)
+        shift = int(math.log2(weight_scale))
+        output_fast = np.vectorize(
+            lambda value: int(value) >> shift, otypes=[int]
+        )(np.asarray(output_fast, dtype=object))
+    else:
+        output_fast = _apply_bias(output_fast, bias_fast)
     feat_list_sv, out_feat_list_sv = _collect_windows_2d(
         payload, output_fast, output_shape
     )
@@ -435,6 +497,7 @@ def _simulate_2d_core(
         bg=bg,
         count_nest=count_nest,
         count_mult=count_mult,
+        weight_scale=weight_scale,
     )
 
 
@@ -457,6 +520,7 @@ def cmd_sim_file(
     bias_value,
     standard,
     export_c_headers: bool = True,
+    exact_scaled: bool = False,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -504,6 +568,7 @@ def cmd_sim_file(
         export_c_headers=export_c_headers,
         bias=bias,
         bias_quant=bias_quant,
+        exact_scaled=exact_scaled,
     )
     return run_simulation(payload, standard)
 
@@ -521,6 +586,7 @@ def cmd_sim_int(
     bias_value,
     standard,
     export_c_headers: bool = True,
+    exact_scaled: bool = False,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -597,6 +663,7 @@ def cmd_sim_int(
         export_c_headers=export_c_headers,
         bias=bias,
         bias_quant=bias_quant,
+        exact_scaled=exact_scaled,
     )
     return run_simulation(payload, standard)
 
@@ -611,6 +678,7 @@ def cmd_sim_normal(
     bias_mean,
     standard,
     export_c_headers: bool = True,
+    exact_scaled: bool = False,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -661,6 +729,7 @@ def cmd_sim_normal(
         export_c_headers=export_c_headers,
         bias=bias,
         bias_quant=bias_quant,
+        exact_scaled=exact_scaled,
     )
     return run_simulation(payload, standard)
 
@@ -743,6 +812,8 @@ def sim(payload: SimulationPayload):
         f"Bias enabled: {bias is not None}\n"
         f"Image side: {image_side}\n"
         f"Quantization bits: {quant_bits}\n"
+        f"Exact scaled weight transform: {payload.exact_scaled}\n"
+        f"Weight transform scale: {core.weight_scale}\n"
         # f"{text_equal}\n"
         f"{text_metric}\n"
         "Totals\n"
@@ -840,6 +911,9 @@ def sim(payload: SimulationPayload):
             )
         dict_def = {
             "QUANT_BITS": quant_bits,
+            "WEIGHT_TRANSFORM_SCALE": core.weight_scale,
+            "EXACT_SCALED_WEIGHTS": int(payload.exact_scaled),
+            "RAW_SPATIAL_WEIGHTS": int(payload.exact_scaled and dim == 2),
             "W_SIZE": wght_quant.shape[-1],
             "FIN_SIZE": feat_arr.shape[-1],
             "FOUT_SIZE": output_default.shape[-1],
@@ -877,6 +951,9 @@ def sim(payload: SimulationPayload):
         # Match the old 2-D RTL ROM image: feature maps are column-major and
         # precede transformed weights; no bias/header words are exported.
         feature_maps_sv = _transpose_feature_maps_for_sv(feat_quant)
+        raw_weight_sv = np.asarray(wght_quant).reshape(
+            -1, np.asarray(wght_quant).shape[-1] * np.asarray(wght_quant).shape[-2]
+        ).astype(int)
         const_data_size = weight_sv.reshape(-1).size + feature_maps_sv.size
         const_data_sv = [
             feature_maps_sv.reshape(-1, feature_maps_sv.shape[-1])
@@ -884,6 +961,13 @@ def sim(payload: SimulationPayload):
             .tolist(),
             weight_sv.tolist(),
         ]
+        if payload.exact_scaled:
+            # The row-streaming exact RTL variant reads the original spatial
+            # tile after the transformed-weight region. Keeping both forms in
+            # the ROM lets the pre-transformed and spatial-transform variants
+            # consume the same generated package.
+            const_data_size += raw_weight_sv.size
+            const_data_sv.append(raw_weight_sv.tolist())
     else:
         # Preserve the established 1-D ROM contract (bias/header, weights,
         # then the linear feature vector).
@@ -946,6 +1030,9 @@ def sim(payload: SimulationPayload):
         )
     dict_def = {
         "QUANT_BITS": quant_bits,
+        "WEIGHT_TRANSFORM_SCALE": core.weight_scale,
+        "EXACT_SCALED_WEIGHTS": int(payload.exact_scaled),
+        "RAW_SPATIAL_WEIGHTS": int(payload.exact_scaled and dim == 2),
         "FIN1_SIZE": feat_list_sv.shape[0],
         "FIN2_SIZE": feat_list_sv.shape[1],
         "FOUT1_SIZE": out_feat_list_sv.shape[0],

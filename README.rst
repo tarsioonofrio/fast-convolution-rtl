@@ -26,6 +26,30 @@ Example::
     python -m fast_convolution.cli sim int --enable-bias --bias 4
 
 
+Pesos Winograd exatos
+---------------------
+
+Para os algoritmos 2-D, ``sim`` pode exportar a transformada dos pesos como
+numeradores inteiros, sem arredondar cada um dos coeficientes transformados.
+Use ``--exact-scaled`` nos subcomandos ``sim file``, ``sim int`` ou
+``sim normal``. Para TC2x2 a escala comum atual é quatro; os produtos e a
+acumulação permanecem nessa escala e a redução é feita uma única vez na saída.
+
+O pacote ``pack_data.sv`` gerado nesse modo marca o contrato com
+``EXACT_SCALED_WEIGHTS = 1`` e informa a escala em
+``WEIGHT_TRANSFORM_SCALE``. A variante RTL correspondente deve manter a
+acumulação alargada e consumir os 16 numeradores transformados diretamente.
+Essa variante permanece no contrato sem bias do ``Conv`` atual; o gerador
+recusa ``--exact-scaled`` combinado com ``--enable-bias`` para não produzir um
+golden output que o RTL não possa reproduzir.
+
+O mesmo pacote também inclui, ao final da região dos pesos transformados, os
+pesos espaciais quantizados originais. Isso permite a variante RTL
+``stream12-rowconst4-exact``: ela lê os nove valores, calcula somente a linha
+necessária da transformada por ciclo e mantém o numerador sem a rede de
+arredondamento por linha.
+
+
 RS5
 ---
 
