@@ -863,6 +863,22 @@ def sim(payload: SimulationPayload):
         float_exports.append(("bias_default", bias))
     _save_flat_arrays(path, float_exports, fmt="%f")
 
+    # WinoCNN-compatible logical dataset (2-D convolutions only).
+    if dim == 2:
+        from .winocnn import export_winocnn
+
+        export_winocnn(
+            path / "winocnn",
+            feat_quant,
+            wght_quant,
+            channel_in=channel_in,
+            channel_out=channel_out,
+            image_side=image_side,
+            kernel_h=int(b_len[0]),
+            kernel_w=int(b_len[1]),
+            bias=bias_quant if len(quant_data) != 0 else bias,
+        )
+
     if payload.export_c_headers:
         repo.dir_clib_data.mkdir(parents=True, exist_ok=True)
         list_quant = [
