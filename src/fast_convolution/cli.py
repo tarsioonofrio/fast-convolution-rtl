@@ -179,6 +179,7 @@ def handle_sim_file(args):
         args.standard,
         not args.no_c,
         args.exact_scaled,
+        args.truncated_weight_transform,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -201,6 +202,7 @@ def handle_sim_int(args):
         args.standard,
         not args.no_c,
         args.exact_scaled,
+        args.truncated_weight_transform,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -220,6 +222,7 @@ def handle_sim_normal(args):
         args.standard,
         not args.no_c,
         args.exact_scaled,
+        args.truncated_weight_transform,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -407,6 +410,11 @@ def _build_sim_parser(subparsers):
         action="store_true",
         help="Export exact scaled 2-D Winograd weights and quantize only once at the output.",
     )
+    sim_file.add_argument(
+        "--truncated-weight-transform",
+        action="store_true",
+        help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
+    )
     sim_file.set_defaults(func=handle_sim_file)
 
     sim_int = sim_sub.add_parser("int", help="Simulation with integers.")
@@ -441,6 +449,11 @@ def _build_sim_parser(subparsers):
         action="store_true",
         help="Export exact scaled 2-D Winograd weights and quantize only once at the output.",
     )
+    sim_int.add_argument(
+        "--truncated-weight-transform",
+        action="store_true",
+        help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
+    )
     sim_int.set_defaults(func=handle_sim_int)
 
     sim_normal = sim_sub.add_parser(
@@ -474,6 +487,11 @@ def _build_sim_parser(subparsers):
         "--exact-scaled",
         action="store_true",
         help="Export exact scaled 2-D Winograd weights and quantize only once at the output.",
+    )
+    sim_normal.add_argument(
+        "--truncated-weight-transform",
+        action="store_true",
+        help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
     )
     sim_normal.set_defaults(func=handle_sim_normal)
 

@@ -46,6 +46,9 @@ class SimulationPayload:
     # Preserve the rational Winograd weight transform as an integer numerator.
     # The scale is applied once at the end of the fast path.
     exact_scaled: bool = False
+    # Match the truncating spatial-weight RTL: divide each exact transformed
+    # coefficient by the common power-of-two scale before the MAC stage.
+    truncated_weight_transform: bool = False
 
 
 @dataclass
@@ -84,6 +87,25 @@ def _matrix_to_exact_int(array) -> np.ndarray:
     return np.vectorize(lambda value: int(value), otypes=[int])(
         np.asarray(array, dtype=object)
     )
+
+
+def _truncate_scaled_weight_transform(array, scale: int, bits: int = 20):
+    """Apply the RTL's signed arithmetic shift and NBITS output slice."""
+    shift = int(math.log2(scale))
+    values = np.vectorize(lambda value: int(value) >> shift, otypes=[int])(
+        np.asarray(array, dtype=object)
+    )
+    modulus = 1 << bits
+    sign_bit = 1 << (bits - 1)
+
+    def wrap_signed(value):
+        unsigned = int(value) % modulus
+        return unsigned - modulus if unsigned >= sign_bit else unsigned
+
+    return np.vectorize(
+        wrap_signed,
+        otypes=[int],
+    )(values)
 
 
 def _reshape_bias(bias: np.ndarray, target: np.ndarray) -> np.ndarray:
@@ -145,6 +167,14 @@ def _quantize_bias(
 
 
 def run_simulation(payload: SimulationPayload, standard: bool):
+    if payload.exact_scaled and payload.truncated_weight_transform:
+        raise ValueError(
+            "--exact-scaled and --truncated-weight-transform are mutually exclusive"
+        )
+    if payload.truncated_weight_transform and (payload.dim != 2 or standard):
+        raise ValueError(
+            "--truncated-weight-transform requires the 2-D fast Winograd path"
+        )
     if standard:
         return sim_naive(payload)
     return sim(payload)
@@ -412,6 +442,12 @@ def _simulate_2d_core(
             "--exact-scaled currently targets the bias-free Conv RTL contract; "
             "remove --enable-bias or use the regular export"
         )
+    if payload.truncated_weight_transform and (
+        payload.bias is not None or payload.bias_quant is not None
+    ):
+        raise ValueError(
+            "--truncated-weight-transform matches a bias-free Conv RTL contract"
+        )
     repo = payload.repo
     channel_in = payload.channel_in
     channel_out = payload.channel_out
@@ -423,6 +459,12 @@ def _simulate_2d_core(
         bg_quant = _matrix_to_exact_int(
             np.asarray(bg, dtype=object) * weight_scale
         )
+    elif payload.truncated_weight_transform:
+        weight_scale = _weight_transform_scale_2d(q)
+        bg_scaled = _matrix_to_exact_int(
+            np.asarray(bg, dtype=object) * weight_scale
+        )
+        bg_quant = _truncate_scaled_weight_transform(bg_scaled, weight_scale)
     else:
         bg_quant = (
             bg
@@ -521,6 +563,7 @@ def cmd_sim_file(
     standard,
     export_c_headers: bool = True,
     exact_scaled: bool = False,
+    truncated_weight_transform: bool = False,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -569,6 +612,7 @@ def cmd_sim_file(
         bias=bias,
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
+        truncated_weight_transform=truncated_weight_transform,
     )
     return run_simulation(payload, standard)
 
@@ -587,6 +631,7 @@ def cmd_sim_int(
     standard,
     export_c_headers: bool = True,
     exact_scaled: bool = False,
+    truncated_weight_transform: bool = False,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -664,6 +709,7 @@ def cmd_sim_int(
         bias=bias,
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
+        truncated_weight_transform=truncated_weight_transform,
     )
     return run_simulation(payload, standard)
 
@@ -679,6 +725,7 @@ def cmd_sim_normal(
     standard,
     export_c_headers: bool = True,
     exact_scaled: bool = False,
+    truncated_weight_transform: bool = False,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -730,6 +777,7 @@ def cmd_sim_normal(
         bias=bias,
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
+        truncated_weight_transform=truncated_weight_transform,
     )
     return run_simulation(payload, standard)
 
@@ -813,6 +861,7 @@ def sim(payload: SimulationPayload):
         f"Image side: {image_side}\n"
         f"Quantization bits: {quant_bits}\n"
         f"Exact scaled weight transform: {payload.exact_scaled}\n"
+        f"Truncated weight transform: {payload.truncated_weight_transform}\n"
         f"Weight transform scale: {core.weight_scale}\n"
         # f"{text_equal}\n"
         f"{text_metric}\n"
@@ -929,7 +978,13 @@ def sim(payload: SimulationPayload):
             "QUANT_BITS": quant_bits,
             "WEIGHT_TRANSFORM_SCALE": core.weight_scale,
             "EXACT_SCALED_WEIGHTS": int(payload.exact_scaled),
-            "RAW_SPATIAL_WEIGHTS": int(payload.exact_scaled and dim == 2),
+            "TRUNCATED_WEIGHT_TRANSFORM": int(
+                payload.truncated_weight_transform
+            ),
+            "RAW_SPATIAL_WEIGHTS": int(
+                (payload.exact_scaled or payload.truncated_weight_transform)
+                and dim == 2
+            ),
             "W_SIZE": wght_quant.shape[-1],
             "FIN_SIZE": feat_arr.shape[-1],
             "FOUT_SIZE": output_default.shape[-1],
@@ -977,11 +1032,9 @@ def sim(payload: SimulationPayload):
             .tolist(),
             weight_sv.tolist(),
         ]
-        if payload.exact_scaled:
-            # The row-streaming exact RTL variant reads the original spatial
-            # tile after the transformed-weight region. Keeping both forms in
-            # the ROM lets the pre-transformed and spatial-transform variants
-            # consume the same generated package.
+        if payload.exact_scaled or payload.truncated_weight_transform:
+            # Spatial-transform RTL variants read the original tile after the
+            # transformed-weight region. Keep both representations in the ROM.
             const_data_size += raw_weight_sv.size
             const_data_sv.append(raw_weight_sv.tolist())
     else:
@@ -1048,7 +1101,13 @@ def sim(payload: SimulationPayload):
         "QUANT_BITS": quant_bits,
         "WEIGHT_TRANSFORM_SCALE": core.weight_scale,
         "EXACT_SCALED_WEIGHTS": int(payload.exact_scaled),
-        "RAW_SPATIAL_WEIGHTS": int(payload.exact_scaled and dim == 2),
+        "TRUNCATED_WEIGHT_TRANSFORM": int(
+            payload.truncated_weight_transform
+        ),
+        "RAW_SPATIAL_WEIGHTS": int(
+            (payload.exact_scaled or payload.truncated_weight_transform)
+            and dim == 2
+        ),
         "FIN1_SIZE": feat_list_sv.shape[0],
         "FIN2_SIZE": feat_list_sv.shape[1],
         "FOUT1_SIZE": out_feat_list_sv.shape[0],
