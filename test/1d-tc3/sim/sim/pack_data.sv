@@ -3,7 +3,13 @@ package pack_data;
   timeunit 1ns;
   timeprecision 1ps;
 
+  localparam int NBITS = 20;
+  localparam int WEIGHT_NBITS = 20;
   localparam int QUANT_BITS = 0;
+  localparam int WEIGHT_TRANSFORM_SCALE = 1;
+  localparam int EXACT_SCALED_WEIGHTS = 0;
+  localparam int TRUNCATED_WEIGHT_TRANSFORM = 0;
+  localparam int RAW_SPATIAL_WEIGHTS = 0;
   localparam int FIN1_SIZE = 300;
   localparam int FIN2_SIZE = 5;
   localparam int FOUT1_SIZE = 300;
@@ -13,7 +19,7 @@ package pack_data;
   localparam int N_WINDOW = 10;
   localparam int N_CHANNEL_IN = 1;
   localparam int N_CHANNEL_OUT = 1;
-  const int const_data[1042] = '{
+  const logic signed [19:0] const_data[1042] = '{
     0, 0, 0,
 
     0, 0, 0, 0, 0,
@@ -53,12 +59,12 @@ package pack_data;
     122, 127, 125, 142, 155, 156, 140, 112, 139, 166, 141, 166, 227, 171, 163, 206, 235, 179, 136, 122, 127, 152, 181, 104, 142, 183, 191, 178, 181, 176, 178, 168,
     120, 127, 150, 168, 159, 164, 141, 118, 169, 165, 152, 160, 185, 42, 161, 211, 174, 130, 141, 115, 134, 163, 171, 76, 157, 191, 189, 185, 180, 180, 182, 177
   };
-  const int const_weight[3][5] = '{
+  const logic signed [19:0] const_weight[3][5] = '{
     '{0, 0, 0, 0, 0},
     '{0, 1, -1, 0, 1},
     '{0, 0, 0, 0, 0}
   };
-  const int const_feat_in[300][5] = '{
+  const logic signed [19:0] const_feat_in[300][5] = '{
     '{118, 120, 124, 118, 122},
     '{118, 122, 116, 115, 116},
     '{115, 116, 111, 109, 111},
@@ -360,7 +366,7 @@ package pack_data;
     '{116, 178, 185, 177, 174},
     '{177, 174, 169, 171, 166}
   };
-  const int const_feat_out_batch[300][3] = '{
+  const logic signed [19:0] const_feat_out_batch[300][3] = '{
     '{-246, -264, -247},
     '{-238, -242, -236},
     '{-262, -252, -247},
@@ -662,7 +668,7 @@ package pack_data;
     '{-350, -408, -350},
     '{-372, -348, -374}
   };
-  const int const_feat_out[30][30] = '{
+  const logic signed [19:0] const_feat_out[30][30] = '{
     '{-246, -250, -278, -276, -270, -280, -282, -284, -276, -250, -246, -242, -244, -244, -240, -246, -234, -240, -248, -244, -230, -228, -242, -242, -248, -248, -250, -246, -248, -258},
     '{-264, -266, -280, -236, -266, -284, -292, -306, -298, -272, -274, -262, -268, -254, -240, -232, -246, -252, -230, -230, -244, -236, -234, -258, -258, -248, -242, -252, -246, -216},
     '{-247, -242, -266, -265, -270, -278, -285, -287, -290, -268, -254, -255, -255, -250, -250, -241, -239, -237, -243, -244, -229, -225, -242, -241, -253, -248, -249, -248, -239, -258},

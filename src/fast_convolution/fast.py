@@ -95,16 +95,41 @@ def wrap_conv_manual_factored(gv):
     return wrap_convolution(c, gs, a)
 
 
-def wrap_convolution(c, bg, a, quant=0):
+def _wrap_signed_matrix(values, nbits):
+    if nbits is None:
+        return values
+    values = sy.Matrix(values)
+    modulus = 1 << nbits
+    sign_bit = 1 << (nbits - 1)
+    return sy.Matrix(
+        values.rows,
+        values.cols,
+        lambda row, col: (
+            (int(values[row, col]) % modulus) - modulus
+            if int(values[row, col]) % modulus >= sign_bit
+            else int(values[row, col]) % modulus
+        ),
+    )
+
+
+def _arithmetic_shift_matrix(values, shift):
+    values = sy.Matrix(values)
+    if shift == 0:
+        return values
+    return sy.Matrix(
+        values.rows,
+        values.cols,
+        lambda row, col: int(values[row, col]) >> shift,
+    )
+
+
+def wrap_convolution(c, bg, a, quant=0, nbits=None):
     def convolution(f):
-        tr = c.T * sy.Matrix(f)
+        tr = _wrap_signed_matrix(c.T * sy.Matrix(f), nbits)
         m_ = sy.HadamardProduct(tr, sy.Matrix(bg), evaluate=True)
-        m = (
-            m_
-            if quant == 0
-            else np.right_shift(np.array(m_).astype(int), quant)
-        )
-        inv = a.T * m
+        m = _arithmetic_shift_matrix(m_, quant)
+        m = _wrap_signed_matrix(m, nbits)
+        inv = _wrap_signed_matrix(a.T * m, nbits)
         return inv
 
     return convolution
@@ -114,16 +139,19 @@ def to_filter(c, bg, a):
     return a.T * bg * c.T
 
 
-def wrap_convolution2d(c1, c2, bg, a1, a2, quant=0):
+def wrap_convolution2d(
+    c1, c2, bg, a1, a2, quant=0, nbits=None, product_nbits=None
+):
     def convolution(f):
-        tr = c1.T * sy.Matrix(f) * c2
+        # Transform modules expose NBITS-wide outputs between matrix stages.
+        tr_partial = _wrap_signed_matrix(c1.T * sy.Matrix(f), nbits)
+        tr = _wrap_signed_matrix(tr_partial * c2, nbits)
         m_ = sy.HadamardProduct(tr, sy.Matrix(bg), evaluate=True)
-        m = (
-            m_
-            if quant == 0
-            else np.right_shift(np.array(m_).astype(int), quant)
-        )
-        inv = a1.T * m * a2
+        m = _arithmetic_shift_matrix(m_, quant)
+        arithmetic_bits = product_nbits if product_nbits is not None else nbits
+        m = _wrap_signed_matrix(m, arithmetic_bits)
+        inv_partial = _wrap_signed_matrix(a1.T * m, arithmetic_bits)
+        inv = _wrap_signed_matrix(inv_partial * a2, arithmetic_bits)
         return inv
 
     return convolution

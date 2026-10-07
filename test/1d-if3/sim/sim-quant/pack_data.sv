@@ -3,7 +3,13 @@ package pack_data;
   timeunit 1ns;
   timeprecision 1ps;
 
+  localparam int NBITS = 20;
+  localparam int WEIGHT_NBITS = 20;
   localparam int QUANT_BITS = 8;
+  localparam int WEIGHT_TRANSFORM_SCALE = 1;
+  localparam int EXACT_SCALED_WEIGHTS = 0;
+  localparam int TRUNCATED_WEIGHT_TRANSFORM = 0;
+  localparam int RAW_SPATIAL_WEIGHTS = 0;
   localparam int FIN1_SIZE = 300;
   localparam int FIN2_SIZE = 5;
   localparam int FOUT1_SIZE = 300;
@@ -13,7 +19,7 @@ package pack_data;
   localparam int N_WINDOW = 10;
   localparam int N_CHANNEL_IN = 1;
   localparam int N_CHANNEL_OUT = 1;
-  const int const_data[1045] = '{
+  const logic signed [19:0] const_data[1045] = '{
     0, 0, 0,
 
     438, -202, -267, 236, 171, -469,
@@ -53,12 +59,12 @@ package pack_data;
     -93, 240, 75, 212, -127, -19, 3, 401, 176, 203, -168, 248, 57, 355, 515, -78, -104, -221, -36, -97, 92, -37, -92, 272, -240, 110, -103, 185, 354, -77, 112, 45,
     -204, 61, 74, 105, -50, 24, -293, -91, 142, 228, -108, 26, 58, 51, 138, -465, -12, 61, -256, 428, 41, 400, -202, -232, 57, -429, 55, 24, 260, 179, -106, -280
   };
-  const int const_weight[3][6] = '{
+  const logic signed [19:0] const_weight[3][6] = '{
     '{438, -202, -267, 236, 171, -469},
     '{-277, 286, -132, 9, -409, 154},
     '{-192, 35, -52, -157, -244, -17}
   };
-  const int const_feat_in[300][5] = '{
+  const logic signed [19:0] const_feat_in[300][5] = '{
     '{451, 102, 250, 573, 478},
     '{573, 478, -250, 243, -38},
     '{243, -38, -26, 105, 36},
@@ -360,7 +366,7 @@ package pack_data;
     '{358, -105, 135, 63, 221},
     '{63, 221, -206, 600, -327}
   };
-  const int const_feat_out_batch[300][3] = '{
+  const logic signed [19:0] const_feat_out_batch[300][3] = '{
     '{189, -199, -172},
     '{887, 950, -979},
     '{433, -109, -343},
@@ -662,7 +668,7 @@ package pack_data;
     '{874, -361, -8},
     '{361, -765, -396}
   };
-  const int const_feat_out[30][30] = '{
+  const logic signed [19:0] const_feat_out[30][30] = '{
     '{189, 207, 1004, -250, 916, -966, 672, -774, 740, -121, -729, 407, 548, -18, 378, 263, -55, -395, 5, 1197, -364, -457, -1425, -219, 811, 363, -356, -315, -564, -90},
     '{-199, -1620, -618, -99, 163, 1101, -401, -468, -716, 1375, 254, 272, -28, -1293, -199, 1330, 140, 469, -1166, 738, 541, -576, 1226, -501, -214, 548, 339, 502, -1227, 44},
     '{-172, 79, -538, -191, -493, 435, 540, 928, -793, -771, 928, -336, -424, 645, -627, -737, -1481, 1544, 91, -1054, 903, -125, 119, 676, -137, 250, -67, -720, 1047, 853},

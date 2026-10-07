@@ -3,7 +3,10 @@ Weights: None
 Bias enabled: False
 Image side: 32
 Quantization bits: 8
-R2: -0.6998873807239359
+Exact scaled weight transform: False
+Truncated weight transform: False
+Weight transform scale: 1
+R2: 0.9999000693393192
 
 Totals
 Naive

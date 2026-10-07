@@ -180,6 +180,7 @@ def handle_sim_file(args):
         not args.no_c,
         args.exact_scaled,
         args.truncated_weight_transform,
+        args.nbits,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -203,6 +204,7 @@ def handle_sim_int(args):
         not args.no_c,
         args.exact_scaled,
         args.truncated_weight_transform,
+        args.nbits,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -223,6 +225,7 @@ def handle_sim_normal(args):
         not args.no_c,
         args.exact_scaled,
         args.truncated_weight_transform,
+        args.nbits,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -415,6 +418,12 @@ def _build_sim_parser(subparsers):
         action="store_true",
         help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
     )
+    sim_file.add_argument(
+        "--nbits",
+        type=int,
+        default=20,
+        help="Signed datapath width in bits (default: 20).",
+    )
     sim_file.set_defaults(func=handle_sim_file)
 
     sim_int = sim_sub.add_parser("int", help="Simulation with integers.")
@@ -454,6 +463,12 @@ def _build_sim_parser(subparsers):
         action="store_true",
         help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
     )
+    sim_int.add_argument(
+        "--nbits",
+        type=int,
+        default=20,
+        help="Signed datapath width in bits (default: 20).",
+    )
     sim_int.set_defaults(func=handle_sim_int)
 
     sim_normal = sim_sub.add_parser(
@@ -492,6 +507,12 @@ def _build_sim_parser(subparsers):
         "--truncated-weight-transform",
         action="store_true",
         help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
+    )
+    sim_normal.add_argument(
+        "--nbits",
+        type=int,
+        default=20,
+        help="Signed datapath width in bits (default: 20).",
     )
     sim_normal.set_defaults(func=handle_sim_normal)
 

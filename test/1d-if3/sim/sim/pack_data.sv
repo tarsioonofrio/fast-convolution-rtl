@@ -3,7 +3,13 @@ package pack_data;
   timeunit 1ns;
   timeprecision 1ps;
 
+  localparam int NBITS = 20;
+  localparam int WEIGHT_NBITS = 20;
   localparam int QUANT_BITS = 0;
+  localparam int WEIGHT_TRANSFORM_SCALE = 1;
+  localparam int EXACT_SCALED_WEIGHTS = 0;
+  localparam int TRUNCATED_WEIGHT_TRANSFORM = 0;
+  localparam int RAW_SPATIAL_WEIGHTS = 0;
   localparam int FIN1_SIZE = 300;
   localparam int FIN2_SIZE = 5;
   localparam int FOUT1_SIZE = 300;
@@ -13,7 +19,7 @@ package pack_data;
   localparam int N_WINDOW = 10;
   localparam int N_CHANNEL_IN = 1;
   localparam int N_CHANNEL_OUT = 1;
-  const int const_data[1045] = '{
+  const logic signed [19:0] const_data[1045] = '{
     0, 0, 0,
 
     0, 1, 0, 1, 0, 1,
@@ -53,12 +59,12 @@ package pack_data;
     122, 127, 125, 142, 155, 156, 140, 112, 139, 166, 141, 166, 227, 171, 163, 206, 235, 179, 136, 122, 127, 152, 181, 104, 142, 183, 191, 178, 181, 176, 178, 168,
     120, 127, 150, 168, 159, 164, 141, 118, 169, 165, 152, 160, 185, 42, 161, 211, 174, 130, 141, 115, 134, 163, 171, 76, 157, 191, 189, 185, 180, 180, 182, 177
   };
-  const int const_weight[3][6] = '{
+  const logic signed [19:0] const_weight[3][6] = '{
     '{0, 1, 0, 1, 0, 1},
     '{1, -4, 1, -3, 2, -3},
     '{0, 1, 0, 1, 0, 1}
   };
-  const int const_feat_in[300][5] = '{
+  const logic signed [19:0] const_feat_in[300][5] = '{
     '{118, 120, 124, 118, 122},
     '{118, 122, 116, 115, 116},
     '{115, 116, 111, 109, 111},
@@ -360,7 +366,7 @@ package pack_data;
     '{116, 178, 185, 177, 174},
     '{177, 174, 169, 171, 166}
   };
-  const int const_feat_out_batch[300][3] = '{
+  const logic signed [19:0] const_feat_out_batch[300][3] = '{
     '{-8, -10, -2},
     '{10, -1, 4},
     '{-22, -10, -6},
@@ -662,7 +668,7 @@ package pack_data;
     '{-30, -29, 22},
     '{-16, 4, -15}
   };
-  const int const_feat_out[30][30] = '{
+  const logic signed [19:0] const_feat_out[30][30] = '{
     '{-8, 6, -19, 0, 2, 0, 1, -9, -10, 10, 1, -2, -6, -6, -4, -9, 1, -8, -7, -8, -2, 4, -9, -5, -10, -3, -5, -1, 0, -10},
     '{-10, -1, -19, 33, -4, -2, -3, -12, -14, 2, -5, 0, -12, 1, 2, 15, -7, -9, 12, 8, -10, 2, 8, -11, -7, 1, 6, -5, 3, 43},
     '{-2, 16, 5, 0, -6, 7, -2, 6, -11, -6, 17, -2, -1, 6, -9, 10, -3, 11, 0, -5, 6, 12, -5, 7, -4, 0, -3, 2, 25, 5},

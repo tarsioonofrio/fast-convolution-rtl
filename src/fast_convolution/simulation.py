@@ -49,6 +49,8 @@ class SimulationPayload:
     # Match the truncating spatial-weight RTL: divide each exact transformed
     # coefficient by the common power-of-two scale before the MAC stage.
     truncated_weight_transform: bool = False
+    # Signed width of the RTL datapath and generated SystemVerilog data arrays.
+    nbits: int = 20
 
 
 @dataclass
@@ -74,11 +76,8 @@ def _weight_transform_scale_2d(q) -> int:
             axis_scale = math.lcm(axis_scale, int(sy.denom(value)))
         axis_scales.append(axis_scale)
     scale = math.prod(axis_scales)
-    if scale <= 0 or scale & (scale - 1):
-        raise ValueError(
-            "exact scaled 2-D export requires a power-of-two weight scale; "
-            f"got {scale}"
-        )
+    if scale <= 0:
+        raise ValueError(f"weight transform scale must be positive; got {scale}")
     return scale
 
 
@@ -90,11 +89,18 @@ def _matrix_to_exact_int(array) -> np.ndarray:
 
 
 def _truncate_scaled_weight_transform(array, scale: int, bits: int = 20):
-    """Apply the RTL's signed arithmetic shift and NBITS output slice."""
-    shift = int(math.log2(scale))
-    values = np.vectorize(lambda value: int(value) >> shift, otypes=[int])(
-        np.asarray(array, dtype=object)
-    )
+    """Floor-divide transformed numerators and wrap to signed ``bits``."""
+    if scale <= 0:
+        raise ValueError(f"weight transform scale must be positive; got {scale}")
+    if scale & (scale - 1) == 0:
+        shift = int(math.log2(scale))
+        values = np.vectorize(lambda value: int(value) >> shift, otypes=[int])(
+            np.asarray(array, dtype=object)
+        )
+    else:
+        values = np.vectorize(lambda value: int(value) // scale, otypes=[int])(
+            np.asarray(array, dtype=object)
+        )
     modulus = 1 << bits
     sign_bit = 1 << (bits - 1)
 
@@ -106,6 +112,22 @@ def _truncate_scaled_weight_transform(array, scale: int, bits: int = 20):
         wrap_signed,
         otypes=[int],
     )(values)
+
+
+def _wrap_signed(values: np.ndarray, nbits: int) -> np.ndarray:
+    """Wrap integer values to a signed two's-complement NBITS signal."""
+    if nbits < 1 or nbits > 63:
+        raise ValueError("NBITS must be between 1 and 63 for integer simulation")
+    modulus = 1 << nbits
+    sign_bit = 1 << (nbits - 1)
+    array = np.asarray(values, dtype=object)
+    wrapped = [
+        (int(value) % modulus) - modulus
+        if int(value) % modulus >= sign_bit
+        else int(value) % modulus
+        for value in array.reshape(-1)
+    ]
+    return np.asarray(wrapped, dtype=np.int64).reshape(array.shape)
 
 
 def _reshape_bias(bias: np.ndarray, target: np.ndarray) -> np.ndarray:
@@ -142,7 +164,9 @@ def _standard_convolve(
                         value = signal.convolve2d(
                             channel, kernel[::-1, ::-1], mode="valid"
                         )
-                    accumulated = value if accumulated is None else accumulated + value
+                    accumulated = (
+                        value if accumulated is None else accumulated + value
+                    )
                 channels_out.append(accumulated)
             outputs.append(channels_out)
         return np.asarray(outputs)
@@ -167,6 +191,13 @@ def _quantize_bias(
 
 
 def run_simulation(payload: SimulationPayload, standard: bool):
+    if payload.nbits < 1 or payload.nbits > 63:
+        raise ValueError("NBITS must be between 1 and 63 for integer simulation")
+    # Model the signed NBITS ports/registers at the simulation boundary.
+    payload.feature_quant = _wrap_signed(payload.feature_quant, payload.nbits)
+    payload.weight_quant = _wrap_signed(payload.weight_quant, payload.nbits)
+    if payload.bias_quant is not None:
+        payload.bias_quant = _wrap_signed(payload.bias_quant, payload.nbits)
     if payload.exact_scaled and payload.truncated_weight_transform:
         raise ValueError(
             "--exact-scaled and --truncated-weight-transform are mutually exclusive"
@@ -203,12 +234,14 @@ def _compute_bg_1d(
 
 
 def _fast_convolutions_1d(
-    bg_quant, channel_out, channel_in, b_len, c, a, quant
+    bg_quant, channel_out, channel_in, b_len, c, a, quant, nbits=None
 ):
     return [
         [
             [
-                fast.wrap_convolution(c, bg_quant[cout][cin][i], a, quant)
+                fast.wrap_convolution(
+                    c, bg_quant[cout][cin][i], a, quant, nbits=nbits
+                )
                 for i in range(b_len)
             ]
             for cin in range(channel_in)
@@ -257,11 +290,22 @@ def _compute_bg_2d(wght_quant, q, b, channel_out, channel_in):
     )
 
 
-def _fast_convolutions_2d(bg_quant, channel_out, channel_in, c, a, quant):
+def _fast_convolutions_2d(
+    bg_quant,
+    channel_out,
+    channel_in,
+    c,
+    a,
+    quant,
+    nbits=None,
+    product_nbits=None,
+):
     return [
         [
             fast.wrap_convolution2d(
-                c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant
+                c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant,
+                nbits=nbits,
+                product_nbits=product_nbits,
             )
             for cin in range(channel_in)
         ]
@@ -365,8 +409,10 @@ def _transpose_square_rows(arr: np.ndarray) -> np.ndarray:
     side = int(np.sqrt(arr_np.shape[1]))
     if side * side != arr_np.shape[1]:
         return arr_np
-    return arr_np.reshape(arr_np.shape[0], side, side).transpose(0, 2, 1).reshape(
-        arr_np.shape[0], arr_np.shape[1]
+    return (
+        arr_np.reshape(arr_np.shape[0], side, side)
+        .transpose(0, 2, 1)
+        .reshape(arr_np.shape[0], arr_np.shape[1])
     )
 
 
@@ -387,8 +433,10 @@ def _simulate_1d_core(
         if payload.quant_data == 0
         else np.round(np.array(bg).astype(float)).astype(int)
     )
+    bg_quant = _wrap_signed(bg_quant, payload.nbits)
     fast_conv = _fast_convolutions_1d(
-        bg_quant, channel_out, channel_in, b_len, c, a, quant_bits
+        bg_quant, channel_out, channel_in, b_len, c, a, quant_bits,
+        nbits=payload.nbits,
     )
 
     output_fast_ = [
@@ -413,6 +461,7 @@ def _simulate_1d_core(
         payload.bias_quant if len(payload.quant_data) != 0 else payload.bias
     )
     output_fast = _apply_bias(output_fast, bias_fast)
+    output_fast = _wrap_signed(output_fast, payload.nbits)
     feat_list_sv, out_feat_list_sv = _collect_windows_1d(
         payload, output_fast, output_shape
     )
@@ -454,27 +503,42 @@ def _simulate_2d_core(
     points, c, b, a, q = read_build_2d(repo)
     bg = _compute_bg_2d(wght_quant, q, b, channel_out, channel_in)
     weight_scale = 1
+    product_nbits = payload.nbits
     if payload.exact_scaled:
         weight_scale = _weight_transform_scale_2d(q)
+        product_nbits = payload.nbits + int(math.log2(weight_scale))
+        if product_nbits > 63:
+            raise ValueError(
+                "exact-scaled simulation requires NBITS + weight scale bits <= 63"
+            )
         bg_quant = _matrix_to_exact_int(
             np.asarray(bg, dtype=object) * weight_scale
         )
+        bg_quant = _wrap_signed(bg_quant, product_nbits)
     elif payload.truncated_weight_transform:
         weight_scale = _weight_transform_scale_2d(q)
         bg_scaled = _matrix_to_exact_int(
             np.asarray(bg, dtype=object) * weight_scale
         )
-        bg_quant = _truncate_scaled_weight_transform(bg_scaled, weight_scale)
+        bg_quant = _truncate_scaled_weight_transform(
+            bg_scaled, weight_scale, bits=payload.nbits
+        )
     else:
         bg_quant = (
             bg
             if payload.quant_data == 0
             else np.round(np.array(bg).astype(float)).astype(int)
         )
+    if not payload.exact_scaled:
+        bg_quant = _wrap_signed(bg_quant, payload.nbits)
     # Match the legacy 3x3 RTL weight bank. While loading the next channel,
     # the first three transformed coefficients remain from the first pair.
+    # This reproduces a defect of that RTL, so it must not apply to the
+    # raw-spatial-weight contract (exact-scaled or truncated), whose RTL
+    # computes every transformed row from the current weight tile.
     if (
         payload.dim == 2
+        and not (payload.exact_scaled or payload.truncated_weight_transform)
         and tuple(payload.a_len) == (3, 3)
         and np.asarray(bg_quant).ndim == 4
         and bg_quant.shape[0] * bg_quant.shape[1] > 1
@@ -486,7 +550,9 @@ def _simulate_2d_core(
     # is removed once, after all input channels have been accumulated.
     product_quant = quant_bits
     fast_conv = _fast_convolutions_2d(
-        bg_quant, channel_out, channel_in, c, a, product_quant
+        bg_quant, channel_out, channel_in, c, a, product_quant,
+        nbits=payload.nbits,
+        product_nbits=product_nbits,
     )
 
     output_fast_ = np.array(
@@ -521,6 +587,7 @@ def _simulate_2d_core(
         )(np.asarray(output_fast, dtype=object))
     else:
         output_fast = _apply_bias(output_fast, bias_fast)
+    output_fast = _wrap_signed(output_fast, payload.nbits)
     feat_list_sv, out_feat_list_sv = _collect_windows_2d(
         payload, output_fast, output_shape
     )
@@ -564,6 +631,7 @@ def cmd_sim_file(
     export_c_headers: bool = True,
     exact_scaled: bool = False,
     truncated_weight_transform: bool = False,
+    nbits: int = 20,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -613,6 +681,7 @@ def cmd_sim_file(
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
+        nbits=nbits,
     )
     return run_simulation(payload, standard)
 
@@ -632,6 +701,7 @@ def cmd_sim_int(
     export_c_headers: bool = True,
     exact_scaled: bool = False,
     truncated_weight_transform: bool = False,
+    nbits: int = 20,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -710,6 +780,7 @@ def cmd_sim_int(
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
+        nbits=nbits,
     )
     return run_simulation(payload, standard)
 
@@ -726,6 +797,7 @@ def cmd_sim_normal(
     export_c_headers: bool = True,
     exact_scaled: bool = False,
     truncated_weight_transform: bool = False,
+    nbits: int = 20,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -778,6 +850,7 @@ def cmd_sim_normal(
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
+        nbits=nbits,
     )
     return run_simulation(payload, standard)
 
@@ -945,7 +1018,9 @@ def sim(payload: SimulationPayload):
             },
             {
                 "name": "feat_out",
-                "value": core.output_fast.reshape(-1, core.output_fast.shape[-1]),
+                "value": core.output_fast.reshape(
+                    -1, core.output_fast.shape[-1]
+                ),
             },
         ]
         if bias_quant is not None:
@@ -960,8 +1035,14 @@ def sim(payload: SimulationPayload):
                 "name": "weight",
                 "value": wght_arr.reshape(-1, wght_arr.shape[-1]),
             },
-            {"name": "weight_gg", "value": core.bg.reshape(-1, core.bg.shape[-1])},
-            {"name": "feat_in", "value": feat_arr.reshape(-1, feat_arr.shape[-1])},
+            {
+                "name": "weight_gg",
+                "value": core.bg.reshape(-1, core.bg.shape[-1]),
+            },
+            {
+                "name": "feat_in",
+                "value": feat_arr.reshape(-1, feat_arr.shape[-1]),
+            },
             {
                 "name": "feat_out",
                 "value": output_default.reshape(-1, output_default.shape[-1]),
@@ -1022,9 +1103,15 @@ def sim(payload: SimulationPayload):
         # Match the old 2-D RTL ROM image: feature maps are column-major and
         # precede transformed weights; no bias/header words are exported.
         feature_maps_sv = _transpose_feature_maps_for_sv(feat_quant)
-        raw_weight_sv = np.asarray(wght_quant).reshape(
-            -1, np.asarray(wght_quant).shape[-1] * np.asarray(wght_quant).shape[-2]
-        ).astype(int)
+        raw_weight_sv = (
+            np.asarray(wght_quant)
+            .reshape(
+                -1,
+                np.asarray(wght_quant).shape[-1]
+                * np.asarray(wght_quant).shape[-2],
+            )
+            .astype(int)
+        )
         const_data_size = weight_sv.reshape(-1).size + feature_maps_sv.size
         const_data_sv = [
             feature_maps_sv.reshape(-1, feature_maps_sv.shape[-1])
@@ -1067,21 +1154,29 @@ def sim(payload: SimulationPayload):
             "value": out_feat_list_sv,
         },
     ]
-    arr = [{**r, "type": "int"} for r in list_array]
+    export_weight_nbits = payload.nbits + (
+        int(math.log2(core.weight_scale)) if payload.exact_scaled else 0
+    )
+    sv_word_type = f"logic signed [{payload.nbits - 1}:0]"
+    sv_weight_type = f"logic signed [{export_weight_nbits - 1}:0]"
+    arr = [{**r, "type": sv_word_type} for r in list_array]
+    arr[0]["type"] = sv_weight_type
 
     list1d = [
         {
             "name": f"const_data[{const_data_size}]",
             "value": const_data_sv,
-            "type": "int",
+            "type": sv_weight_type,
         }
     ]
     if dim == 2:
         list1d_tail = [
             {
                 "name": f"const_feat_out[{output_fast_flat_size}]",
-                "value": [[output_fast_arr_sv.reshape(-1).astype(int).tolist()]],
-                "type": "int",
+                "value": [
+                    [output_fast_arr_sv.reshape(-1).astype(int).tolist()]
+                ],
+                "type": sv_word_type,
             }
         ]
     else:
@@ -1094,16 +1189,16 @@ def sim(payload: SimulationPayload):
                     f"[{output_fast_rows_sv.shape[1]}]"
                 ),
                 "value": output_fast_rows_sv,
-                "type": "int",
+                "type": sv_word_type,
             }
         )
     dict_def = {
+        "NBITS": payload.nbits,
+        "WEIGHT_NBITS": export_weight_nbits,
         "QUANT_BITS": quant_bits,
         "WEIGHT_TRANSFORM_SCALE": core.weight_scale,
         "EXACT_SCALED_WEIGHTS": int(payload.exact_scaled),
-        "TRUNCATED_WEIGHT_TRANSFORM": int(
-            payload.truncated_weight_transform
-        ),
+        "TRUNCATED_WEIGHT_TRANSFORM": int(payload.truncated_weight_transform),
         "RAW_SPATIAL_WEIGHTS": int(
             (payload.exact_scaled or payload.truncated_weight_transform)
             and dim == 2
@@ -1169,6 +1264,7 @@ def sim_naive(payload: SimulationPayload):
         output_quant = np.right_shift(output_quant, quant_bits)
     bias_quant = payload.bias_quant if len(quant_data) != 0 else payload.bias
     output_quant = _apply_bias(output_quant, bias_quant)
+    output_quant = _wrap_signed(output_quant, payload.nbits)
     output_quant_relu = np.maximum(output_quant, 0)
     output_shape = output_default.shape[-2:]
     # The HDL package must carry the transformed weights and fast-path output
@@ -1304,7 +1400,13 @@ def sim_naive(payload: SimulationPayload):
             "value": out_feat_list_sv,
         },
     ]
-    arr = [{**r, "type": "int"} for r in list_array]
+    export_weight_nbits = payload.nbits + (
+        int(math.log2(core.weight_scale)) if payload.exact_scaled else 0
+    )
+    sv_word_type = f"logic signed [{payload.nbits - 1}:0]"
+    sv_weight_type = f"logic signed [{export_weight_nbits - 1}:0]"
+    arr = [{**r, "type": sv_word_type} for r in list_array]
+    arr[0]["type"] = sv_weight_type
     if dim == 2:
         # Match the old 2-D RTL ROM image: feature maps are column-major and
         # precede transformed weights; no bias/header words are exported.
@@ -1320,6 +1422,7 @@ def sim_naive(payload: SimulationPayload):
             {
                 "name": f"const_feat_out[{output_fast_rows_sv.size}]",
                 "value": output_fast_arr_sv.reshape(-1).astype(int).tolist(),
+                "type": sv_word_type,
             }
         )
     else:
@@ -1345,21 +1448,24 @@ def sim_naive(payload: SimulationPayload):
                     f"[{output_fast_rows_sv.shape[1]}]"
                 ),
                 "value": output_fast_rows_sv,
+                "type": sv_word_type,
             }
         )
-    arr = [{**r, "type": "int"} for r in list_array]
+    arr = [{**r, "type": sv_word_type} for r in list_array]
+    arr[0]["type"] = sv_weight_type
     const_data_entries = [
         {
             "name": f"const_data[{const_data_size}]",
             "value": const_data_sv,
-            "type": "int",
+            "type": sv_weight_type,
         }
     ]
     dict_def = {
+        "NBITS": payload.nbits,
+        "WEIGHT_NBITS": export_weight_nbits,
         "QUANT_BITS": quant_bits,
         "FIN1_SIZE": fin_size[0],
-        "N_WINDOW": output_quant.shape[-1]
-        // (a_len if dim == 1 else a_len[0]),
+        "N_WINDOW": output_quant.shape[-1] // (a_len if dim == 1 else a_len[0]),
         "FIN2_SIZE": fin_size[1],
         "FOUT1_SIZE": fout_size[0],
         "FOUT2_SIZE": fout_size[1],
@@ -1370,6 +1476,10 @@ def sim_naive(payload: SimulationPayload):
     }
     if len(quant_data) != 0:
         utils.sv_pkg(
-            "pack_data", path / "pack_data.sv", const_data_entries, arr, dict_def
+            "pack_data",
+            path / "pack_data.sv",
+            const_data_entries,
+            arr,
+            dict_def,
         )
     return out_dict

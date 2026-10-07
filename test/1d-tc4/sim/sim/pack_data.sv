@@ -3,7 +3,13 @@ package pack_data;
   timeunit 1ns;
   timeprecision 1ps;
 
+  localparam int NBITS = 20;
+  localparam int WEIGHT_NBITS = 20;
   localparam int QUANT_BITS = 0;
+  localparam int WEIGHT_TRANSFORM_SCALE = 1;
+  localparam int EXACT_SCALED_WEIGHTS = 0;
+  localparam int TRUNCATED_WEIGHT_TRANSFORM = 0;
+  localparam int RAW_SPATIAL_WEIGHTS = 0;
   localparam int FIN1_SIZE = 240;
   localparam int FIN2_SIZE = 6;
   localparam int FOUT1_SIZE = 240;
@@ -13,7 +19,7 @@ package pack_data;
   localparam int N_WINDOW = 7;
   localparam int N_CHANNEL_IN = 1;
   localparam int N_CHANNEL_OUT = 1;
-  const int const_data[1045] = '{
+  const logic signed [19:0] const_data[1045] = '{
     0, 0, 0,
 
     0, 0, 0, 0, 0, 0,
@@ -53,12 +59,12 @@ package pack_data;
     122, 127, 125, 142, 155, 156, 140, 112, 139, 166, 141, 166, 227, 171, 163, 206, 235, 179, 136, 122, 127, 152, 181, 104, 142, 183, 191, 178, 181, 176, 178, 168,
     120, 127, 150, 168, 159, 164, 141, 118, 169, 165, 152, 160, 185, 42, 161, 211, 174, 130, 141, 115, 134, 163, 171, 76, 157, 191, 189, 185, 180, 180, 182, 177
   };
-  const int const_weight[3][6] = '{
+  const logic signed [19:0] const_weight[3][6] = '{
     '{0, 0, 0, 0, 0, 0},
     '{0, 0, -1, 0, 1, 1},
     '{0, 0, 0, 0, 0, 0}
   };
-  const int const_feat_in[240][6] = '{
+  const logic signed [19:0] const_feat_in[240][6] = '{
     '{118, 120, 124, 118, 122, 116},
     '{122, 116, 115, 116, 111, 109},
     '{111, 109, 111, 107, 109, 108},
@@ -300,7 +306,7 @@ package pack_data;
     '{116, 178, 185, 177, 174, 169},
     '{174, 169, 171, 166, 0, 0}
   };
-  const int const_feat_out_batch[240][4] = '{
+  const logic signed [19:0] const_feat_out_batch[240][4] = '{
     '{9, -8, 6, 9},
     '{-4, 14, -34, 45},
     '{-7, 15, -31, 52},
@@ -542,7 +548,7 @@ package pack_data;
     '{29, -29, 29, -11},
     '{14, 148, 0, 0}
   };
-  const int const_feat_out[30][30] = '{
+  const logic signed [19:0] const_feat_out[30][30] = '{
     '{9, 8, 1, -20, -2, 2, 5, 11, 11, 11, 14, 10, 12, 5, 0, -7, 6, 6, -9, -7, 7, 4, -4, 8, 5, 0, -4, 3, -1, -21},
     '{-8, -16, -13, 9, 2, -4, -2, -8, 3, 7, -6, 3, -1, 1, 10, 2, -1, -9, 4, 7, -8, -7, 4, -9, 0, 0, 3, -1, -8, 21},
     '{6, 32, 37, 13, -2, 8, -4, 2, -31, -43, -10, -29, -21, -13, -30, 8, -9, 15, 6, -7, 10, 13, -4, 11, -10, 0, -1, -3, 26, -21},

@@ -44,7 +44,9 @@ def _format_list2d(entries: Sequence[Dict[str, object]]) -> List[str]:
     for entry in entries:
         typ = str(entry["type"])
         name = str(entry["name"])
-        arr = np.array(entry["value"]).astype(typ)
+        arr = np.array(entry["value"])
+        if typ in {"int", "float", "bool"}:
+            arr = arr.astype(typ)
         if arr.ndim == 1:
             value_str = "    " + ", ".join(map(str, arr.tolist()))
         else:

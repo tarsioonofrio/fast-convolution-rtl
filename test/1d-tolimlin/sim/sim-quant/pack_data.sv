@@ -3,7 +3,13 @@ package pack_data;
   timeunit 1ns;
   timeprecision 1ps;
 
+  localparam int NBITS = 20;
+  localparam int WEIGHT_NBITS = 20;
   localparam int QUANT_BITS = 8;
+  localparam int WEIGHT_TRANSFORM_SCALE = 1;
+  localparam int EXACT_SCALED_WEIGHTS = 0;
+  localparam int TRUNCATED_WEIGHT_TRANSFORM = 0;
+  localparam int RAW_SPATIAL_WEIGHTS = 0;
   localparam int FIN1_SIZE = 240;
   localparam int FIN2_SIZE = 6;
   localparam int FOUT1_SIZE = 240;
@@ -13,7 +19,7 @@ package pack_data;
   localparam int N_WINDOW = 7;
   localparam int N_CHANNEL_IN = 1;
   localparam int N_CHANNEL_OUT = 1;
-  const int const_data[1051] = '{
+  const logic signed [19:0] const_data[1051] = '{
     0, 0, 0,
 
     438, 86, -16, -101, 352, 252, -101, -267,
@@ -53,12 +59,12 @@ package pack_data;
     -93, 240, 75, 212, -127, -19, 3, 401, 176, 203, -168, 248, 57, 355, 515, -78, -104, -221, -36, -97, 92, -37, -92, 272, -240, 110, -103, 185, 354, -77, 112, 45,
     -204, 61, 74, 105, -50, 24, -293, -91, 142, 228, -108, 26, 58, 51, 138, -465, -12, 61, -256, 428, 41, 400, -202, -232, 57, -429, 55, 24, 260, 179, -106, -280
   };
-  const int const_weight[3][8] = '{
+  const logic signed [19:0] const_weight[3][8] = '{
     '{438, 86, -16, -101, 352, 252, -101, -267},
     '{-277, -204, -62, 143, -72, 70, 143, -132},
     '{-192, -122, -104, 18, -70, -52, 18, -52}
   };
-  const int const_feat_in[240][6] = '{
+  const logic signed [19:0] const_feat_in[240][6] = '{
     '{451, 102, 250, 573, 478, -250},
     '{478, -250, 243, -38, -26, 105},
     '{-26, 105, 36, 372, 194, 31},
@@ -300,7 +306,7 @@ package pack_data;
     '{358, -105, 135, 63, 221, -206},
     '{221, -206, 600, -327, 0, 0}
   };
-  const int const_feat_out_batch[240][4] = '{
+  const logic signed [19:0] const_feat_out_batch[240][4] = '{
     '{186, -203, -168, 888},
     '{946, -978, 440, -104},
     '{-344, -307, 601, -49},
@@ -542,7 +548,7 @@ package pack_data;
     '{870, -364, -6, 363},
     '{-761, -396, 0, 0}
   };
-  const int const_feat_out[30][30] = '{
+  const logic signed [19:0] const_feat_out[30][30] = '{
     '{186, 206, 998, -255, 904, -966, 667, -774, 733, -125, -733, 408, 548, -20, 370, 264, -57, -390, 4, 1190, -361, -466, -1426, -222, 807, 359, -362, -316, -566, -95},
     '{-203, -1621, -621, -101, 160, 1099, -403, -468, -721, 1375, 256, 274, -30, -1296, -205, 1332, 140, 472, -1166, 737, 542, -581, 1225, -502, -217, 546, 341, 503, -1229, 42},
     '{-168, 86, -532, -192, -491, 436, 547, 929, -788, -765, 935, -330, -415, 648, -624, -738, -1464, 1548, 96, -1045, 903, -120, 123, 681, -131, 251, -66, -714, 1058, 854},
