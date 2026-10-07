@@ -297,8 +297,8 @@ def _build_1d_build_parser(build_sub):
     manual.set_defaults(func=handle_build_manual1d)
 
     tolimlin = build_1d_sub.add_parser(
-        "tolimlin-4x3",
-        help="Build 1D Tolimieri linear convolution (4x3).",
+        "tolimlin4x3",
+        help="Build 1D Tolimieri linear convolution (4x3), also known as Winograd polynomial.",
     )
     tolimlin.set_defaults(func=handle_build_tolimlin_4x3)
 
@@ -332,7 +332,7 @@ def _build_2d_build_parser(build_sub):
 
     tolimlin = build_2d_sub.add_parser(
         "tolimlin4x3",
-        help="Build 2D Tolimieri linear convolution (4x3).",
+        help="Build 2D Tolimieri linear convolution (4x3), also known as Winograd polynomial.",
     )
     tolimlin.set_defaults(func=handle_build_tolimlin_4x3_2d)
 
