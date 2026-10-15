@@ -14,7 +14,25 @@ Install
 Features
 --------
 
-* TODO
+* 1-D and 2-D fast convolution algorithms: Toom-Cook interpolation, the
+  six-multiplication and 6x6-multiplication manual factorizations, and the
+  Tolimieri linear (4x3) / Winograd polynomial transforms.
+* Multidimensional binding of 2-D transforms through ``build 2d bind nest``
+  (nested) and ``build 2d bind kron`` (Kronecker).
+* A single ``fast-conv`` CLI organized as ``init``, ``build``, ``quant``,
+  ``sim`` and ``example`` subcommands (see ``docs/usage.rst``).
+* Optional bias in every ``sim`` mode via ``--enable-bias``, plus the 2-D
+  weight-transform options ``--exact-scaled`` and
+  ``--truncated-weight-transform``.
+* SystemVerilog code generation under ``sv/``: ``pack_param.sv``,
+  ``mult_matrices.sv``/``mult_matrices_csa.sv`` and the time-multiplexed
+  ``mux_mult_XX.sv`` modules.
+* C headers under ``clib/`` with build and simulation data, such as
+  ``build.h``/``build_shift.h``/``init.h`` and ``sim.h``/``sim_float.h``.
+* Simulation datasets, golden vectors and ``pack_data.sv`` under ``sim/``,
+  including the ``d``/``g``/``s`` reference arrays and ``sim.txt`` logs.
+* WinoCNN-compatible 2-D datasets (``winocnn/feature.bin``, ``weight.bin``
+  and ``params.json``).
 
 CLI
 ---

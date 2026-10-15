@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
+.PHONY: clean clean-build clean-pyc clean-test coverage docs help install lint lint/ruff test test-all
 
 .DEFAULT_GOAL := help
 
@@ -48,20 +48,20 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint/flake8: ## check style with flake8
-	flake8 fast_convolution tests
+lint/ruff: ## check style with ruff
+	ruff check src test
 
 
-lint: lint/flake8 ## check style
+lint: lint/ruff ## check style
 
 test: ## run tests quickly with the default Python
-	python setup.py test
+	python -m pytest
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source fast_convolution setup.py test
+	coverage run -m pytest
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
@@ -80,17 +80,11 @@ servedocs: docs ## compile the docs watching for changes
 #release: dist ## package and upload a release
 #	twine upload dist/*
 
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
-
 build: clean
 	python -m build
 
 install: ## install the package to the active Python's site-packages
 	pip install -e .
-#	python setup.py install
 
 uninstall: ## install the package to the active Python's site-packages
 	pip uninstall fast_convolution

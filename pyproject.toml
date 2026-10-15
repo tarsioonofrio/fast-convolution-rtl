@@ -17,6 +17,9 @@ classifiers = [
 
 ]
 license = {text = "Not open source"}
+# https://stackoverflow.com/a/73600610/2850407
+dynamic = ["dependencies"]
+
 [project.optional-dependencies]
 dev = [
     "coverage",  # testing
@@ -25,8 +28,6 @@ dev = [
     "ruff"  # linting
 ]
 
-# https://stackoverflow.com/a/73600610/2850407
-dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
