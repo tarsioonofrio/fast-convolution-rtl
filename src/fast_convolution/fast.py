@@ -112,14 +112,29 @@ def _wrap_signed_matrix(values, nbits):
     )
 
 
-def _arithmetic_shift_matrix(values, shift):
+def _arithmetic_shift_matrix(values, shift, rounding="floor"):
+    if rounding not in ("floor", "nearest"):
+        raise ValueError(
+            f"rounding must be 'floor' or 'nearest'; got {rounding!r}"
+        )
     values = sy.Matrix(values)
     if shift == 0:
         return values
+    if rounding == "nearest":
+        offset = 1 << (shift - 1)
+
+        def shift_value(value):
+            return (int(value) + offset) >> shift
+
+    else:
+
+        def shift_value(value):
+            return int(value) >> shift
+
     return sy.Matrix(
         values.rows,
         values.cols,
-        lambda row, col: int(values[row, col]) >> shift,
+        lambda row, col: shift_value(values[row, col]),
     )
 
 
@@ -140,14 +155,22 @@ def to_filter(c, bg, a):
 
 
 def wrap_convolution2d(
-    c1, c2, bg, a1, a2, quant=0, nbits=None, product_nbits=None
+    c1,
+    c2,
+    bg,
+    a1,
+    a2,
+    quant=0,
+    nbits=None,
+    product_nbits=None,
+    rounding="floor",
 ):
     def convolution(f):
         # Transform modules expose NBITS-wide outputs between matrix stages.
         tr_partial = _wrap_signed_matrix(c1.T * sy.Matrix(f), nbits)
         tr = _wrap_signed_matrix(tr_partial * c2, nbits)
         m_ = sy.HadamardProduct(tr, sy.Matrix(bg), evaluate=True)
-        m = _arithmetic_shift_matrix(m_, quant)
+        m = _arithmetic_shift_matrix(m_, quant, rounding=rounding)
         arithmetic_bits = product_nbits if product_nbits is not None else nbits
         m = _wrap_signed_matrix(m, arithmetic_bits)
         inv_partial = _wrap_signed_matrix(a1.T * m, arithmetic_bits)

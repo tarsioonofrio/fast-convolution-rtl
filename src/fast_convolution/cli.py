@@ -181,6 +181,7 @@ def handle_sim_file(args):
         args.exact_scaled,
         args.truncated_weight_transform,
         args.nbits,
+        args.rounding,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -205,6 +206,7 @@ def handle_sim_int(args):
         args.exact_scaled,
         args.truncated_weight_transform,
         args.nbits,
+        args.rounding,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -226,6 +228,7 @@ def handle_sim_normal(args):
         args.exact_scaled,
         args.truncated_weight_transform,
         args.nbits,
+        args.rounding,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -419,6 +422,12 @@ def _build_sim_parser(subparsers):
         help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
     )
     sim_file.add_argument(
+        "--rounding",
+        choices=("floor", "nearest"),
+        default="floor",
+        help="Rounding mode for truncated transformed weights (default: floor).",
+    )
+    sim_file.add_argument(
         "--nbits",
         type=int,
         default=20,
@@ -464,6 +473,12 @@ def _build_sim_parser(subparsers):
         help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
     )
     sim_int.add_argument(
+        "--rounding",
+        choices=("floor", "nearest"),
+        default="floor",
+        help="Rounding mode for truncated transformed weights (default: floor).",
+    )
+    sim_int.add_argument(
         "--nbits",
         type=int,
         default=20,
@@ -507,6 +522,12 @@ def _build_sim_parser(subparsers):
         "--truncated-weight-transform",
         action="store_true",
         help="Match the 2-D RTL that arithmetic-shifts each transformed weight before MACs.",
+    )
+    sim_normal.add_argument(
+        "--rounding",
+        choices=("floor", "nearest"),
+        default="floor",
+        help="Rounding mode for truncated transformed weights (default: floor).",
     )
     sim_normal.add_argument(
         "--nbits",

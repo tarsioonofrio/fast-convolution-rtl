@@ -49,6 +49,8 @@ class SimulationPayload:
     # Match the truncating spatial-weight RTL: divide each exact transformed
     # coefficient by the common power-of-two scale before the MAC stage.
     truncated_weight_transform: bool = False
+    # Rounding applied to the truncated transformed weights and products.
+    weight_rounding: str = "floor"
     # Signed width of the RTL datapath and generated SystemVerilog data arrays.
     nbits: int = 20
 
@@ -88,15 +90,36 @@ def _matrix_to_exact_int(array) -> np.ndarray:
     )
 
 
-def _truncate_scaled_weight_transform(array, scale: int, bits: int = 20):
-    """Floor-divide transformed numerators and wrap to signed ``bits``."""
+def _truncate_scaled_weight_transform(
+    array, scale: int, bits: int = 20, rounding: str = "floor"
+):
+    """Divide transformed numerators and wrap to signed ``bits``."""
     if scale <= 0:
         raise ValueError(f"weight transform scale must be positive; got {scale}")
+    if rounding not in ("floor", "nearest"):
+        raise ValueError(
+            f"rounding must be 'floor' or 'nearest'; got {rounding!r}"
+        )
     if scale & (scale - 1) == 0:
         shift = int(math.log2(scale))
-        values = np.vectorize(lambda value: int(value) >> shift, otypes=[int])(
-            np.asarray(array, dtype=object)
-        )
+        if rounding == "nearest" and shift > 0:
+            offset = 1 << (shift - 1)
+            values = np.vectorize(
+                lambda value: (int(value) + offset) >> shift, otypes=[int]
+            )(np.asarray(array, dtype=object))
+        elif rounding == "nearest":
+            values = np.vectorize(lambda value: int(value), otypes=[int])(
+                np.asarray(array, dtype=object)
+            )
+        else:
+            values = np.vectorize(
+                lambda value: int(value) >> shift, otypes=[int]
+            )(np.asarray(array, dtype=object))
+    elif rounding == "nearest":
+        offset = scale // 2
+        values = np.vectorize(
+            lambda value: (int(value) + offset) // scale, otypes=[int]
+        )(np.asarray(array, dtype=object))
     else:
         values = np.vectorize(lambda value: int(value) // scale, otypes=[int])(
             np.asarray(array, dtype=object)
@@ -206,6 +229,13 @@ def run_simulation(payload: SimulationPayload, standard: bool):
         raise ValueError(
             "--truncated-weight-transform requires the 2-D fast Winograd path"
         )
+    if (
+        payload.weight_rounding != "floor"
+        and not payload.truncated_weight_transform
+    ):
+        raise ValueError(
+            "--rounding requires --truncated-weight-transform"
+        )
     if standard:
         return sim_naive(payload)
     return sim(payload)
@@ -299,6 +329,7 @@ def _fast_convolutions_2d(
     quant,
     nbits=None,
     product_nbits=None,
+    rounding="floor",
 ):
     return [
         [
@@ -306,6 +337,7 @@ def _fast_convolutions_2d(
                 c[0], c[1], bg_quant[cout][cin], a[0], a[1], quant,
                 nbits=nbits,
                 product_nbits=product_nbits,
+                rounding=rounding,
             )
             for cin in range(channel_in)
         ]
@@ -504,6 +536,7 @@ def _simulate_2d_core(
     bg = _compute_bg_2d(wght_quant, q, b, channel_out, channel_in)
     weight_scale = 1
     product_nbits = payload.nbits
+    weight_rounding = "floor"
     if payload.exact_scaled:
         weight_scale = _weight_transform_scale_2d(q)
         product_nbits = payload.nbits + int(math.log2(weight_scale))
@@ -517,11 +550,15 @@ def _simulate_2d_core(
         bg_quant = _wrap_signed(bg_quant, product_nbits)
     elif payload.truncated_weight_transform:
         weight_scale = _weight_transform_scale_2d(q)
+        weight_rounding = payload.weight_rounding
         bg_scaled = _matrix_to_exact_int(
             np.asarray(bg, dtype=object) * weight_scale
         )
         bg_quant = _truncate_scaled_weight_transform(
-            bg_scaled, weight_scale, bits=payload.nbits
+            bg_scaled,
+            weight_scale,
+            bits=payload.nbits,
+            rounding=weight_rounding,
         )
     else:
         bg_quant = (
@@ -553,6 +590,7 @@ def _simulate_2d_core(
         bg_quant, channel_out, channel_in, c, a, product_quant,
         nbits=payload.nbits,
         product_nbits=product_nbits,
+        rounding=weight_rounding,
     )
 
     output_fast_ = np.array(
@@ -632,6 +670,7 @@ def cmd_sim_file(
     exact_scaled: bool = False,
     truncated_weight_transform: bool = False,
     nbits: int = 20,
+    weight_rounding: str = "floor",
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -681,6 +720,7 @@ def cmd_sim_file(
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
+        weight_rounding=weight_rounding,
         nbits=nbits,
     )
     return run_simulation(payload, standard)
@@ -702,6 +742,7 @@ def cmd_sim_int(
     exact_scaled: bool = False,
     truncated_weight_transform: bool = False,
     nbits: int = 20,
+    weight_rounding: str = "floor",
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -780,6 +821,7 @@ def cmd_sim_int(
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
+        weight_rounding=weight_rounding,
         nbits=nbits,
     )
     return run_simulation(payload, standard)
@@ -798,6 +840,7 @@ def cmd_sim_normal(
     exact_scaled: bool = False,
     truncated_weight_transform: bool = False,
     nbits: int = 20,
+    weight_rounding: str = "floor",
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -850,6 +893,7 @@ def cmd_sim_normal(
         bias_quant=bias_quant,
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
+        weight_rounding=weight_rounding,
         nbits=nbits,
     )
     return run_simulation(payload, standard)
@@ -935,6 +979,7 @@ def sim(payload: SimulationPayload):
         f"Quantization bits: {quant_bits}\n"
         f"Exact scaled weight transform: {payload.exact_scaled}\n"
         f"Truncated weight transform: {payload.truncated_weight_transform}\n"
+        f"Rounding: {payload.weight_rounding}\n"
         f"Weight transform scale: {core.weight_scale}\n"
         # f"{text_equal}\n"
         f"{text_metric}\n"
