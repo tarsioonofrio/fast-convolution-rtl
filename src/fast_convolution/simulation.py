@@ -51,6 +51,10 @@ class SimulationPayload:
     truncated_weight_transform: bool = False
     # Rounding applied to the truncated transformed weights and products.
     weight_rounding: str = "floor"
+    # Extra fractional bits kept in the truncated transformed weights.
+    weight_frac_bits: int = 0
+    # Fractional bits deferred from the product shift to a final output shift.
+    extra_frac_bits: int = 0
     # Signed width of the RTL datapath and generated SystemVerilog data arrays.
     nbits: int = 20
 
@@ -153,6 +157,29 @@ def _wrap_signed(values: np.ndarray, nbits: int) -> np.ndarray:
     return np.asarray(wrapped, dtype=np.int64).reshape(array.shape)
 
 
+def _arithmetic_shift_array(
+    values: np.ndarray, shift: int, rounding: str = "floor"
+) -> np.ndarray:
+    """Arithmetic right shift of an integer array with the matrix rounding."""
+    if rounding not in ("floor", "nearest"):
+        raise ValueError(
+            f"rounding must be 'floor' or 'nearest'; got {rounding!r}"
+        )
+    if shift < 0:
+        raise ValueError(f"shift must be non-negative; got {shift}")
+    array = np.asarray(values, dtype=object)
+    if shift == 0:
+        return np.asarray(array, dtype=np.int64)
+    if rounding == "nearest":
+        offset = 1 << (shift - 1)
+        shifted = [
+            (int(value) + offset) >> shift for value in array.reshape(-1)
+        ]
+    else:
+        shifted = [int(value) >> shift for value in array.reshape(-1)]
+    return np.asarray(shifted, dtype=np.int64).reshape(array.shape)
+
+
 def _reshape_bias(bias: np.ndarray, target: np.ndarray) -> np.ndarray:
     if bias.ndim != 1:
         raise ValueError("Bias must be a 1D array.")
@@ -228,6 +255,24 @@ def run_simulation(payload: SimulationPayload, standard: bool):
     if payload.truncated_weight_transform and (payload.dim != 2 or standard):
         raise ValueError(
             "--truncated-weight-transform requires the 2-D fast Winograd path"
+        )
+    if payload.weight_frac_bits < 0 or payload.extra_frac_bits < 0:
+        raise ValueError(
+            "--weight-frac-bits and --extra-frac-bits must be non-negative"
+        )
+    if (payload.weight_frac_bits or payload.extra_frac_bits) and (
+        not payload.truncated_weight_transform
+    ):
+        raise ValueError(
+            "--weight-frac-bits and --extra-frac-bits require "
+            "--truncated-weight-transform"
+        )
+    quant_bits = payload.quant_data.get("bits", 0)
+    max_extra_frac_bits = quant_bits + payload.weight_frac_bits
+    if payload.extra_frac_bits > max_extra_frac_bits:
+        raise ValueError(
+            f"--extra-frac-bits ({payload.extra_frac_bits}) must not exceed "
+            f"QUANT + --weight-frac-bits ({max_extra_frac_bits})"
         )
     if (
         payload.weight_rounding != "floor"
@@ -537,6 +582,8 @@ def _simulate_2d_core(
     weight_scale = 1
     product_nbits = payload.nbits
     weight_rounding = "floor"
+    weight_frac_bits = payload.weight_frac_bits
+    extra_frac_bits = payload.extra_frac_bits
     if payload.exact_scaled:
         weight_scale = _weight_transform_scale_2d(q)
         product_nbits = payload.nbits + int(math.log2(weight_scale))
@@ -555,9 +602,9 @@ def _simulate_2d_core(
             np.asarray(bg, dtype=object) * weight_scale
         )
         bg_quant = _truncate_scaled_weight_transform(
-            bg_scaled,
+            bg_scaled * (1 << weight_frac_bits),
             weight_scale,
-            bits=payload.nbits,
+            bits=payload.nbits + weight_frac_bits,
             rounding=weight_rounding,
         )
     else:
@@ -567,7 +614,12 @@ def _simulate_2d_core(
             else np.round(np.array(bg).astype(float)).astype(int)
         )
     if not payload.exact_scaled:
-        bg_quant = _wrap_signed(bg_quant, payload.nbits)
+        if payload.truncated_weight_transform:
+            bg_quant = _wrap_signed(
+                bg_quant, payload.nbits + weight_frac_bits
+            )
+        else:
+            bg_quant = _wrap_signed(bg_quant, payload.nbits)
     # Match the legacy 3x3 RTL weight bank. While loading the next channel,
     # the first three transformed coefficients remain from the first pair.
     # This reproduces a defect of that RTL, so it must not apply to the
@@ -585,7 +637,9 @@ def _simulate_2d_core(
     # In exact-scaled mode the transformed weights are integer numerators.
     # Keep the regular product shift here; the common weight-transform scale
     # is removed once, after all input channels have been accumulated.
-    product_quant = quant_bits
+    # In fractional truncated mode the extra weight bits join the product
+    # domain, while deferred extra bits are removed after the channel sum.
+    product_quant = quant_bits + weight_frac_bits - extra_frac_bits
     fast_conv = _fast_convolutions_2d(
         bg_quant, channel_out, channel_in, c, a, product_quant,
         nbits=payload.nbits,
@@ -609,6 +663,10 @@ def _simulate_2d_core(
         ]
     )
     output_fast = np.sum(output_fast_, axis=1)
+    if payload.truncated_weight_transform and extra_frac_bits:
+        output_fast = _arithmetic_shift_array(
+            output_fast, extra_frac_bits, rounding=weight_rounding
+        )
     bias_fast = (
         payload.bias_quant if len(payload.quant_data) != 0 else payload.bias
     )
@@ -671,6 +729,8 @@ def cmd_sim_file(
     truncated_weight_transform: bool = False,
     nbits: int = 20,
     weight_rounding: str = "floor",
+    weight_frac_bits: int = 0,
+    extra_frac_bits: int = 0,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     quant_data = read_quant_if_exists(repo)
@@ -721,6 +781,8 @@ def cmd_sim_file(
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
         weight_rounding=weight_rounding,
+        weight_frac_bits=weight_frac_bits,
+        extra_frac_bits=extra_frac_bits,
         nbits=nbits,
     )
     return run_simulation(payload, standard)
@@ -743,6 +805,8 @@ def cmd_sim_int(
     truncated_weight_transform: bool = False,
     nbits: int = 20,
     weight_rounding: str = "floor",
+    weight_frac_bits: int = 0,
+    extra_frac_bits: int = 0,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -822,6 +886,8 @@ def cmd_sim_int(
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
         weight_rounding=weight_rounding,
+        weight_frac_bits=weight_frac_bits,
+        extra_frac_bits=extra_frac_bits,
         nbits=nbits,
     )
     return run_simulation(payload, standard)
@@ -841,6 +907,8 @@ def cmd_sim_normal(
     truncated_weight_transform: bool = False,
     nbits: int = 20,
     weight_rounding: str = "floor",
+    weight_frac_bits: int = 0,
+    extra_frac_bits: int = 0,
 ):
     dim, c_len, b_len, a_len = read_init(repo)
     np.random.seed(seed)
@@ -894,6 +962,8 @@ def cmd_sim_normal(
         exact_scaled=exact_scaled,
         truncated_weight_transform=truncated_weight_transform,
         weight_rounding=weight_rounding,
+        weight_frac_bits=weight_frac_bits,
+        extra_frac_bits=extra_frac_bits,
         nbits=nbits,
     )
     return run_simulation(payload, standard)
@@ -980,6 +1050,8 @@ def sim(payload: SimulationPayload):
         f"Exact scaled weight transform: {payload.exact_scaled}\n"
         f"Truncated weight transform: {payload.truncated_weight_transform}\n"
         f"Rounding: {payload.weight_rounding}\n"
+        f"Weight transform fractional bits: {payload.weight_frac_bits}\n"
+        f"Extra fractional bits: {payload.extra_frac_bits}\n"
         f"Weight transform scale: {core.weight_scale}\n"
         # f"{text_equal}\n"
         f"{text_metric}\n"
@@ -999,6 +1071,34 @@ def sim(payload: SimulationPayload):
     path.mkdir(exist_ok=True, parents=True)
     with open(path / "sim.txt", "w") as f:
         f.write(text)
+    generation_path = path / "generation.json"
+    if payload.truncated_weight_transform and not generation_path.exists():
+        # New truncated runs record the same workload fields used by the
+        # external dataset generators.  Never clobber existing metadata.
+        generation = {
+            "workload": {
+                "image_side": image_side,
+                "channel_in": channel_in,
+                "channel_out": channel_out,
+                "kernel_size": (
+                    int(b_len[0]) if dim == 2 else int(b_len)
+                ),
+                "quant_bits": quant_bits,
+                "nbits": payload.nbits,
+                "weight_transform_scale": core.weight_scale,
+                "weight_transform_frac_bits": payload.weight_frac_bits,
+                "extra_frac_bits": payload.extra_frac_bits,
+                "truncated_weight_transform": True,
+                "rounding": payload.weight_rounding,
+            },
+            "generator": {
+                "project": "fast-convolution-rtl",
+                "method": "fast_convolution.cli sim",
+            },
+        }
+        with open(generation_path, "w") as f:
+            json.dump(generation, f, indent=2, sort_keys=True)
+            f.write("\n")
     # The ROM header reserves one exported bias word per input/output pair.
     # With no quantization, use the integer bias supplied to the fast path;
     # with quantization, use its quantized counterpart.
@@ -1107,6 +1207,8 @@ def sim(payload: SimulationPayload):
             "TRUNCATED_WEIGHT_TRANSFORM": int(
                 payload.truncated_weight_transform
             ),
+            "WEIGHT_TRANSFORM_FRAC_BITS": payload.weight_frac_bits,
+            "EXTRA_FRAC_BITS": payload.extra_frac_bits,
             "RAW_SPATIAL_WEIGHTS": int(
                 (payload.exact_scaled or payload.truncated_weight_transform)
                 and dim == 2
@@ -1201,6 +1303,10 @@ def sim(payload: SimulationPayload):
     ]
     export_weight_nbits = payload.nbits + (
         int(math.log2(core.weight_scale)) if payload.exact_scaled else 0
+    ) + (
+        payload.weight_frac_bits
+        if payload.truncated_weight_transform
+        else 0
     )
     sv_word_type = f"logic signed [{payload.nbits - 1}:0]"
     sv_weight_type = f"logic signed [{export_weight_nbits - 1}:0]"
@@ -1244,6 +1350,8 @@ def sim(payload: SimulationPayload):
         "WEIGHT_TRANSFORM_SCALE": core.weight_scale,
         "EXACT_SCALED_WEIGHTS": int(payload.exact_scaled),
         "TRUNCATED_WEIGHT_TRANSFORM": int(payload.truncated_weight_transform),
+        "WEIGHT_TRANSFORM_FRAC_BITS": payload.weight_frac_bits,
+        "EXTRA_FRAC_BITS": payload.extra_frac_bits,
         "RAW_SPATIAL_WEIGHTS": int(
             (payload.exact_scaled or payload.truncated_weight_transform)
             and dim == 2
@@ -1447,6 +1555,10 @@ def sim_naive(payload: SimulationPayload):
     ]
     export_weight_nbits = payload.nbits + (
         int(math.log2(core.weight_scale)) if payload.exact_scaled else 0
+    ) + (
+        payload.weight_frac_bits
+        if payload.truncated_weight_transform
+        else 0
     )
     sv_word_type = f"logic signed [{payload.nbits - 1}:0]"
     sv_weight_type = f"logic signed [{export_weight_nbits - 1}:0]"

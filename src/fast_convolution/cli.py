@@ -229,6 +229,8 @@ def handle_sim_normal(args):
         args.truncated_weight_transform,
         args.nbits,
         args.rounding,
+        args.weight_frac_bits,
+        args.extra_frac_bits,
     )
     if isinstance(output, dict) and "text" in output:
         print(output["text"])
@@ -528,6 +530,18 @@ def _build_sim_parser(subparsers):
         choices=("floor", "nearest"),
         default="floor",
         help="Rounding mode for truncated transformed weights (default: floor).",
+    )
+    sim_normal.add_argument(
+        "--weight-frac-bits",
+        type=int,
+        default=0,
+        help="Extra fractional bits in truncated transformed weights (default: 0).",
+    )
+    sim_normal.add_argument(
+        "--extra-frac-bits",
+        type=int,
+        default=0,
+        help="Fractional bits removed by a final output shift (default: 0).",
     )
     sim_normal.add_argument(
         "--nbits",
