@@ -10,8 +10,8 @@ datasets.
 It generates the datasets and golden outputs of the FastConv accelerators
 (`FastConv_SystemVerilog <https://github.com/tarsioonofrio/FastConv_SystemVerilog>`_), including those of
 
-    "Trading Multiplications for Simpler Transforms: Area and Energy Efficiency of Polynomial Winograd
-    Convolution," submitted to the *IEEE International Symposium on Circuits and Systems (ISCAS)*, 2027.
+    T. O. da Silva and F. G. Moraes, "Trading Multiplications for Simpler Transforms: Area and Energy
+    Efficiency of Polynomial Winograd Convolution," submitted to the *IEEE International Symposium on Circuits and Systems (ISCAS)*, 2027.
 
 The integer simulation models the RTL arithmetic bit for bit (truncated or rounded transformed weights,
 fractional bits, word-width wrap-around), so an RTL run is accepted only when every output word equals the
