@@ -1,106 +1,169 @@
-================
-Fast Convolution
-================
+=================================================================================
+fast-convolution-rtl: fast-convolution algorithms, golden models and RTL helpers
+=================================================================================
 
-Package that implement some fast convolution algoritms
+This package builds fast 1-D and 2-D convolution algorithms (Toom-Cook, the Winograd polynomial / Tolimieri
+linear construction and manual factorizations), quantizes them, simulates them in integer arithmetic and
+exports what an RTL implementation needs: SystemVerilog packages and helper modules, C headers and golden
+datasets.
 
+It generates the datasets and golden outputs of the FastConv accelerators
+(`FastConv_SystemVerilog <https://github.com/tarsioonofrio/FastConv_SystemVerilog>`_), including those of
 
-Install
+    "Trading Multiplications for Simpler Transforms: Area and Energy Efficiency of Polynomial Winograd
+    Convolution," submitted to the *IEEE International Symposium on Circuits and Systems (ISCAS)*, 2027.
+
+The integer simulation models the RTL arithmetic bit for bit (truncated or rounded transformed weights,
+fractional bits, word-width wrap-around), so an RTL run is accepted only when every output word equals the
+golden. It also writes WinoCNN-compatible inputs, used to run the WinoCNN baseline on the same data.
+
+Layout
+------
+
+==========================  ======================================================================================
+Folder                      Content
+==========================  ======================================================================================
+``src/fast_convolution/``   the package: ``cli.py`` (``fast-conv``), builders (``build.py``, ``bind.py``, ``fast.py``,
+                            ``naive.py``, ``cyclic.py``, ``fft.py``), quantization (``quant.py``), integer simulation
+                            and dataset export (``simulation.py``, ``winocnn.py``), SystemVerilog/C/LaTeX writers,
+                            ``template/`` (SystemVerilog and Makefile templates), ``clib/`` (C library)
+``test/``                   ``pytest`` suite and one reference repository per algorithm (``1d-tc3``, ``2d-tcn16``, ...)
+``docs/``                   Sphinx documentation (``usage.rst``, ``installation.rst``)
+``images/``                 example inputs for ``sim file`` (images, a Laplace kernel)
+``etc/``                    shell templates and debugging helpers
+==========================  ======================================================================================
+
+Algorithms
+----------
+
+An algorithm lives in a *repository*: a folder whose ``config/`` holds the problem size (``init.json``), the
+matrices (``build.json``: interpolation points ``p``, input transform ``c``, scaling ``q``, weight transform
+``b``, inverse ``a``), the generator name (``gen.json``), the bind method (``bind.json``) and the quantization
+(``quant.json``). The builders write these files; any other bilinear algorithm can be added by writing
+``build.json`` by hand.
+
+==================  ==========================================  ========================================
+Builder             Algorithm                                   Example repository in ``test/``
+==================  ==========================================  ========================================
+``toom-cook``       Toom-Cook interpolation, any output size;   ``1d-tc2``, ``1d-tc3``, ``2d-tcn4``,
+                    points given with ``--p1``/``--p2``         ``2d-tcn9``, ``2d-tcn16``
+``tolimlin4x3``     Tolimieri linear F(4,3), the Winograd       ``1d-tolimlin``, ``2d-tolimlin``
+                    polynomial algorithm of the ISCAS 2027 WP
+``manual``          the six-multiplication and 6×6              ``1d-if3``, ``2d-ifn9``, ``2d-ifk9``
+                    manual factorizations (Inspection
+                    Factorization)
+``bind nest|kron``  2-D algorithm from two 1-D ones (nested     every ``2d-*``
+                    or Kronecker)
+==================  ==========================================  ========================================
+
+Quick start
+-----------
+
+Install in a Python 3.9 virtual environment (NumPy 1.24 has no wheels for newer Pythons) and run the tests
+(about 30 s)::
+
+    uv venv --python 3.9 .venv && uv pip install --python .venv/bin/python -e .   # or python3.9 -m venv + pip
+    .venv/bin/python -m pytest -q              # 144 passed
+    git restore -- test                        # the tests rewrite test/*/sim/sim/sim.txt
+
+Build the 2-D Toom-Cook F(2,3) from scratch and generate the dataset of the ISCAS 2027 point ``TCtw``
+(3 input channels, 12 output channels, 32×32 input, seed 0, 16-bit words, truncated transformed weights)::
+
+    mkdir tc23 && cd tc23
+    fast-conv init 2d -o 2 -w 3
+    fast-conv build 2d toom-cook
+    fast-conv build 2d bind nest
+    fast-conv quant shift -b 8
+    fast-conv sim normal --image-side 32 -i 3 -o 12 -d 0 --no-c --truncated-weight-transform --nbits 16 -n tctw
+
+``s.txt``, ``g.txt`` and ``d.txt`` in ``sim/sim-tctw/`` are byte-identical to the committed dataset
+``FastConv_SystemVerilog/rtl/conv2x2/data/tcn4/sim/sim-032-3-12-normal-trunc-nbits16/``. Without a LaTeX
+compiler the builders print a warning and skip the PDF of the derivation.
+
+Requirements
+------------
+
+==================  ===============  ==================================================================
+Item                Version used     Notes
+==================  ===============  ==================================================================
+Python              3.9              dependencies in ``requirements.txt`` (SymPy 1.12, NumPy 1.24,
+                                     SciPy 1.10, ...)
+LaTeX               optional         ``latexmk`` or ``pdflatex`` for the PDFs of each derivation
+C compiler, CMake   optional         to build the generated C library in ``clib/``
+==================  ===============  ==================================================================
+
+Where each dataset of the papers comes from
+-------------------------------------------
+
+Every dataset in ``FastConv_SystemVerilog/rtl/conv*/data/<algorithm>/sim/`` was written by ``fast-conv sim``
+on the algorithm repository next to it (``data/<algorithm>/config/``). Its ``generation.json`` records the
+command options (seed, channels, image side, word width, rounding, fractional bits), the revision of this
+package and the SHA-256 of ``pack_data.sv``; ``README.md`` in the dataset folder repeats the exact command.
+The six datasets of the ISCAS 2027 paper are listed in ``FastConv_SystemVerilog/report/iscas2027/``.
+
+============================  ===============================================================================
+Dataset option                Meaning
+============================  ===============================================================================
+``sim normal -d <seed>``      inputs and weights drawn from N(0, 1) with that seed, quantized to Q8
+``--truncated-weight-``       transformed weights shifted to the RTL word before the MACs (the RTL computes or
+``transform``                 stores them this way)
+``--rounding nearest``        round instead of floor the transformed weights and the products
+``--weight-frac-bits F``      F extra fractional bits kept in the transformed weights
+``--extra-frac-bits G``       G fractional bits kept in the partial sums and removed by one final shift
+``--nbits N``                 signed N-bit words with wrap-around, as the RTL registers
+``--exact-scaled``            transformed weights exported as integer numerators, scaled once at the output
+============================  ===============================================================================
+
+Flow, step by step
+------------------
+
+1. **init** (``fast-conv init 1d|2d -i <in> -o <out> -w <kernel>``) writes ``config/init.json``.
+2. **build** (``fast-conv build 1d|2d <builder>``) derives the matrices into ``config/build.json`` and a LaTeX
+   derivation into ``build/``. For 2-D, ``build 2d bind nest`` (or ``kron``) combines the two dimensions and
+   writes the carry-save adder trees of the input transform (``build/bind-nest/``).
+3. **quant** (``fast-conv quant none|shift -b <bits>``) fixes the fixed-point format (Q8 with ``-b 8``).
+4. **sim** (``fast-conv sim file|int|normal``) runs the naive and the fast convolution in floating point and in
+   integer arithmetic, then writes:
+
+   * ``sv/``: ``pack_param.sv``, ``mult_matrices.sv``/``mult_matrices_csa.sv`` (input transform) and the
+     time-multiplexed ``mux_mult_XX.sv``;
+   * ``clib/``: ``build.h``, ``build_shift.h``, ``init.h``, ``sim.h``, ``sim_float.h`` (unless ``--no-c``);
+   * ``sim/sim-<name>/``: ``pack_data.sv`` (inputs, weights and golden output for the testbench), the
+     reference arrays ``d`` (naive), ``g`` (fast, floating point), ``s`` (fast, integer), ``sim.txt``,
+     ``generation.json``, and ``winocnn/`` (``feature.bin``, ``weight.bin``, ``params.json``).
+
+``fast-conv example rand|seq|list`` prints a small worked example. ``docs/usage.rst`` describes every option.
+
+Notes
+-----
+
+- **Bias** is zero unless ``--enable-bias`` is given to a ``sim`` subcommand (``--bias`` sets the mean).
+- **Exact Winograd weights** (``--exact-scaled``): the 2-D weight transform is exported as integer numerators
+  without rounding each coefficient; products and accumulation stay at the common scale (4 for TC 2×2) and the
+  output is reduced once. ``pack_data.sv`` then sets ``EXACT_SCALED_WEIGHTS = 1`` and ``WEIGHT_TRANSFORM_SCALE``
+  and appends the quantized spatial weights, so a row-by-row RTL can read the nine raw weights. The option is
+  refused together with ``--enable-bias``, which the matching RTL does not support.
+- **Algorithms without a builder** (for instance the 7-product bit-shift F(4,3) or the direct convolution used
+  by FastConv) are added by writing ``config/build.json``; ``bind`` needs a generator name it knows in
+  ``config/gen.json`` (use ``tolimlin_4x3`` during the bind and restore the descriptive name afterwards).
+- **Verilator line limit.** Long arrays in ``pack_data.sv`` can exceed the about 40 000 tokens per line that
+  Verilator 5.052 accepts; FastConv wraps them at 16 values per line, values unchanged.
+- Earlier versions of this README described building an RS5 (RISC-V) application; that code is not part of
+  this repository.
+
+Limitations
+-----------
+
+- Only 2-D algorithms support ``--truncated-weight-transform`` and the rounding and fractional-bit options.
+- Inputs are synthetic (normal distribution, files or integers); real network layers are fed through
+  ``sim file`` or by building the payload in Python (``fast_convolution.simulation.SimulationPayload``).
+- The quantization model is fixed point with power-of-two scales.
+
+License
 -------
 
-`pip install -e .`
-
-
-Features
---------
-
-* 1-D and 2-D fast convolution algorithms: Toom-Cook interpolation, the
-  six-multiplication and 6x6-multiplication manual factorizations, and the
-  Tolimieri linear (4x3) / Winograd polynomial transforms.
-* Multidimensional binding of 2-D transforms through ``build 2d bind nest``
-  (nested) and ``build 2d bind kron`` (Kronecker).
-* A single ``fast-conv`` CLI organized as ``init``, ``build``, ``quant``,
-  ``sim`` and ``example`` subcommands (see ``docs/usage.rst``).
-* Optional bias in every ``sim`` mode via ``--enable-bias``, plus the 2-D
-  weight-transform options ``--exact-scaled`` and
-  ``--truncated-weight-transform``.
-* SystemVerilog code generation under ``sv/``: ``pack_param.sv``,
-  ``mult_matrices.sv``/``mult_matrices_csa.sv`` and the time-multiplexed
-  ``mux_mult_XX.sv`` modules.
-* C headers under ``clib/`` with build and simulation data, such as
-  ``build.h``/``build_shift.h``/``init.h`` and ``sim.h``/``sim_float.h``.
-* Simulation datasets, golden vectors and ``pack_data.sv`` under ``sim/``,
-  including the ``d``/``g``/``s`` reference arrays and ``sim.txt`` logs.
-* WinoCNN-compatible 2-D datasets (``winocnn/feature.bin``, ``weight.bin``
-  and ``params.json``).
-
-CLI
----
-
-Bias is only enabled when passing ``--enable-bias`` to ``fast-conv sim`` subcommands.
-
-Example::
-
-    python -m fast_convolution.cli sim int --enable-bias --bias 4
-
-
-Pesos Winograd exatos
----------------------
-
-Para os algoritmos 2-D, ``sim`` pode exportar a transformada dos pesos como
-numeradores inteiros, sem arredondar cada um dos coeficientes transformados.
-Use ``--exact-scaled`` nos subcomandos ``sim file``, ``sim int`` ou
-``sim normal``. Para TC2x2 a escala comum atual é quatro; os produtos e a
-acumulação permanecem nessa escala e a redução é feita uma única vez na saída.
-
-O pacote ``pack_data.sv`` gerado nesse modo marca o contrato com
-``EXACT_SCALED_WEIGHTS = 1`` e informa a escala em
-``WEIGHT_TRANSFORM_SCALE``. A variante RTL correspondente deve manter a
-acumulação alargada e consumir os 16 numeradores transformados diretamente.
-Essa variante permanece no contrato sem bias do ``Conv`` atual; o gerador
-recusa ``--exact-scaled`` combinado com ``--enable-bias`` para não produzir um
-golden output que o RTL não possa reproduzir.
-
-O mesmo pacote também inclui, ao final da região dos pesos transformados, os
-pesos espaciais quantizados originais. Isso permite a variante RTL
-``stream12-rowconst4-exact``: ela lê os nove valores, calcula somente a linha
-necessária da transformada por ciclo e mantém o numerador sem a rede de
-arredondamento por linha.
-
-
-RS5
----
-
-* Geração do hex para RS5 (riscv64-elf)
-
-cd RS5/app/(application)
-
-    module load riscv64-elf/14.1.0
-    make clean
-    make all
-
-
-Simulação (verilator)
-
-cd ../../sim/
-
-Importante :  o  testbench.sv   lê o binário na linha 43
-
-    localparam string        BIN_FILE        = "../app/conv/test.bin";
-
-
-
-    module purge
-    module load verilator/5.024-CXX20
-    source /opt/rh/gcc-toolset-13/enable
-    make; more debug/Report.txt
-
-
-Credits
--------
-
-
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+``pyproject.toml`` declares the package "Not open source"; no license file has been added, so the author keeps
+all rights. The package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ template.
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
