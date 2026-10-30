@@ -14,9 +14,9 @@ maintainers = [
   {name = "Társio Onofrio Cardoso da Silva", email = "tarsio.onofrio@edu.pucrs.br"}
 ]
 classifiers = [
-
+  "License :: OSI Approved :: MIT License",
 ]
-license = {text = "Not open source"}
+license = {text = "MIT"}
 # https://stackoverflow.com/a/73600610/2850407
 dynamic = ["dependencies"]
 

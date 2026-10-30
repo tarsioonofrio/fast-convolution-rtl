@@ -162,8 +162,7 @@ Limitations
 License
 -------
 
-``pyproject.toml`` declares the package "Not open source"; no license file has been added, so the author keeps
-all rights. The package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ template.
+MIT License (``LICENSE``), copyright © 2023–2026 Társio Onofrio da Silva. The package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ template.
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
