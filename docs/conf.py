@@ -48,7 +48,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'Fast Convolution'
 copyright = "2024, Társio Onofrio Cardoso da Silva"
-author = "Társio Onofrio Cardoso da Silva"
+author = "Társio Onofrio"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -129,7 +129,7 @@ latex_elements = {
 latex_documents = [
     (master_doc, 'fast_convolution.tex',
      'Fast Convolution Documentation',
-     'Társio Onofrio Cardoso da Silva', 'manual'),
+     'Társio Onofrio', 'manual'),
 ]
 
 
