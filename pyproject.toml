@@ -8,10 +8,10 @@ version = "0.0.1"
 description = "Package that implement some fast convolution algoritms"
 readme = "README.rst"
 authors = [
-  {name = "Társio Onofrio", email = "tarsio.onofrio@edu.pucrs.br"}
+  {name = "Társio Onofrio Cardoso da Silva", email = "tarsio.onofrio@edu.pucrs.br"}
 ]
 maintainers = [
-  {name = "Társio Onofrio", email = "tarsio.onofrio@edu.pucrs.br"}
+  {name = "Társio Onofrio Cardoso da Silva", email = "tarsio.onofrio@edu.pucrs.br"}
 ]
 classifiers = [
   "License :: OSI Approved :: MIT License",

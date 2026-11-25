@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* Társio Onofrio <tarsioonofrio@gmail.com>
+* Társio Onofrio Cardoso da Silva <tarsioonofrio@gmail.com>
 
 Contributors
 ------------
